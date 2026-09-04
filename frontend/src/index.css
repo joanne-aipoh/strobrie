@@ -27,6 +27,10 @@ body {
   line-height: 1.6;
 }
 
+a {
+  color: var(--color-hot-pink-dark);
+}
+
 .container {
   max-width: var(--max-width);
   margin: 0 auto;
