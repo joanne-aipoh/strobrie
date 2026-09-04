@@ -3,19 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Strobrie — Cafe by Joanne | Abuja</title>
-  <meta name="description" content="Strobrie is a cozy cafe in Abuja by Joanne, serving fresh coffee, pastries, and light bites.">
+  <title>Strobriē By Joanne — Cafe &amp; Bakery in Abuja</title>
+  <meta name="description" content="Strobriē By Joanne is a cafe and bakery in Abuja serving coffee, pastries, breakfast, and hosting art events, pottery, and sip &amp; paint sessions.">
+  <meta property="og:title" content="Strobriē By Joanne — Cafe & Bakery in Abuja">
+  <meta property="og:description" content="Cafe, bakery, and event space in Abuja. Dine-in, pick up and delivery.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="site-header">
     <div class="container header-inner">
-      <a href="#" class="logo">Strobrie</a>
+      <a href="#" class="logo">
+        Strobri<span class="logo-e">ē</span>
+        <span class="logo-sub">by Joanne</span>
+      </a>
       <nav class="nav">
-        <a href="#about">About</a>
         <a href="#menu">Menu</a>
-        <a href="#location">Location</a>
-        <a href="#contact">Contact</a>
+        <a href="#events">Events &amp; Space</a>
+        <a href="#visit">Visit Us</a>
+        <a href="https://instagram.com/strobrie" target="_blank" rel="noopener">Instagram</a>
       </nav>
     </div>
   </header>
@@ -23,68 +32,125 @@
   <main>
     <section class="hero">
       <div class="container hero-inner">
-        <h1>Strobrie</h1>
-        <p class="tagline">A cozy cafe in Abuja, by Joanne.</p>
-        <a href="#menu" class="button">See Our Menu</a>
+        <p class="eyebrow">Cafe &middot; Bakery &middot; Abuja</p>
+        <h1>Come in. Take a seat.<br>Order the usual.</h1>
+        <p class="tagline">
+          A cozy, plant-filled corner in Abuja for great coffee, fresh bakes,
+          hearty plates, and good company.
+        </p>
+        <div class="hero-actions">
+          <a href="#menu" class="button button-primary">View Menu</a>
+          <a href="https://instagram.com/strobrie" target="_blank" rel="noopener" class="button button-ghost">Follow @strobrie</a>
+        </div>
       </div>
     </section>
 
     <section id="about" class="section">
-      <div class="container">
-        <h2>About Us</h2>
-        <p>
-          Strobrie is a neighborhood cafe in Abuja where good coffee meets warm
-          hospitality. Every cup and every plate is made with care, so you can
-          slow down, catch up with friends, or get some work done in a
-          comfortable space.
-        </p>
+      <div class="container about-grid">
+        <div>
+          <h2>Our Space</h2>
+          <p>
+            Strobriē By Joanne is a cafe and bakery built around warm wood,
+            greenery, and natural light. It's the kind of place to slow down
+            over a Ube Latte, catch up with friends, or get a little work
+            done &mdash; and on weekends, it doubles as a gathering spot for
+            art, pottery, and community events.
+          </p>
+        </div>
+        <div class="about-facts">
+          <div class="fact">
+            <span class="fact-label">Where</span>
+            <span>Abuja, Nigeria</span>
+          </div>
+          <div class="fact">
+            <span class="fact-label">Service</span>
+            <span>Dine-in &middot; Pick up &middot; Delivery</span>
+          </div>
+          <div class="fact">
+            <span class="fact-label">Hours</span>
+            <span>Mon&ndash;Fri 8am&ndash;6pm<br>Sat 9am&ndash;6pm &middot; Sun 10am&ndash;3pm</span>
+          </div>
+        </div>
       </div>
     </section>
 
     <section id="menu" class="section section-alt">
       <div class="container">
         <h2>Menu</h2>
-        <div class="menu-grid">
-          <div class="menu-item">
-            <h3>Espresso</h3>
-            <p>Rich and bold, single or double shot.</p>
+        <div class="menu-tabs">
+          <div class="menu-card">
+            <h3>Cafe</h3>
+            <ul>
+              <li><span>Full English Breakfast</span></li>
+              <li><span>Grilled Sandwich &amp; Chips</span></li>
+              <li><span>Steak Pasta</span></li>
+            </ul>
           </div>
-          <div class="menu-item">
-            <h3>Cappuccino</h3>
-            <p>Smooth espresso topped with velvety foam.</p>
+          <div class="menu-card menu-card-featured">
+            <h3>Drinks</h3>
+            <p class="menu-note">Made from real ube</p>
+            <ul>
+              <li><span>Berry Fizz</span><span class="price">&#8358;6,800</span></li>
+              <li><span>Ube Latte</span><span class="price">&#8358;6,500</span></li>
+              <li><span>Signature Iced Drinks</span><span class="price">&#8358;7,500</span></li>
+            </ul>
           </div>
-          <div class="menu-item">
-            <h3>Iced Latte</h3>
-            <p>Chilled espresso with milk over ice.</p>
+          <div class="menu-card">
+            <h3>Bakery</h3>
+            <ul>
+              <li><span>Fresh Pastries, daily</span></li>
+              <li><span>Cakes &amp; Sweet Bakes</span></li>
+              <li><span>Custom Orders</span></li>
+            </ul>
           </div>
-          <div class="menu-item">
-            <h3>Pastries</h3>
-            <p>Freshly baked croissants and muffins daily.</p>
+        </div>
+        <p class="menu-cta">Full menus and photos are on <a href="https://instagram.com/strobrie" target="_blank" rel="noopener">Instagram</a>.</p>
+      </div>
+    </section>
+
+    <section id="events" class="section">
+      <div class="container">
+        <h2>Events &amp; Space</h2>
+        <div class="event-grid">
+          <div class="event-card">
+            <h3>Rent Our Space</h3>
+            <p>Up to 50 guests &mdash; birthdays, corporate gatherings, brunch parties, and private dinners.</p>
+          </div>
+          <div class="event-card">
+            <h3>Art Events</h3>
+            <p>Community art sessions in the cafe.</p>
+          </div>
+          <div class="event-card">
+            <h3>Pottery</h3>
+            <p>Hands-on pottery sessions for all skill levels.</p>
+          </div>
+          <div class="event-card">
+            <h3>Sip &amp; Paint</h3>
+            <p>Drinks, canvases, and good company.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="location" class="section">
-      <div class="container">
-        <h2>Location</h2>
-        <p>Abuja, Nigeria — full address coming soon.</p>
-        <p>Open daily, 8am – 8pm.</p>
-      </div>
-    </section>
-
-    <section id="contact" class="section section-alt">
-      <div class="container">
-        <h2>Contact</h2>
-        <p>Have a question or want to place an order? Reach out to us.</p>
-        <p>Email: <a href="mailto:hello@strobrie.com">hello@strobrie.com</a></p>
+    <section id="visit" class="section section-alt">
+      <div class="container visit-grid">
+        <div>
+          <h2>Visit Us</h2>
+          <p>Abuja, Nigeria &mdash; full address coming soon.</p>
+          <p>Mon&ndash;Fri 8am&ndash;6pm &middot; Sat 9am&ndash;6pm &middot; Sun 10am&ndash;3pm</p>
+        </div>
+        <div>
+          <h2>Get in Touch</h2>
+          <p>Email: <a href="mailto:hello@strobrie.com">hello@strobrie.com</a></p>
+          <p>Instagram: <a href="https://instagram.com/strobrie" target="_blank" rel="noopener">@strobrie</a></p>
+        </div>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
     <div class="container">
-      <p>&copy; <span id="year"></span> Strobrie. All rights reserved.</p>
+      <p>&copy; <span id="year"></span> Strobriē By Joanne. All rights reserved.</p>
     </div>
   </footer>
 
