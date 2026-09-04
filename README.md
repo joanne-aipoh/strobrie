@@ -18,3 +18,9 @@ Then visit http://localhost:8000.
 - `index.html` — page markup and content
 - `styles.css` — styling
 - `script.js` — small bits of interactivity
+
+## Placeholder content to replace
+
+- Contact email (currently `hello@strobrie.com`)
+- Street address in the Location section
+- Opening hours, if they differ from 8am–8pm daily
