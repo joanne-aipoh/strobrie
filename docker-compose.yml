@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: strobrie
+      POSTGRES_USER: strobrie
+      POSTGRES_PASSWORD: strobrie
+    ports:
+      - "5432:5432"
+    volumes:
+      - strobrie_pgdata:/var/lib/postgresql/data
+
+volumes:
+  strobrie_pgdata:
