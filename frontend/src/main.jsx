@@ -15,17 +15,28 @@ import PosEvents from "./pos/pages/Events.jsx";
 import PosEventDetail from "./pos/pages/EventDetail.jsx";
 import PosInventory from "./pos/pages/Inventory.jsx";
 import PosReports from "./pos/pages/Reports.jsx";
+import PosProducts from "./pos/pages/Products.jsx";
+import PosOrders from "./pos/pages/Orders.jsx";
+import ShopLayout from "./shop/ShopLayout.jsx";
+import Catalog from "./shop/pages/Catalog.jsx";
+import ProductDetail from "./shop/pages/ProductDetail.jsx";
+import Cart from "./shop/pages/Cart.jsx";
+import Checkout from "./shop/pages/Checkout.jsx";
+import OrderConfirmation from "./shop/pages/OrderConfirmation.jsx";
+import { isShopHost } from "./shop/shopBase.js";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<App />}>
-          <Route index element={<Home />} />
-          <Route path="menu" element={<Menu />} />
-          <Route path="events" element={<Events />} />
-          <Route path="visit" element={<Visit />} />
-        </Route>
+        {!isShopHost && (
+          <Route path="/" element={<App />}>
+            <Route index element={<Home />} />
+            <Route path="menu" element={<Menu />} />
+            <Route path="events" element={<Events />} />
+            <Route path="visit" element={<Visit />} />
+          </Route>
+        )}
         <Route path="/pos" element={<PosLayout />}>
           <Route index element={<Navigate to="/pos/sell" replace />} />
           <Route path="sell" element={<PosSell />} />
@@ -49,6 +60,29 @@ createRoot(document.getElementById("root")).render(
               </PosManagerRoute>
             }
           />
+          <Route
+            path="products"
+            element={
+              <PosManagerRoute>
+                <PosProducts />
+              </PosManagerRoute>
+            }
+          />
+          <Route
+            path="orders"
+            element={
+              <PosManagerRoute>
+                <PosOrders />
+              </PosManagerRoute>
+            }
+          />
+        </Route>
+        <Route path={isShopHost ? "/" : "/shop"} element={<ShopLayout />}>
+          <Route index element={<Catalog />} />
+          <Route path="product/:productId" element={<ProductDetail />} />
+          <Route path="cart" element={<Cart />} />
+          <Route path="checkout" element={<Checkout />} />
+          <Route path="order-confirmation" element={<OrderConfirmation />} />
         </Route>
       </Routes>
     </BrowserRouter>

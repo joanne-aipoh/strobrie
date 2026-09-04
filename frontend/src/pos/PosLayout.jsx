@@ -47,6 +47,8 @@ function PosShell() {
           <NavLink to="/pos/customers">Customers</NavLink>
           <NavLink to="/pos/events">Events</NavLink>
           {isManager && <NavLink to="/pos/inventory">Inventory</NavLink>}
+          {isManager && <NavLink to="/pos/products">Products</NavLink>}
+          {isManager && <NavLink to="/pos/orders">Orders</NavLink>}
           {isManager && <NavLink to="/pos/reports">Reports</NavLink>}
         </nav>
 
