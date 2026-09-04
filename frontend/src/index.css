@@ -1,11 +1,15 @@
 :root {
-  --color-bg: #fdf1f4;
-  --color-bg-alt: #fbe3ea;
+  /* Palette pulled from the Strobriē logo's coral → pink → mauve gradient. */
+  --color-bg: #fdf2ed;
+  --color-bg-alt: #fbe6dd;
   --color-card: #ffffff;
   --color-text: #2b1d22;
-  --color-hot-pink: #e0217e;
-  --color-hot-pink-dark: #b81966;
-  --color-lavender: #d9c7ef;
+  --color-coral: #f2825c;
+  --color-hot-pink: #e8467a;
+  --color-hot-pink-dark: #c23f68;
+  --color-mauve: #9c6b8c;
+  --color-mauve-light: #ead9e4;
+  --gradient-brand: linear-gradient(135deg, #f2825c 0%, #e8467a 55%, #9c6b8c 100%);
   --color-ink: #1a1a1a;
   --color-error: #b3261e;
   --max-width: 1080px;
@@ -48,20 +52,24 @@ body {
   font-family: "Dancing Script", cursive;
   font-size: 2rem;
   font-weight: 700;
-  color: var(--color-hot-pink-dark);
   text-decoration: none;
   line-height: 1;
   display: flex;
   align-items: baseline;
   gap: 0.4rem;
+  color: var(--color-hot-pink-dark);
+  background: var(--gradient-brand);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .logo-sub {
-  font-family: "Poppins", sans-serif;
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--color-text);
-  letter-spacing: 0.05em;
+  font-family: "Dancing Script", cursive;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-coral);
+  -webkit-text-fill-color: var(--color-coral);
 }
 
 .nav {
@@ -82,7 +90,7 @@ body {
 }
 
 .hero {
-  background: linear-gradient(160deg, var(--color-bg-alt), var(--color-bg) 60%);
+  background: linear-gradient(150deg, var(--color-bg-alt), var(--color-bg) 55%, #f3e3ea 100%);
   padding: 5rem 0 4.5rem;
   text-align: center;
 }
@@ -141,12 +149,12 @@ body {
 }
 
 .button-primary {
-  background: var(--color-hot-pink);
+  background: var(--gradient-brand);
   color: #fff;
 }
 
 .button-primary:hover:not(:disabled) {
-  background: var(--color-hot-pink-dark);
+  filter: brightness(0.92);
 }
 
 .button-ghost {
@@ -215,7 +223,7 @@ body {
 }
 
 .menu-card-featured {
-  background: var(--color-lavender);
+  background: var(--color-mauve-light);
 }
 
 .menu-card h3 {
@@ -278,8 +286,9 @@ body {
 .event-card {
   background: var(--color-card);
   padding: 1.75rem;
-  border-radius: 16px;
-  border-top: 4px solid var(--color-hot-pink);
+  border-radius: 16px 16px 12px 12px;
+  border-top: 4px solid transparent;
+  border-image: var(--gradient-brand) 1;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
@@ -377,7 +386,7 @@ body {
 }
 
 .site-footer {
-  background: var(--color-hot-pink-dark);
+  background: var(--gradient-brand);
   color: #fff;
   padding: 1.5rem 0;
   text-align: center;
