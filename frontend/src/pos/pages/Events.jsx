@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePosAuth } from "../PosAuthContext.jsx";
 import { posApi } from "../posApi.js";
+import { posPath } from "../posBase.js";
 
 function fmt(n) {
   return "₦" + Math.round(n).toLocaleString();
@@ -90,7 +91,7 @@ export default function Events() {
           <div className="empty-note">No events yet.</div>
         ) : (
           sorted.map((ev) => (
-            <div className="event-card" key={ev.id} onClick={() => navigate(`/pos/events/${ev.id}`)}>
+            <div className="event-card" key={ev.id} onClick={() => navigate(posPath(`/events/${ev.id}`))}>
               <h4>{ev.name}</h4>
               <div className="meta">
                 {ev.date}

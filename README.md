@@ -8,10 +8,12 @@ items, events/RSVPs, contact messages, and space-rental booking requests in
 Postgres.
 
 The frontend also includes:
-- **Flow**, an internal till/operations app for staff, at `/pos` — see
+- **Flow**, an internal till/operations app for staff, at `/pos` in local
+  dev — meant to live at `flow.strobrie.com` — see
   [Flow (the POS app)](#flow-the-pos-app) below
-- **The shop**, a customer-facing storefront for cakes/drinks/food, meant to
-  live at `shop.strobrie.com` — see [The shop](#the-shop) below
+- **The shop**, a customer-facing storefront for cakes/drinks/food, at
+  `/shop` in local dev — meant to live at `shop.strobrie.com` — see
+  [The shop](#the-shop) below
 
 ## Structure
 
@@ -81,11 +83,15 @@ checkout, plus `/api/shop/admin/*` for product/photo/order management. See
 ## Flow (the POS app)
 
 Flow is Strobrie's internal till and operations tool, at `/pos` on the same
-frontend. It started as a self-contained prototype and was rebuilt here to
-share the same Postgres database as the public site, so every device at the
-till sees the same live data.
+frontend in local dev (meant to live at `flow.strobrie.com` in production —
+the app detects a `flow.` hostname and shows Flow at `/` instead of the
+marketing site; see [DEPLOYMENT.md](DEPLOYMENT.md)). It started as a
+self-contained prototype and was rebuilt here to share the same Postgres
+database as the public site, so every device at the till sees the same live
+data.
 
-**First run:** open `/pos` — since no staff exist yet, it prompts to create
+**First run:** open `/pos` (or `flow.strobrie.com` in production) — since no
+staff exist yet, it prompts to create
 the first manager account (name + a 4-6 digit PIN). After that, staff pick
 their name and enter their PIN to log in.
 
@@ -134,8 +140,9 @@ Each product can have multiple photos, a stock quantity (or unlimited), and
 an "available online" toggle.
 
 **Managing products & photos**: in Flow, under the manager-only **Products**
-tab (`/pos/products`) — add/edit/delete products, upload/reorder/delete
-photos, and toggle whether each one is visible in the shop.
+tab (`/pos/products`, or `flow.strobrie.com/products` in production) —
+add/edit/delete products, upload/reorder/delete photos, and toggle whether
+each one is visible in the shop.
 
 **Checkout**: cart → customer details (pickup or delivery) → redirected to a
 Paystack-hosted payment page → redirected back to an order confirmation page,
@@ -146,8 +153,9 @@ checkout fails with a clear "payments aren't set up yet" message instead of a
 confusing error.
 
 **Viewing orders**: in Flow, under the manager-only **Orders** tab
-(`/pos/orders`) — lists every order with items, fulfillment method, payment
-status, and a dropdown to update status (pending/paid/fulfilled/cancelled).
+(`/pos/orders`, or `flow.strobrie.com/orders` in production) — lists every
+order with items, fulfillment method, payment status, and a dropdown to
+update status (pending/paid/fulfilled/cancelled).
 
 **Known limitation**: same trust model as the rest of Flow (see above) — the
 admin product/order endpoints under `/api/shop/admin/*` don't re-verify a

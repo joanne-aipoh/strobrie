@@ -3,20 +3,22 @@
 This assumes a fresh Hostinger VPS (Ubuntu), with `strobrie.com` already
 pointed at it in Hostinger's DNS. One server runs everything: Postgres, the
 FastAPI backend, and the React frontend (served as static files by Nginx —
-same build, served on two domains).
+same build, served on all three domains: `strobrie.com`, `shop.strobrie.com`,
+`flow.strobrie.com`).
 
 ## 1. DNS
 
-In Hostinger's DNS zone for `strobrie.com`, add an **A record** for `shop`
-pointing at the same VPS IP address as the root domain:
+In Hostinger's DNS zone for `strobrie.com`, add **A records** for `shop` and
+`flow`, both pointing at the same VPS IP address as the root domain:
 
 ```
 Type  Name  Value
 A     shop  <your VPS IP>
+A     flow  <your VPS IP>
 ```
 
-That's it for DNS — `shop.strobrie.com` is a normal subdomain served by the
-same server, not a separate host.
+That's it for DNS — `shop.strobrie.com` and `flow.strobrie.com` are normal
+subdomains served by the same server, not separate hosts.
 
 ## 2. Server prerequisites
 
@@ -59,7 +61,7 @@ Edit `.env`:
 
 ```
 DATABASE_URL=postgresql+psycopg://strobrie:<the password you set>@localhost/strobrie
-CORS_ORIGINS=https://strobrie.com,https://shop.strobrie.com
+CORS_ORIGINS=https://strobrie.com,https://shop.strobrie.com,https://flow.strobrie.com
 FRONTEND_URL=https://shop.strobrie.com
 PAYSTACK_SECRET_KEY=<your live secret key from the Paystack dashboard>
 ```
@@ -111,16 +113,16 @@ VITE_API_URL=https://strobrie.com/api
 ```
 
 (The API is reverse-proxied under `/api` on the same domain in the Nginx
-config below, so both `strobrie.com` and `shop.strobrie.com` can reach it
-without a separate CORS-facing hostname for the API itself.)
+config below, so `strobrie.com`, `shop.strobrie.com`, and `flow.strobrie.com`
+can all reach it without a separate CORS-facing hostname for the API itself.)
 
 ```bash
 npm run build
 ```
 
-This produces `frontend/dist/` — the same build is served on both domains.
-Re-run `npm run build` (and reload Nginx isn't even necessary — it just
-reads the files) every time you deploy new frontend changes.
+This produces `frontend/dist/` — the same build is served on all three
+domains. Re-run `npm run build` (and reload Nginx isn't even necessary — it
+just reads the files) every time you deploy new frontend changes.
 
 ## 7. Nginx
 
@@ -148,9 +150,11 @@ server {
 }
 ```
 
-Create `/etc/nginx/sites-available/shop.strobrie.com` — identical, just a
-different `server_name` (the frontend code detects the `shop.` hostname
-itself and shows the storefront instead of the marketing site):
+Create `/etc/nginx/sites-available/shop.strobrie.com` and
+`/etc/nginx/sites-available/flow.strobrie.com` — both identical to the block
+above, just a different `server_name` each (the frontend code detects the
+`shop.`/`flow.` hostname itself and shows the storefront or Flow instead of
+the marketing site):
 
 ```nginx
 server {
@@ -174,39 +178,73 @@ server {
 }
 ```
 
+```nginx
+server {
+    listen 80;
+    server_name flow.strobrie.com;
+    root /var/www/strobrie/frontend/dist;
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location /uploads/ {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location / {
+        try_files $uri /index.html;
+    }
+}
+```
+
 ```bash
 sudo ln -s /etc/nginx/sites-available/strobrie.com /etc/nginx/sites-enabled/
 sudo ln -s /etc/nginx/sites-available/shop.strobrie.com /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/flow.strobrie.com /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
 ## 8. HTTPS
 
 ```bash
-sudo certbot --nginx -d strobrie.com -d www.strobrie.com -d shop.strobrie.com
+sudo certbot --nginx -d strobrie.com -d www.strobrie.com -d shop.strobrie.com -d flow.strobrie.com
 ```
 
-Certbot edits both server blocks to add TLS and a redirect from port 80.
+Certbot edits all three server blocks to add TLS and a redirect from port 80.
+
+**Worth considering for `flow.strobrie.com` specifically**: since it's a
+staff-only tool with no reason to be publicly discoverable, you could
+additionally lock it down with HTTP Basic Auth in front of the app (an extra
+`auth_basic` line in that one server block) or restrict it to specific IPs —
+Flow's own PIN login still applies underneath either way. Not required to
+launch, just worth knowing it's an option since this subdomain is easier to
+stumble onto than a URL path was.
 
 ## 9. Go live checklist
 
-- [ ] DNS: `shop` A record added, propagated (`dig shop.strobrie.com`)
-- [ ] `backend/.env`: real `DATABASE_URL`, `CORS_ORIGINS` includes both
+- [ ] DNS: `shop` and `flow` A records added, propagated
+      (`dig shop.strobrie.com`, `dig flow.strobrie.com`)
+- [ ] `backend/.env`: real `DATABASE_URL`, `CORS_ORIGINS` includes all three
       domains, `PAYSTACK_SECRET_KEY` is your **live** key (not test)
 - [ ] `python -m app.seed` run once
 - [ ] `strobrie-api` systemd service running (`systemctl status strobrie-api`)
 - [ ] `frontend/.env`: `VITE_API_URL` points at the production API path,
       then `npm run build`
-- [ ] Both Nginx server blocks enabled, `nginx -t` passes
+- [ ] All three Nginx server blocks enabled, `nginx -t` passes
 - [ ] HTTPS issued for all three hostnames
 - [ ] Visit `https://strobrie.com` — marketing site loads
 - [ ] Visit `https://shop.strobrie.com` — storefront loads at `/`, not
       `/shop`
-- [ ] Log into `https://strobrie.com/pos`, add at least one real product
+- [ ] Visit `https://flow.strobrie.com` — staff login loads at `/`, not
+      `/pos`
+- [ ] Log into `https://flow.strobrie.com`, add at least one real product
       with real photos in the **Products** tab, mark it "Available online"
 - [ ] Place a real ₦100-ish test order through the live storefront to
       confirm Paystack, then void/refund it from your Paystack dashboard
-- [ ] Check `https://strobrie.com/pos/orders` shows it
+- [ ] Check `https://flow.strobrie.com/orders` shows it
 
 ## Redeploying after future changes
 

@@ -24,12 +24,13 @@ import Cart from "./shop/pages/Cart.jsx";
 import Checkout from "./shop/pages/Checkout.jsx";
 import OrderConfirmation from "./shop/pages/OrderConfirmation.jsx";
 import { isShopHost } from "./shop/shopBase.js";
+import { isFlowHost, posPath } from "./pos/posBase.js";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        {!isShopHost && (
+        {!isShopHost && !isFlowHost && (
           <Route path="/" element={<App />}>
             <Route index element={<Home />} />
             <Route path="menu" element={<Menu />} />
@@ -37,8 +38,8 @@ createRoot(document.getElementById("root")).render(
             <Route path="visit" element={<Visit />} />
           </Route>
         )}
-        <Route path="/pos" element={<PosLayout />}>
-          <Route index element={<Navigate to="/pos/sell" replace />} />
+        <Route path={isFlowHost ? "/" : "/pos"} element={<PosLayout />}>
+          <Route index element={<Navigate to={posPath("/sell")} replace />} />
           <Route path="sell" element={<PosSell />} />
           <Route path="waste" element={<PosWaste />} />
           <Route path="customers" element={<PosCustomers />} />
