@@ -55,106 +55,31 @@ function ContactForm() {
   );
 }
 
-function BookingForm() {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    event_type: "birthday",
-    guest_count: 10,
-    preferred_date: "",
-    notes: "",
-  });
-  const [status, setStatus] = useState("idle");
-  const [error, setError] = useState(null);
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setStatus("submitting");
-    setError(null);
-    try {
-      await api.createBookingRequest(form);
-      setStatus("success");
-    } catch (err) {
-      setError(err.message);
-      setStatus("idle");
-    }
-  }
-
-  if (status === "success") {
-    return (
-      <p className="form-success">
-        Thanks! Your space-rental request is in — we'll follow up by email.
-      </p>
-    );
-  }
-
-  return (
-    <form className="booking-form" onSubmit={handleSubmit}>
-      <input
-        type="text"
-        placeholder="Your name"
-        required
-        value={form.name}
-        onChange={(e) => setForm({ ...form, name: e.target.value })}
-      />
-      <input
-        type="email"
-        placeholder="Email"
-        required
-        value={form.email}
-        onChange={(e) => setForm({ ...form, email: e.target.value })}
-      />
-      <select
-        value={form.event_type}
-        onChange={(e) => setForm({ ...form, event_type: e.target.value })}
-      >
-        <option value="birthday">Birthday celebration</option>
-        <option value="corporate">Corporate gathering</option>
-        <option value="brunch">Brunch party</option>
-        <option value="private_dinner">Private dinner</option>
-        <option value="other">Other</option>
-      </select>
-      <input
-        type="number"
-        min="1"
-        max="50"
-        placeholder="Guest count"
-        required
-        value={form.guest_count}
-        onChange={(e) => setForm({ ...form, guest_count: Number(e.target.value) })}
-      />
-      <input
-        type="date"
-        required
-        value={form.preferred_date}
-        onChange={(e) => setForm({ ...form, preferred_date: e.target.value })}
-      />
-      <textarea
-        placeholder="Anything else we should know?"
-        rows={3}
-        value={form.notes}
-        onChange={(e) => setForm({ ...form, notes: e.target.value })}
-      />
-      {error && <p className="form-error">{error}</p>}
-      <button type="submit" className="button button-primary" disabled={status === "submitting"}>
-        {status === "submitting" ? "Sending…" : "Request Booking"}
-      </button>
-    </form>
-  );
-}
-
 export default function Visit() {
   return (
     <>
       <section className="section">
+        <div className="container">
+          <div className="form-card" style={{ maxWidth: 480, margin: "0 auto" }}>
+            <h2>Send a Message</h2>
+            <ContactForm />
+          </div>
+        </div>
+      </section>
+
+      <section className="section section-alt">
         <div className="container visit-grid">
           <div>
-            <h2>Visit Us</h2>
-            <p>Abuja, Nigeria &mdash; full address coming soon.</p>
+            <h2>Contact Us</h2>
+            <p>HFIA Garden, Off Tafawa Balewa Road, Garki, Abuja, Federal Capital Territory, Nigeria</p>
             <p>Mon&ndash;Fri 8am&ndash;6pm &middot; Sat 9am&ndash;6pm &middot; Sun 10am&ndash;3pm</p>
           </div>
           <div>
             <h2>Get in Touch</h2>
+            <p>
+              Phone: <a href="tel:+2348090701995">+234 809 070 1995</a> &middot;{" "}
+              <a href="tel:+2348029125229">+234 802 912 5229</a>
+            </p>
             <p>Email: <a href="mailto:hello@strobrie.com">hello@strobrie.com</a></p>
             <p>
               Instagram:{" "}
@@ -162,20 +87,10 @@ export default function Visit() {
                 @strobrie
               </a>
             </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="section section-alt">
-        <div className="container form-grid">
-          <div className="form-card">
-            <h2>Send a Message</h2>
-            <ContactForm />
-          </div>
-          <div className="form-card">
-            <h2>Rent Our Space</h2>
-            <p className="menu-note">Up to 50 guests &middot; from &#8358;350,000</p>
-            <BookingForm />
+            <p>
+              We also make custom cakes &mdash; please contact us directly on Instagram or call us
+              for customized designs.
+            </p>
           </div>
         </div>
       </section>

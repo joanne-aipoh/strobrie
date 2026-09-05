@@ -5,3 +5,7 @@ node_modules/
 # filesystem is case-insensitive: ~/Documents/Strobrie and this repo's own
 # ~/Documents/strobrie are literally the same directory on disk.
 .obsidian/
+
+# Source menu photos you drop in for me to crop/extract artwork from —
+# not app assets themselves, so not tracked in git.
+menu-images/

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { posApi } from "../posApi.js";
 import { shopApi } from "../../shop/shopApi.js";
 
-const CATEGORY_ORDER = ["Coffee", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Extras", "Breakfast", "Lunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer"];
+const CATEGORY_ORDER = ["Coffee", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Extras", "Breakfast", "Lunch", "Brunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer"];
 const LOW_STOCK_THRESHOLD = { kg: 2, l: 3, each: 10, g: 500, ml: 500 };
 
 function stockStatus(qty, unit) {

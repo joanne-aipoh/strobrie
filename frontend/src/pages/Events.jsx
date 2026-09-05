@@ -2,11 +2,6 @@ import { useEffect, useState } from "react";
 import { api } from "../api.js";
 
 const STATIC_OFFERINGS = [
-  {
-    title: "Rent Our Space",
-    description:
-      "Up to 50 guests — birthdays, corporate gatherings, brunch parties, and private dinners.",
-  },
   { title: "Art Events", description: "Community art sessions in the cafe." },
   { title: "Pottery", description: "Hands-on pottery sessions for all skill levels." },
   { title: "Sip & Paint", description: "Drinks, canvases, and good company." },
@@ -102,7 +97,7 @@ export default function Events() {
     <>
       <section className="section">
         <div className="container">
-          <h2>Events &amp; Space</h2>
+          <h2>Events</h2>
           <div className="event-grid">
             {STATIC_OFFERINGS.map((offering) => (
               <div className="event-card" key={offering.title}>

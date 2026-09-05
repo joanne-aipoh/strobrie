@@ -3,8 +3,8 @@ import { usePosAuth } from "../PosAuthContext.jsx";
 import { posApi } from "../posApi.js";
 import { shopApi } from "../../shop/shopApi.js";
 
-const CATEGORY_ORDER = ["Coffee", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Extras", "Breakfast", "Lunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer"];
-const NAIRA_PER_POINT_REDEEM = 10;
+const CATEGORY_ORDER = ["Coffee", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Extras", "Breakfast", "Lunch", "Brunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer"];
+const NAIRA_PER_POINT_REDEEM = 1;
 
 function fmt(n) {
   return "₦" + Math.round(n).toLocaleString();
@@ -355,7 +355,14 @@ export default function Sell() {
                 min="0"
                 max={attachedCustomer.points}
                 value={redeemPoints}
-                onChange={(e) => setRedeemPoints(e.target.value)}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (raw === "") {
+                    setRedeemPoints("");
+                    return;
+                  }
+                  setRedeemPoints(String(Math.max(0, Math.min(Number(raw) || 0, attachedCustomer.points))));
+                }}
                 placeholder="0"
               />
             </div>

@@ -1,0 +1,30 @@
+// Common Abuja districts, for the delivery-area picker on Checkout. Lets a
+// customer self-select their area so staff can quickly confirm the right
+// car/bike delivery rate, instead of parsing free-text addresses.
+export const ABUJA_AREAS = [
+  "Garki",
+  "Wuse",
+  "Wuse 2",
+  "Maitama",
+  "Asokoro",
+  "Central Business District (CBD)",
+  "Utako",
+  "Jabi",
+  "Life Camp",
+  "Katampe",
+  "Gwarinpa",
+  "Kado",
+  "Wuye",
+  "Gudu",
+  "Apo",
+  "Lokogoma",
+  "Galadimawa",
+  "Games Village",
+  "Lugbe",
+  "Kubwa",
+  "Dei-Dei",
+  "Karu",
+  "Nyanya",
+  "Gwagwalada",
+  "Other (outside these areas)",
+];

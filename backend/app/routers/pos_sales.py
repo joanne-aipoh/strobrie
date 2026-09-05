@@ -9,8 +9,10 @@ from ..database import get_db
 
 router = APIRouter(prefix="/api/pos/sales", tags=["pos-sales"])
 
-POINTS_PER_100_NAIRA = 1
-NAIRA_PER_POINT_REDEEM = 10
+# Earn rate: 1 point per ₦200 spent = 0.5%. Redeem rate: each point is worth
+# ₦1 off — points are just money, tracked as whole naira.
+NAIRA_PER_POINT_EARNED = 200
+NAIRA_PER_POINT_REDEEM = 1
 
 
 @router.get("", response_model=list[pos_schemas.SaleOut])
@@ -54,7 +56,7 @@ def charge(payload: pos_schemas.ChargeRequest, db: Session = Depends(get_db)):
         points_redeemed = max(0, min(payload.redeem_points, customer.points))
         discount = min(points_redeemed * NAIRA_PER_POINT_REDEEM, subtotal)
     total = subtotal - discount
-    points_earned = (total // 100) * POINTS_PER_100_NAIRA
+    points_earned = total // NAIRA_PER_POINT_EARNED
 
     # Deduct ingredients per recipe, remembering exactly what was deducted so a void can restore it.
     menu_item_ids = [line.menu_item_id for line in payload.items if line.menu_item_id is not None]

@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import "./shop.css";
 import { CartProvider, useCart } from "./CartContext.jsx";
 import { isShopHost, shopPath } from "./shopBase.js";
@@ -7,18 +7,25 @@ const MAIN_SITE_URL = "https://strobrie.com";
 
 function ShopHeader() {
   const { count } = useCart();
+  const location = useLocation();
+  const normalize = (p) => p.replace(/\/+$/, "") || "/";
+  const onShopRoot = normalize(location.pathname) === normalize(shopPath("/"));
   return (
     <header className="site-header">
       <div className="container header-inner">
         <NavLink to={shopPath("/")} className="logo">
-          Strobri<span className="logo-e">ē</span>
+          <span className="logo-name">
+            Strobri<span className="logo-e">ē</span>
+          </span>
           <span className="logo-sub">shop</span>
         </NavLink>
         <nav className="nav">
-          <NavLink to={shopPath("/")} end>
-            All Products
-          </NavLink>
           {isShopHost ? <a href={MAIN_SITE_URL}>Main Site</a> : <NavLink to="/">Main Site</NavLink>}
+          {!onShopRoot && (
+            <NavLink to={shopPath("/")} end>
+              All Products
+            </NavLink>
+          )}
           <NavLink to={shopPath("/cart")} className="cart-link">
             Cart{count > 0 ? ` (${count})` : ""}
           </NavLink>

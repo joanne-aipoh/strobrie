@@ -6,6 +6,7 @@ import App from "./App.jsx";
 import Home from "./pages/Home.jsx";
 import Menu from "./pages/Menu.jsx";
 import Events from "./pages/Events.jsx";
+import Space from "./pages/Space.jsx";
 import Visit from "./pages/Visit.jsx";
 import PosLayout, { PosManagerRoute } from "./pos/PosLayout.jsx";
 import PosSell from "./pos/pages/Sell.jsx";
@@ -35,6 +36,7 @@ createRoot(document.getElementById("root")).render(
             <Route index element={<Home />} />
             <Route path="menu" element={<Menu />} />
             <Route path="events" element={<Events />} />
+            <Route path="space" element={<Space />} />
             <Route path="visit" element={<Visit />} />
           </Route>
         )}

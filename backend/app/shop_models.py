@@ -47,7 +47,21 @@ class Order(Base):
     customer_phone: Mapped[str] = mapped_column(String(30))
     fulfillment_method: Mapped[str] = mapped_column(String(20))  # 'pickup' | 'delivery'
     delivery_address: Mapped[str | None] = mapped_column(Text, default=None)
+    # Which part of Abuja the customer picked, for confirming the car/bike
+    # delivery rate — self-selected from a fixed list, not free text.
+    delivery_area: Mapped[str | None] = mapped_column(String(100), default=None)
+    # A note card to include with a delivery, for orders placed on someone
+    # else's behalf ("Happy anniversary! — love, Tobi"). Delivery only.
+    gift_note: Mapped[str | None] = mapped_column(Text, default=None)
+    # Loyalty: points spent as a discount and points earned on this order —
+    # same mechanics as an in-person Flow sale, just tied to an online order.
+    loyalty_customer_id: Mapped[int | None] = mapped_column(ForeignKey("loyalty_customers.id"), default=None)
+    points_redeemed: Mapped[int] = mapped_column(Integer, default=0)
+    points_earned: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[str] = mapped_column(String(20), default="pending")  # pending|paid|fulfilled|cancelled
+    # When the customer wants to pick up/receive the order. Null means no
+    # preference — as soon as possible (same-day, ready as normal).
+    requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     subtotal: Mapped[int] = mapped_column(Integer)
     total: Mapped[int] = mapped_column(Integer)
     payment_reference: Mapped[str | None] = mapped_column(String(100), default=None)
@@ -66,5 +80,16 @@ class OrderItem(Base):
     name: Mapped[str] = mapped_column(String(150))
     price: Mapped[int] = mapped_column(Integer)
     qty: Mapped[int] = mapped_column(Integer)
+    # Free-text cake inscription ("Happy Birthday Sarah"), for cake/cheesecake
+    # line items only — null for everything else.
+    inscription: Mapped[str | None] = mapped_column(String(200), default=None)
+    # Optional design description for a simple cake design (e.g. "pink
+    # flowers on top"). Complex/customized designs are handled off-platform
+    # via direct contact, not through this field.
+    design_notes: Mapped[str | None] = mapped_column(Text, default=None)
+    # For a "build your box" item (e.g. a box of cupcakes split across
+    # flavors): JSON text mapping flavor label -> qty, e.g. '{"Vanilla": 3,
+    # "Chocolate": 4, "Carrot": 1}'. Null for ordinary single-flavor items.
+    flavor_breakdown: Mapped[str | None] = mapped_column(Text, default=None)
 
     order: Mapped["Order"] = relationship(back_populates="items")

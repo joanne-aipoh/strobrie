@@ -46,7 +46,7 @@ export default function Home() {
           <div className="about-facts">
             <div className="fact">
               <span className="fact-label">Where</span>
-              <span>Abuja, Nigeria</span>
+              <span>HFIA Garden, Off Tafawa Balewa Road, Garki, Abuja, Federal Capital Territory, Nigeria</span>
             </div>
             <div className="fact">
               <span className="fact-label">Service</span>

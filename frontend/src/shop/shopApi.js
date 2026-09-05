@@ -25,6 +25,8 @@ export const shopApi = {
   getProduct: (id) => request(`/api/shop/products/${id}`),
   checkout: (data) => request("/api/shop/checkout", { method: "POST", body: JSON.stringify(data) }),
   verifyOrder: (reference) => request(`/api/shop/orders/verify/${reference}`),
+  lookupLoyaltyPoints: (phone) => request(`/api/shop/loyalty/points?phone=${encodeURIComponent(phone)}`),
+  boxFlavors: (productId) => request(`/api/shop/products/${productId}/box-flavors`),
 
   // admin (Flow Products tab)
   adminListProducts: () => request("/api/shop/admin/products"),

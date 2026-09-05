@@ -54,6 +54,12 @@ table? Run `psql -d strobrie -f migrate_menu_to_products.sql` once first —
 see that file's header comment. A database that's never been seeded needs
 nothing extra.)
 
+(Pulling this after an older checkout that predates cake inscriptions,
+delivery note cards, preferred pickup/delivery times, online loyalty
+redemption, delivery areas, cake design notes, or build-your-own-box flavor
+picks? Run once:
+`psql -d strobrie -c "ALTER TABLE orders ADD COLUMN IF NOT EXISTS requested_at TIMESTAMPTZ; ALTER TABLE orders ADD COLUMN IF NOT EXISTS gift_note TEXT; ALTER TABLE orders ADD COLUMN IF NOT EXISTS loyalty_customer_id INTEGER REFERENCES loyalty_customers(id); ALTER TABLE orders ADD COLUMN IF NOT EXISTS points_redeemed INTEGER DEFAULT 0 NOT NULL; ALTER TABLE orders ADD COLUMN IF NOT EXISTS points_earned INTEGER DEFAULT 0 NOT NULL; ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_area VARCHAR(100); ALTER TABLE order_items ADD COLUMN IF NOT EXISTS inscription VARCHAR(200); ALTER TABLE order_items ADD COLUMN IF NOT EXISTS design_notes TEXT; ALTER TABLE order_items ADD COLUMN IF NOT EXISTS flavor_breakdown TEXT;"`)
+
 The API is now at http://localhost:8000 (interactive docs at `/docs`).
 
 ### 3. Frontend
@@ -147,9 +153,10 @@ storefront at `/` instead of the marketing site (see
 **Catalog**: one shared `products` table powers the shop, the public Menu
 page, *and* Flow's Sell screen — the same real menu (transcribed from
 Strobrie's actual printed menus — Coffee, Tea, Juices, Smoothies,
-Milkshakes, Lemonades, Breakfast, Lunch, Bakery, Cakes, Cheesecakes,
-Mocktails, Cocktails, Schweppes, Beer) is sellable in-person and orderable
-online, no separate lists to keep in sync. Items sold in multiple sizes or
+Milkshakes, Lemonades, Breakfast, Lunch, Brunch (weekend-only: Saturdays
+9am-1pm, Sundays 10am-3pm), Bakery, Cakes, Cheesecakes, Mocktails,
+Cocktails, Schweppes, Beer) is sellable in-person and orderable online, no
+separate lists to keep in sync. Items sold in multiple sizes or
 quantities (cake sizes, box counts, pancake stacks, cocktail flavours) are
 each their own product, since they're each independently priced. Each
 product can have multiple photos, a stock quantity (or unlimited), and an
@@ -162,18 +169,27 @@ add/edit/delete products, upload/reorder/delete photos, quick-restock, and
 toggle whether each one is visible in the shop. This is also the easy way to
 adjust prices — one edit updates the price everywhere it's sold.
 
-**Checkout**: cart → customer details (pickup or delivery) → redirected to a
-Paystack-hosted payment page → redirected back to an order confirmation page,
-which verifies the payment server-side before marking the order paid and
-decrementing stock. Needs `PAYSTACK_SECRET_KEY` set in `backend/.env` (from
-your [Paystack dashboard](https://dashboard.paystack.com)) — without it,
-checkout fails with a clear "payments aren't set up yet" message instead of a
+**Checkout**: cart → customer details (pickup or delivery), an optional
+preferred date/time (for a cake ordered days ahead — leave blank for as soon
+as possible), an optional written inscription per cake/cheesecake line, and
+an optional Strobrie Loyalty phone number to spend points from (same
+program as Flow's till — look up a phone number to see its points balance
+and redeem some for a discount; the order also earns new points on the
+final, discounted total, credited once payment is confirmed) →
+redirected to a Paystack-hosted payment page → redirected back to an order
+confirmation page, which verifies the payment server-side before marking the
+order paid, decrementing stock, and applying the loyalty point changes.
+Needs `PAYSTACK_SECRET_KEY` set in `backend/.env` (from your
+[Paystack dashboard](https://dashboard.paystack.com)) — without it, checkout
+fails with a clear "payments aren't set up yet" message instead of a
 confusing error.
 
 **Viewing orders**: in Flow, under the manager-only **Orders** tab
 (`/pos/orders`, or `flow.strobrie.com/orders` in production) — lists every
-order with items, fulfillment method, payment status, and a dropdown to
-update status (pending/paid/fulfilled/cancelled).
+order with items (including any cake inscription), fulfillment method,
+requested date/time (if the customer asked for one), any loyalty points
+redeemed/earned, payment status, and a dropdown to update status
+(pending/paid/fulfilled/cancelled).
 
 **Known limitation**: same trust model as the rest of Flow (see above) — the
 admin product/order endpoints under `/api/shop/admin/*` don't re-verify a
@@ -182,7 +198,6 @@ staff session per request.
 ## Still needed
 
 - Real photos of the space, food, and drinks
-- Confirmed street address
 - Confirmed contact email
 - Production deployment — see [DEPLOYMENT.md](DEPLOYMENT.md) for the
   Hostinger VPS setup (Nginx for both domains, systemd service, HTTPS)
