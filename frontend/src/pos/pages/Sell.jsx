@@ -3,7 +3,7 @@ import { usePosAuth } from "../PosAuthContext.jsx";
 import { posApi } from "../posApi.js";
 import { shopApi } from "../../shop/shopApi.js";
 
-const CATEGORY_ORDER = ["Coffee", "Drinks", "Breakfast", "Lunch", "Bakery", "Cakes", "Bar", "Brunch"];
+const CATEGORY_ORDER = ["Coffee", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Extras", "Breakfast", "Lunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer"];
 const NAIRA_PER_POINT_REDEEM = 10;
 
 function fmt(n) {

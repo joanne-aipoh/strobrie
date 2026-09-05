@@ -145,8 +145,13 @@ storefront at `/` instead of the marketing site (see
 [DEPLOYMENT.md](DEPLOYMENT.md) for the Nginx setup that makes that work).
 
 **Catalog**: one shared `products` table powers the shop, the public Menu
-page, *and* Flow's Sell screen — the same 63-item real menu is sellable
-in-person and orderable online, no separate lists to keep in sync. Each
+page, *and* Flow's Sell screen — the same real menu (transcribed from
+Strobrie's actual printed menus — Coffee, Tea, Juices, Smoothies,
+Milkshakes, Lemonades, Breakfast, Lunch, Bakery, Cakes, Cheesecakes,
+Mocktails, Cocktails, Schweppes, Beer) is sellable in-person and orderable
+online, no separate lists to keep in sync. Items sold in multiple sizes or
+quantities (cake sizes, box counts, pancake stacks, cocktail flavours) are
+each their own product, since they're each independently priced. Each
 product can have multiple photos, a stock quantity (or unlimited), and an
 "available online" toggle (Flow can still sell a hidden-from-online item at
 the till; the toggle only gates the public storefront).
