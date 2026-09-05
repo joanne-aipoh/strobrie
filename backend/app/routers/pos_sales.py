@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from .. import pos_models, pos_schemas
+from .. import pos_models, pos_schemas, shop_models
 from ..database import get_db
 
 router = APIRouter(prefix="/api/pos/sales", tags=["pos-sales"])
@@ -35,6 +35,18 @@ def charge(payload: pos_schemas.ChargeRequest, db: Session = Depends(get_db)):
         if customer is None:
             raise HTTPException(status_code=404, detail="Customer not found")
 
+    menu_item_ids = [line.menu_item_id for line in payload.items if line.menu_item_id is not None]
+    products_by_id: dict[int, shop_models.Product] = {}
+    if menu_item_ids:
+        stmt = select(shop_models.Product).where(shop_models.Product.id.in_(menu_item_ids))
+        products_by_id = {p.id: p for p in db.scalars(stmt)}
+
+    # Fail fast, before any mutation, if a tracked item doesn't have enough stock.
+    for line in payload.items:
+        product = products_by_id.get(line.menu_item_id)
+        if product and product.stock_qty is not None and line.qty > product.stock_qty:
+            raise HTTPException(status_code=400, detail=f"Not enough {product.name} in stock ({product.stock_qty} left)")
+
     subtotal = sum(line.price * line.qty for line in payload.items)
     discount = 0
     points_redeemed = 0
@@ -61,6 +73,13 @@ def charge(payload: pos_schemas.ChargeRequest, db: Session = Depends(get_db)):
             ingredient = db.get(pos_models.InventoryItem, recipe.ingredient_id)
             if ingredient:
                 ingredient.quantity -= amount
+
+    # Deduct from tracked product stock (an unlimited/made-to-order item has
+    # no stock_qty set and is unaffected — already validated as sufficient above).
+    for line in payload.items:
+        product = products_by_id.get(line.menu_item_id)
+        if product and product.stock_qty is not None:
+            product.stock_qty -= line.qty
 
     sale = pos_models.Sale(
         staff_id=staff.id,
@@ -108,6 +127,12 @@ def void_sale(sale_id: int, payload: pos_schemas.VoidRequest, db: Session = Depe
         ingredient = db.get(pos_models.InventoryItem, int(ingredient_id))
         if ingredient:
             ingredient.quantity += amount
+
+    for sale_item in sale.items:
+        if sale_item.menu_item_id is not None:
+            product = db.get(shop_models.Product, sale_item.menu_item_id)
+            if product and product.stock_qty is not None:
+                product.stock_qty += sale_item.qty
 
     if sale.customer_id is not None:
         customer = db.get(pos_models.LoyaltyCustomer, sale.customer_id)

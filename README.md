@@ -45,9 +45,14 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-python -m app.seed        # populates menu items, events, inventory & recipes
+python -m app.seed        # populates products (menu), events, inventory & recipes
 uvicorn app.main:app --reload --port 8000
 ```
+
+(Pulling this after having an older checkout with a separate `menu_items`
+table? Run `psql -d strobrie -f migrate_menu_to_products.sql` once first —
+see that file's header comment. A database that's never been seeded needs
+nothing extra.)
 
 The API is now at http://localhost:8000 (interactive docs at `/docs`).
 
@@ -66,18 +71,23 @@ The site is now at http://localhost:5173.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET | `/api/menu` | List menu items |
+| GET | `/api/shop/products` | List sellable items (the public menu/shop catalog) |
 | GET | `/api/events` | List upcoming events (with RSVP counts) |
 | POST | `/api/events/{id}/rsvps` | RSVP to an event |
 | POST | `/api/contact` | Submit a contact message |
 | POST | `/api/bookings` | Submit a space-rental booking request |
+
+The public Menu page and the shop's storefront both read from the same
+`/api/shop/products` — see [The shop](#the-shop) below for why there's one
+shared catalog rather than two.
 
 Flow (the POS) adds a further set of endpoints under `/api/pos/*` — staff,
 sales, customers, waste, inventory/recipes, and ticketed events. See
 `backend/app/routers/pos_*.py` or the interactive docs at `/docs`.
 
 The shop adds endpoints under `/api/shop/*` — public product listing and
-checkout, plus `/api/shop/admin/*` for product/photo/order management. See
+checkout, plus `/api/shop/admin/*` for product/photo/order management (also
+used by Flow's Sell screen and Products tab). See
 `backend/app/routers/shop_*.py`.
 
 ## Flow (the POS app)
@@ -134,15 +144,18 @@ A customer-facing storefront for ordering cakes, drinks, and food online, at
 storefront at `/` instead of the marketing site (see
 [DEPLOYMENT.md](DEPLOYMENT.md) for the Nginx setup that makes that work).
 
-**Catalog**: a separate `products` table from Flow's till menu — the shop's
-product mix (and photos) can differ from what's sold at the till day to day.
-Each product can have multiple photos, a stock quantity (or unlimited), and
-an "available online" toggle.
+**Catalog**: one shared `products` table powers the shop, the public Menu
+page, *and* Flow's Sell screen — the same 63-item real menu is sellable
+in-person and orderable online, no separate lists to keep in sync. Each
+product can have multiple photos, a stock quantity (or unlimited), and an
+"available online" toggle (Flow can still sell a hidden-from-online item at
+the till; the toggle only gates the public storefront).
 
 **Managing products & photos**: in Flow, under the manager-only **Products**
 tab (`/pos/products`, or `flow.strobrie.com/products` in production) —
-add/edit/delete products, upload/reorder/delete photos, and toggle whether
-each one is visible in the shop.
+add/edit/delete products, upload/reorder/delete photos, quick-restock, and
+toggle whether each one is visible in the shop. This is also the easy way to
+adjust prices — one edit updates the price everywhere it's sold.
 
 **Checkout**: cart → customer details (pickup or delivery) → redirected to a
 Paystack-hosted payment page → redirected back to an order confirmation page,

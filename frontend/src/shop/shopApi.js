@@ -31,6 +31,8 @@ export const shopApi = {
   createProduct: (data) => request("/api/shop/admin/products", { method: "POST", body: JSON.stringify(data) }),
   updateProduct: (id, data) => request(`/api/shop/admin/products/${id}`, { method: "PUT", body: JSON.stringify(data) }),
   deleteProduct: (id) => request(`/api/shop/admin/products/${id}`, { method: "DELETE" }),
+  restockProduct: (id, qty) =>
+    request(`/api/shop/admin/products/${id}/restock`, { method: "POST", body: JSON.stringify({ qty }) }),
   uploadPhoto: async (productId, file) => {
     const form = new FormData();
     form.append("file", file);

@@ -7,6 +7,40 @@ function fmt(n) {
 
 const BLANK_FORM = { name: "", description: "", category: "", price: "", stock_qty: "" };
 
+function RestockControl({ product, onChanged }) {
+  const [qty, setQty] = useState("");
+  const [error, setError] = useState("");
+
+  async function addBatch() {
+    const q = parseInt(qty, 10);
+    if (!q || q <= 0) {
+      setError("Enter a quantity greater than 0.");
+      return;
+    }
+    await shopApi.restockProduct(product.id, q);
+    setQty("");
+    setError("");
+    onChanged();
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+      <input
+        type="number"
+        min="1"
+        placeholder="Qty made"
+        value={qty}
+        onChange={(e) => setQty(e.target.value)}
+        style={{ maxWidth: 100, fontSize: 12.5, padding: "4px 8px" }}
+      />
+      <button className="link-btn" onClick={addBatch}>
+        + Add to stock
+      </button>
+      {error && <span className="error-text">{error}</span>}
+    </div>
+  );
+}
+
 function ProductPhotos({ product, onChanged }) {
   const fileInputRef = useRef(null);
   const [error, setError] = useState("");
@@ -232,6 +266,7 @@ export default function Products() {
                       {fmt(product.price)} &middot; {product.stock_qty === null ? "unlimited stock" : `${product.stock_qty} in stock`}
                     </div>
                     {product.description && <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 4 }}>{product.description}</div>}
+                    <RestockControl product={product} onChanged={load} />
                   </div>
                   <span className={`checkin-badge ${product.is_active ? "in" : "out"}`}>
                     {product.is_active ? "Available online" : "Hidden"}

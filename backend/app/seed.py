@@ -5,11 +5,14 @@ Run with: python -m app.seed
 
 from datetime import datetime, timezone
 
-from . import models, pos_models
+from . import models, pos_models, shop_models
 from .database import Base, SessionLocal, engine
 
-# Real menu, as used by the Flow POS at the till. Prices are in whole Naira.
-MENU_ITEMS = [
+# Strobrie's real menu — one shared catalog for both the till (Flow's Sell
+# screen) and the online shop. Prices are in whole Naira. All items are
+# seeded as available online (is_active=True); toggle per item from Flow's
+# Products tab if some shouldn't be orderable online.
+PRODUCTS = [
     ("esp", "Coffee", "Espresso", 3800),
     ("ame", "Coffee", "Americano", 4700),
     ("cap", "Coffee", "Cappuccino", 5300),
@@ -151,12 +154,12 @@ def seed():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
-        if db.query(models.MenuItem).count() == 0:
-            for i, (slug, category, name, price) in enumerate(MENU_ITEMS):
-                db.add(models.MenuItem(slug=slug, category=category, name=name, price=price, sort_order=i))
-            print(f"Inserted {len(MENU_ITEMS)} menu items")
+        if db.query(shop_models.Product).count() == 0:
+            for i, (slug, category, name, price) in enumerate(PRODUCTS):
+                db.add(shop_models.Product(slug=slug, category=category, name=name, price=price, sort_order=i))
+            print(f"Inserted {len(PRODUCTS)} products")
         else:
-            print("Menu items already seeded, skipping")
+            print("Products already seeded, skipping")
 
         if db.query(models.Event).count() == 0:
             db.add_all(models.Event(**event) for event in EVENTS)
@@ -173,12 +176,12 @@ def seed():
         db.commit()
 
         if db.query(pos_models.Recipe).count() == 0:
-            menu_by_slug = {m.slug: m for m in db.query(models.MenuItem).all()}
+            product_by_slug = {p.slug: p for p in db.query(shop_models.Product).all()}
             ingredient_by_slug = {i.slug: i for i in db.query(pos_models.InventoryItem).all()}
             count = 0
             for item_slug, ingredients in RECIPES.items():
-                menu_item = menu_by_slug.get(item_slug)
-                if not menu_item:
+                product = product_by_slug.get(item_slug)
+                if not product:
                     continue
                 for ing_slug, qty in ingredients:
                     ingredient = ingredient_by_slug.get(ing_slug)
@@ -186,7 +189,7 @@ def seed():
                         continue
                     db.add(
                         pos_models.Recipe(
-                            menu_item_id=menu_item.id, ingredient_id=ingredient.id, qty_per_item=qty
+                            menu_item_id=product.id, ingredient_id=ingredient.id, qty_per_item=qty
                         )
                     )
                     count += 1
