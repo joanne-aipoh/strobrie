@@ -4,17 +4,6 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
-class MenuItemOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    slug: str | None
-    category: str
-    name: str
-    description: str | None
-    price: int | None
-
-
 class EventOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

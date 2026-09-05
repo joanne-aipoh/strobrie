@@ -45,7 +45,7 @@ class Recipe(Base):
     __tablename__ = "recipes"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    menu_item_id: Mapped[int] = mapped_column(ForeignKey("menu_items.id"))
+    menu_item_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
     ingredient_id: Mapped[int] = mapped_column(ForeignKey("inventory_items.id"))
     qty_per_item: Mapped[float] = mapped_column(Float)
 
@@ -80,7 +80,7 @@ class SaleItem(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     sale_id: Mapped[int] = mapped_column(ForeignKey("sales.id"))
-    menu_item_id: Mapped[int | None] = mapped_column(ForeignKey("menu_items.id"), default=None)
+    menu_item_id: Mapped[int | None] = mapped_column(ForeignKey("products.id"), default=None)
     name: Mapped[str] = mapped_column(String(150))
     category: Mapped[str] = mapped_column(String(30))
     qty: Mapped[int] = mapped_column(Integer)

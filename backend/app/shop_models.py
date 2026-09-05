@@ -11,6 +11,7 @@ class Product(Base):
     __tablename__ = "products"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    slug: Mapped[str | None] = mapped_column(String(30), unique=True, default=None)
     name: Mapped[str] = mapped_column(String(150))
     description: Mapped[str | None] = mapped_column(Text, default=None)
     category: Mapped[str] = mapped_column(String(50))

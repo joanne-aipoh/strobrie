@@ -7,18 +7,6 @@ from sqlalchemy.sql import func
 from .database import Base
 
 
-class MenuItem(Base):
-    __tablename__ = "menu_items"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    slug: Mapped[str | None] = mapped_column(String(30), unique=True, default=None)
-    category: Mapped[str] = mapped_column(String(30))
-    name: Mapped[str] = mapped_column(String(120))
-    description: Mapped[str | None] = mapped_column(Text, default=None)
-    price: Mapped[int | None] = mapped_column(Integer, default=None)
-    sort_order: Mapped[int] = mapped_column(Integer, default=0)
-
-
 class Event(Base):
     __tablename__ = "events"
 

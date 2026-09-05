@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { usePosAuth } from "../PosAuthContext.jsx";
 import { posApi } from "../posApi.js";
+import { shopApi } from "../../shop/shopApi.js";
 
 const CATEGORY_ORDER = ["Coffee", "Drinks", "Breakfast", "Lunch", "Bakery", "Cakes", "Bar", "Brunch"];
 const NAIRA_PER_POINT_REDEEM = 10;
@@ -69,20 +70,31 @@ export default function Sell() {
   const [toast, setToast] = useState("");
   const [lastReceipt, setLastReceipt] = useState(null);
 
-  useEffect(() => {
-    posApi.getMenu().then((items) => {
+  function loadMenu() {
+    return shopApi.adminListProducts().then((items) => {
       setMenu(items);
-      const firstCat = CATEGORY_ORDER.find((c) => items.some((i) => i.category === c)) || items[0]?.category;
-      setActiveCat(firstCat);
+      setActiveCat((prev) => prev || CATEGORY_ORDER.find((c) => items.some((i) => i.category === c)) || items[0]?.category);
+      return items;
     });
+  }
+
+  useEffect(() => {
+    loadMenu();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const categories = menu ? CATEGORY_ORDER.filter((c) => menu.some((i) => i.category === c)) : [];
   const itemsInCat = menu ? menu.filter((i) => i.category === activeCat) : [];
 
+  function qtyInCart(itemId) {
+    return cart.find((c) => c.menuItemId === itemId)?.qty || 0;
+  }
+
   function addToCart(item) {
     setCart((prev) => {
       const existing = prev.find((c) => c.menuItemId === item.id);
+      const currentQty = existing?.qty || 0;
+      if (item.stock_qty !== null && currentQty >= item.stock_qty) return prev;
       if (existing) {
         return prev.map((c) => (c.menuItemId === item.id ? { ...c, qty: c.qty + 1 } : c));
       }
@@ -92,8 +104,12 @@ export default function Sell() {
 
   function changeQty(idx, delta) {
     setCart((prev) => {
+      const line = prev[idx];
+      const menuItem = menu?.find((m) => m.id === line.menuItemId);
+      const nextQty = line.qty + delta;
+      if (menuItem?.stock_qty !== null && menuItem?.stock_qty !== undefined && nextQty > menuItem.stock_qty) return prev;
       const next = [...prev];
-      next[idx] = { ...next[idx], qty: next[idx].qty + delta };
+      next[idx] = { ...line, qty: nextQty };
       return next.filter((c) => c.qty > 0);
     });
   }
@@ -206,6 +222,7 @@ export default function Sell() {
       detachCustomer();
       setChargeStatus("idle");
       setTimeout(() => setToast(""), 8000);
+      loadMenu();
     } catch (err) {
       setChargeError(err.message);
       setChargeStatus("idle");
@@ -251,12 +268,25 @@ export default function Sell() {
               <div className="price">Any price, any name</div>
             </button>
           )}
-          {itemsInCat.map((item) => (
-            <button key={item.id} className="item-card" onClick={() => addToCart(item)}>
-              <div className="name">{item.name}</div>
-              <div className="price">{fmt(item.price)}</div>
-            </button>
-          ))}
+          {itemsInCat.map((item) => {
+            const remaining = item.stock_qty === null ? null : item.stock_qty - qtyInCart(item.id);
+            const soldOut = remaining !== null && remaining <= 0;
+            return (
+              <button
+                key={item.id}
+                className="item-card"
+                disabled={soldOut}
+                style={soldOut ? { opacity: 0.5, cursor: "not-allowed" } : undefined}
+                onClick={() => addToCart(item)}
+              >
+                <div className="name">{item.name}</div>
+                {soldOut ? <div className="price">Sold out</div> : <div className="price">{fmt(item.price)}</div>}
+                {remaining !== null && !soldOut && (
+                  <div style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 2 }}>{remaining} left</div>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 

@@ -50,6 +50,10 @@ class PhotoReorderRequest(BaseModel):
     photo_ids_in_order: list[int]
 
 
+class RestockRequest(BaseModel):
+    qty: int = Field(gt=0)
+
+
 # --- Orders ------------------------------------------------------------
 
 

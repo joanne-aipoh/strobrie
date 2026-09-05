@@ -17,9 +17,6 @@ async function request(path, options = {}) {
 }
 
 export const posApi = {
-  // menu (shared with the public site)
-  getMenu: () => request("/api/menu"),
-
   // staff / auth
   listStaff: () => request("/api/pos/staff"),
   setupFirstManager: (data) => request("/api/pos/staff/setup", { method: "POST", body: JSON.stringify(data) }),

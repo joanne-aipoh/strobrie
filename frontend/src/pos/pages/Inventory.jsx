@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { posApi } from "../posApi.js";
+import { shopApi } from "../../shop/shopApi.js";
 
 const CATEGORY_ORDER = ["Coffee", "Drinks", "Breakfast", "Lunch", "Bakery", "Cakes", "Bar", "Brunch"];
 const LOW_STOCK_THRESHOLD = { kg: 2, l: 3, each: 10, g: 500, ml: 500 };
@@ -24,7 +25,7 @@ export default function Inventory() {
   const [recipeMsg, setRecipeMsg] = useState("");
 
   useEffect(() => {
-    Promise.all([posApi.listInventory(), posApi.getMenu()]).then(([inv, items]) => {
+    Promise.all([posApi.listInventory(), shopApi.adminListProducts()]).then(([inv, items]) => {
       setInventory(inv);
       setMenu(items);
       if (inv.length > 0) setRestockItemId(inv[0].id);

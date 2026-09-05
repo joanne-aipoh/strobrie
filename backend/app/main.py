@@ -11,7 +11,6 @@ from .routers import (
     bookings,
     contact,
     events,
-    menu,
     pos_customers,
     pos_events,
     pos_inventory,
@@ -40,7 +39,6 @@ UPLOADS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads"
 os.makedirs(os.path.join(UPLOADS_DIR, "products"), exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
-app.include_router(menu.router)
 app.include_router(events.router)
 app.include_router(contact.router)
 app.include_router(bookings.router)

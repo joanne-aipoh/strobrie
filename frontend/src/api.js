@@ -16,7 +16,7 @@ async function request(path, options = {}) {
 }
 
 export const api = {
-  getMenu: () => request("/api/menu"),
+  getMenu: () => request("/api/shop/products"),
   getEvents: () => request("/api/events"),
   createRsvp: (eventId, data) =>
     request(`/api/events/${eventId}/rsvps`, {
