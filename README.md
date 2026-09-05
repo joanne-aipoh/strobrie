@@ -7,8 +7,11 @@ A React frontend talks to a Python (FastAPI) backend, which stores menu
 items, events/RSVPs, contact messages, and space-rental booking requests in
 Postgres.
 
-The frontend also includes **Flow**, an internal till/operations app for
-staff, at `/pos` — see [Flow (the POS app)](#flow-the-pos-app) below.
+The frontend also includes:
+- **Flow**, an internal till/operations app for staff, at `/pos` — see
+  [Flow (the POS app)](#flow-the-pos-app) below
+- **The shop**, a customer-facing storefront for cakes/drinks/food, meant to
+  live at `shop.strobrie.com` — see [The shop](#the-shop) below
 
 ## Structure
 
@@ -71,6 +74,10 @@ Flow (the POS) adds a further set of endpoints under `/api/pos/*` — staff,
 sales, customers, waste, inventory/recipes, and ticketed events. See
 `backend/app/routers/pos_*.py` or the interactive docs at `/docs`.
 
+The shop adds endpoints under `/api/shop/*` — public product listing and
+checkout, plus `/api/shop/admin/*` for product/photo/order management. See
+`backend/app/routers/shop_*.py`.
+
 ## Flow (the POS app)
 
 Flow is Strobrie's internal till and operations tool, at `/pos` on the same
@@ -113,9 +120,44 @@ worked and is fine for a LAN-only till, but anyone who can reach the API
 directly could impersonate a staff ID. Worth revisiting (e.g. a real session
 token) before this is exposed beyond a trusted local network.
 
+## The shop
+
+A customer-facing storefront for ordering cakes, drinks, and food online, at
+`/shop` in local dev. In production it's meant to be reached at
+`shop.strobrie.com` — the app detects a `shop.` hostname and shows the
+storefront at `/` instead of the marketing site (see
+[DEPLOYMENT.md](DEPLOYMENT.md) for the Nginx setup that makes that work).
+
+**Catalog**: a separate `products` table from Flow's till menu — the shop's
+product mix (and photos) can differ from what's sold at the till day to day.
+Each product can have multiple photos, a stock quantity (or unlimited), and
+an "available online" toggle.
+
+**Managing products & photos**: in Flow, under the manager-only **Products**
+tab (`/pos/products`) — add/edit/delete products, upload/reorder/delete
+photos, and toggle whether each one is visible in the shop.
+
+**Checkout**: cart → customer details (pickup or delivery) → redirected to a
+Paystack-hosted payment page → redirected back to an order confirmation page,
+which verifies the payment server-side before marking the order paid and
+decrementing stock. Needs `PAYSTACK_SECRET_KEY` set in `backend/.env` (from
+your [Paystack dashboard](https://dashboard.paystack.com)) — without it,
+checkout fails with a clear "payments aren't set up yet" message instead of a
+confusing error.
+
+**Viewing orders**: in Flow, under the manager-only **Orders** tab
+(`/pos/orders`) — lists every order with items, fulfillment method, payment
+status, and a dropdown to update status (pending/paid/fulfilled/cancelled).
+
+**Known limitation**: same trust model as the rest of Flow (see above) — the
+admin product/order endpoints under `/api/shop/admin/*` don't re-verify a
+staff session per request.
+
 ## Still needed
 
 - Real photos of the space, food, and drinks
 - Confirmed street address
 - Confirmed contact email
-- Production deployment (hosting for the frontend, backend, and database)
+- Production deployment — see [DEPLOYMENT.md](DEPLOYMENT.md) for the
+  Hostinger VPS setup (Nginx for both domains, systemd service, HTTPS)
+- A live (not test) Paystack key once you're ready to accept real payments

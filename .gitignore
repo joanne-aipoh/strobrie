@@ -1,2 +1,7 @@
 .DS_Store
 node_modules/
+
+# An Obsidian vault (personal notes) can end up here because macOS's default
+# filesystem is case-insensitive: ~/Documents/Strobrie and this repo's own
+# ~/Documents/strobrie are literally the same directory on disk.
+.obsidian/
