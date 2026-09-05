@@ -1,17 +1,21 @@
 /* Scoped under .pos-app so these class names (some shared with the public
    site, e.g. .price/.form-grid/.event-card) never leak into marketing pages. */
 .pos-app {
-  --cream: #f4ede2;
-  --cream-2: #fbf7f0;
-  --rust: #b5542d;
-  --rust-dark: #8f3e1f;
+  /* Same coral -> pink -> mauve family as the public site, so the till
+     and the website read as one brand. --sage stays a separate, purely
+     functional color (selected payment toggle, prices) rather than a
+     brand accent, so those states stay visually distinct from actions. */
+  --cream: #fdf2ed;
+  --cream-2: #fbe6dd;
+  --rust: #e8467a;
+  --rust-dark: #c23f68;
   --sage: #7c9a6e;
-  --walnut: #6b4a2e;
-  --ink: #2c2416;
-  --ink-soft: #6b5f4f;
-  --line: #e3d7c4;
-  --danger: #b5542d;
+  --ink: #2b1d22;
+  --ink-soft: #6b5763;
+  --line: #ecd9dd;
+  --danger: #b3261e;
   --white: #ffffff;
+  --gradient-pos: linear-gradient(135deg, #f2825c 0%, #e8467a 55%, #9c6b8c 100%);
 
   margin: 0;
   min-height: 100vh;
@@ -27,8 +31,12 @@
   font-family:Georgia,"Times New Roman",serif;
   font-size:26px;
   margin:0;
-  color:var(--rust-dark);
   letter-spacing:0.2px;
+  color:var(--rust-dark);
+  background:var(--gradient-pos);
+  background-clip:text;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
 }
 .pos-app .brand span{font-size:12px;color:var(--ink-soft);}
 .pos-app nav.tabs{display:flex;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
@@ -51,7 +59,7 @@
   padding:7px 14px;border-radius:999px;border:1px solid var(--line);
   background:var(--white);font-size:13px;cursor:pointer;color:var(--ink);
 }
-.pos-app .cat-btn.active{background:var(--rust);border-color:var(--rust);color:var(--white);}
+.pos-app .cat-btn.active{background:var(--gradient-pos);border-color:transparent;color:var(--white);}
 
 .pos-app .item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
 .pos-app .item-card{
@@ -88,7 +96,7 @@
 .pos-app .pay-btn.selected{background:var(--sage);border-color:var(--sage);color:var(--white);font-weight:600;}
 .pos-app .charge-btn{
   width:100%;padding:11px;border-radius:8px;border:none;
-  background:var(--rust);color:var(--white);font-size:14px;font-weight:600;cursor:pointer;
+  background:var(--gradient-pos);color:var(--white);font-size:14px;font-weight:600;cursor:pointer;
 }
 .pos-app .charge-btn:disabled{background:#d8c9b6;cursor:not-allowed;}
 .pos-app .toast{
@@ -107,7 +115,7 @@
 .pos-app .error-text{color:var(--danger);font-size:12px;margin-top:4px;}
 .pos-app .log-btn{
   margin-top:14px;padding:10px 18px;border-radius:8px;border:none;
-  background:var(--rust);color:var(--white);font-size:13.5px;font-weight:600;cursor:pointer;
+  background:var(--gradient-pos);color:var(--white);font-size:13.5px;font-weight:600;cursor:pointer;
 }
 .pos-app .log-btn:disabled{background:#d8c9b6;cursor:not-allowed;}
 
@@ -127,17 +135,24 @@
 .pos-app .empty-note{font-size:13px;color:var(--ink-soft);padding:10px 0;}
 .pos-app .reason-tag{
   display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;
-  background:#f3e4d6;color:var(--rust-dark);
+  background:#f6e0e6;color:var(--rust-dark);
 }
 .pos-app .login-wrap{max-width:420px;margin:60px auto;padding:0 16px;}
-.pos-app .login-wrap h1{font-family:Georgia,"Times New Roman",serif;color:var(--rust-dark);font-size:28px;margin:0 0 4px;text-align:center;}
+.pos-app .login-wrap h1{
+  font-family:Georgia,"Times New Roman",serif;font-size:28px;margin:0 0 4px;text-align:center;
+  color:var(--rust-dark);
+  background:var(--gradient-pos);
+  background-clip:text;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
 .pos-app .login-wrap .sub{text-align:center;color:var(--ink-soft);font-size:13px;margin-bottom:24px;}
 .pos-app .staff-picker{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:18px;}
 .pos-app .staff-btn{
   padding:10px 18px;border-radius:10px;border:1px solid var(--line);
   background:var(--white);font-size:14px;cursor:pointer;
 }
-.pos-app .staff-btn.selected{border-color:var(--rust);background:#f8ece4;font-weight:600;}
+.pos-app .staff-btn.selected{border-color:var(--rust);background:#f8e3e8;font-weight:600;}
 .pos-app .pin-entry{display:flex;flex-direction:column;align-items:center;gap:10px;}
 .pos-app .pin-entry input{
   width:140px;text-align:center;letter-spacing:6px;font-size:20px;
@@ -146,7 +161,7 @@
 .pos-app .header-user{display:flex;align-items:center;gap:10px;font-size:13px;flex-wrap:wrap;}
 .pos-app .header-user .role-tag{
   font-size:10.5px;text-transform:uppercase;letter-spacing:0.4px;
-  background:#f3e4d6;color:var(--rust-dark);padding:2px 7px;border-radius:999px;
+  background:#f6e0e6;color:var(--rust-dark);padding:2px 7px;border-radius:999px;
 }
 .pos-app .link-btn{background:none;border:none;color:var(--rust-dark);font-size:12.5px;cursor:pointer;text-decoration:underline;padding:0;}
 .pos-app .staff-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
@@ -159,4 +174,4 @@
 .pos-app .tier-row input,.pos-app .tier-row select{flex:1;}
 .pos-app .checkin-badge{font-size:11px;padding:2px 8px;border-radius:999px;}
 .pos-app .checkin-badge.in{background:#eaf1e5;color:#3b5b31;}
-.pos-app .checkin-badge.out{background:#f3e4d6;color:var(--rust-dark);}
+.pos-app .checkin-badge.out{background:#f6e0e6;color:var(--rust-dark);}
