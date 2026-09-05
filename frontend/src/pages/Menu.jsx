@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
 
-const CATEGORY_LABELS = {
-  cafe: "Cafe",
-  drinks: "Drinks",
-  bakery: "Bakery",
-};
+const CATEGORY_ORDER = ["Coffee", "Drinks", "Breakfast", "Brunch", "Lunch", "Bakery", "Cakes", "Bar"];
 
 function groupByCategory(items) {
   return items.reduce((groups, item) => {
@@ -14,8 +10,8 @@ function groupByCategory(items) {
   }, {});
 }
 
-function formatNaira(kobo) {
-  return `₦${(kobo / 100).toLocaleString("en-NG", { maximumFractionDigits: 0 })}`;
+function formatNaira(amount) {
+  return `₦${amount.toLocaleString("en-NG", { maximumFractionDigits: 0 })}`;
 }
 
 export default function Menu() {
@@ -28,6 +24,11 @@ export default function Menu() {
       .then(setItems)
       .catch((err) => setError(err.message));
   }, []);
+
+  const grouped = items ? groupByCategory(items) : {};
+  const categories = items
+    ? [...CATEGORY_ORDER.filter((c) => grouped[c]), ...Object.keys(grouped).filter((c) => !CATEGORY_ORDER.includes(c))]
+    : [];
 
   return (
     <section className="section section-alt">
@@ -44,28 +45,22 @@ export default function Menu() {
 
         {items && (
           <div className="menu-tabs">
-            {Object.entries(CATEGORY_LABELS).map(([category, label]) => {
-              const categoryItems = groupByCategory(items)[category] || [];
-              if (categoryItems.length === 0) return null;
-              return (
-                <div
-                  key={category}
-                  className={`menu-card ${category === "drinks" ? "menu-card-featured" : ""}`}
-                >
-                  <h3>{label}</h3>
-                  <ul>
-                    {categoryItems.map((item) => (
-                      <li key={item.id}>
-                        <span>{item.name}</span>
-                        {item.price_kobo != null && (
-                          <span className="price">{formatNaira(item.price_kobo)}</span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
+            {categories.map((category) => (
+              <div
+                key={category}
+                className={`menu-card ${category === "Coffee" ? "menu-card-featured" : ""}`}
+              >
+                <h3>{category}</h3>
+                <ul>
+                  {grouped[category].map((item) => (
+                    <li key={item.id}>
+                      <span>{item.name}</span>
+                      {item.price != null && <span className="price">{formatNaira(item.price)}</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         )}
 

@@ -11,10 +11,11 @@ class MenuItem(Base):
     __tablename__ = "menu_items"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    category: Mapped[str] = mapped_column(String(20))
+    slug: Mapped[str | None] = mapped_column(String(30), unique=True, default=None)
+    category: Mapped[str] = mapped_column(String(30))
     name: Mapped[str] = mapped_column(String(120))
     description: Mapped[str | None] = mapped_column(Text, default=None)
-    price_kobo: Mapped[int | None] = mapped_column(Integer, default=None)
+    price: Mapped[int | None] = mapped_column(Integer, default=None)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
 
 

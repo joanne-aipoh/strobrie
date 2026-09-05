@@ -8,10 +8,11 @@ class MenuItemOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    category: Literal["cafe", "drinks", "bakery"]
+    slug: str | None
+    category: str
     name: str
     description: str | None
-    price_kobo: int | None
+    price: int | None
 
 
 class EventOut(BaseModel):

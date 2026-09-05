@@ -1,0 +1,44 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from .. import pos_models, pos_schemas
+from ..database import get_db
+
+router = APIRouter(prefix="/api/pos", tags=["pos-inventory"])
+
+
+@router.get("/inventory", response_model=list[pos_schemas.InventoryItemOut])
+def list_inventory(db: Session = Depends(get_db)):
+    stmt = select(pos_models.InventoryItem).order_by(pos_models.InventoryItem.name)
+    return db.scalars(stmt).all()
+
+
+@router.post("/inventory/{item_id}/restock", response_model=pos_schemas.InventoryItemOut)
+def restock(item_id: int, payload: pos_schemas.RestockRequest, db: Session = Depends(get_db)):
+    item = db.get(pos_models.InventoryItem, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Inventory item not found")
+    item.quantity += payload.qty
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.get("/recipes/{menu_item_id}", response_model=list[pos_schemas.RecipeLineOut])
+def get_recipe(menu_item_id: int, db: Session = Depends(get_db)):
+    stmt = select(pos_models.Recipe).where(pos_models.Recipe.menu_item_id == menu_item_id)
+    return db.scalars(stmt).all()
+
+
+@router.put("/recipes/{menu_item_id}", response_model=list[pos_schemas.RecipeLineOut])
+def set_recipe(menu_item_id: int, payload: pos_schemas.RecipeSetRequest, db: Session = Depends(get_db)):
+    db.query(pos_models.Recipe).filter(pos_models.Recipe.menu_item_id == menu_item_id).delete()
+    lines = [
+        pos_models.Recipe(menu_item_id=menu_item_id, ingredient_id=line.ingredient_id, qty_per_item=line.qty_per_item)
+        for line in payload.lines
+    ]
+    db.add_all(lines)
+    db.commit()
+    stmt = select(pos_models.Recipe).where(pos_models.Recipe.menu_item_id == menu_item_id)
+    return db.scalars(stmt).all()
