@@ -50,6 +50,12 @@ export const posApi = {
   setRecipe: (menuItemId, lines) =>
     request(`/api/pos/recipes/${menuItemId}`, { method: "PUT", body: JSON.stringify({ lines }) }),
 
+  // menu item stock (finished-goods count, e.g. baked items)
+  restockMenuItem: (id, qty) =>
+    request(`/api/pos/menu-items/${id}/restock`, { method: "POST", body: JSON.stringify({ qty }) }),
+  setMenuItemStock: (id, stockQty) =>
+    request(`/api/pos/menu-items/${id}/stock`, { method: "PUT", body: JSON.stringify({ stock_qty: stockQty }) }),
+
   // ticketed events
   listEvents: () => request("/api/pos/events"),
   getEvent: (id) => request(`/api/pos/events/${id}`),

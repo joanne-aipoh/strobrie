@@ -13,6 +13,15 @@ class MenuItemOut(BaseModel):
     name: str
     description: str | None
     price: int | None
+    stock_qty: int | None
+
+
+class RestockRequest(BaseModel):
+    qty: int = Field(gt=0)
+
+
+class StockSetRequest(BaseModel):
+    stock_qty: int | None = Field(default=None, ge=0)
 
 
 class EventOut(BaseModel):

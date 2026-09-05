@@ -17,6 +17,7 @@ class MenuItem(Base):
     description: Mapped[str | None] = mapped_column(Text, default=None)
     price: Mapped[int | None] = mapped_column(Integer, default=None)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    stock_qty: Mapped[int | None] = mapped_column(Integer, default=None)  # null = unlimited (made-to-order)
 
 
 class Event(Base):

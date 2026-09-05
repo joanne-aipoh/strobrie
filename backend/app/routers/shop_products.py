@@ -71,6 +71,19 @@ def update_product(product_id: int, payload: shop_schemas.ProductUpdate, db: Ses
     return product
 
 
+@router.post("/admin/products/{product_id}/restock", response_model=shop_schemas.ProductOut)
+def restock_product(product_id: int, payload: shop_schemas.RestockRequest, db: Session = Depends(get_db)):
+    """Log a batch made — adds to stock_qty, treating a currently-unlimited
+    (null) product as starting from 0 (i.e. this is what turns tracking on)."""
+    product = db.get(shop_models.Product, product_id)
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+    product.stock_qty = (product.stock_qty or 0) + payload.qty
+    db.commit()
+    db.refresh(product)
+    return product
+
+
 @router.delete("/admin/products/{product_id}", status_code=204)
 def delete_product(product_id: int, db: Session = Depends(get_db)):
     product = db.get(shop_models.Product, product_id)

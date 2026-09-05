@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from .. import pos_models, pos_schemas
+from .. import models, pos_models, pos_schemas
 from ..database import get_db
 
 router = APIRouter(prefix="/api/pos/sales", tags=["pos-sales"])
@@ -35,6 +35,18 @@ def charge(payload: pos_schemas.ChargeRequest, db: Session = Depends(get_db)):
         if customer is None:
             raise HTTPException(status_code=404, detail="Customer not found")
 
+    menu_item_ids = [line.menu_item_id for line in payload.items if line.menu_item_id is not None]
+    menu_items_by_id: dict[int, models.MenuItem] = {}
+    if menu_item_ids:
+        stmt = select(models.MenuItem).where(models.MenuItem.id.in_(menu_item_ids))
+        menu_items_by_id = {item.id: item for item in db.scalars(stmt)}
+
+    # Fail fast, before any mutation, if a tracked item doesn't have enough stock.
+    for line in payload.items:
+        menu_item = menu_items_by_id.get(line.menu_item_id)
+        if menu_item and menu_item.stock_qty is not None and line.qty > menu_item.stock_qty:
+            raise HTTPException(status_code=400, detail=f"Not enough {menu_item.name} in stock ({menu_item.stock_qty} left)")
+
     subtotal = sum(line.price * line.qty for line in payload.items)
     discount = 0
     points_redeemed = 0
@@ -45,7 +57,6 @@ def charge(payload: pos_schemas.ChargeRequest, db: Session = Depends(get_db)):
     points_earned = (total // 100) * POINTS_PER_100_NAIRA
 
     # Deduct ingredients per recipe, remembering exactly what was deducted so a void can restore it.
-    menu_item_ids = [line.menu_item_id for line in payload.items if line.menu_item_id is not None]
     recipes_by_item: dict[int, list[pos_models.Recipe]] = {}
     if menu_item_ids:
         stmt = select(pos_models.Recipe).where(pos_models.Recipe.menu_item_id.in_(menu_item_ids))
@@ -61,6 +72,13 @@ def charge(payload: pos_schemas.ChargeRequest, db: Session = Depends(get_db)):
             ingredient = db.get(pos_models.InventoryItem, recipe.ingredient_id)
             if ingredient:
                 ingredient.quantity -= amount
+
+    # Deduct from tracked menu-item stock (a made-to-order item with no
+    # stock_qty set is unaffected — already validated as sufficient above).
+    for line in payload.items:
+        menu_item = menu_items_by_id.get(line.menu_item_id)
+        if menu_item and menu_item.stock_qty is not None:
+            menu_item.stock_qty -= line.qty
 
     sale = pos_models.Sale(
         staff_id=staff.id,
@@ -108,6 +126,12 @@ def void_sale(sale_id: int, payload: pos_schemas.VoidRequest, db: Session = Depe
         ingredient = db.get(pos_models.InventoryItem, int(ingredient_id))
         if ingredient:
             ingredient.quantity += amount
+
+    for sale_item in sale.items:
+        if sale_item.menu_item_id is not None:
+            menu_item = db.get(models.MenuItem, sale_item.menu_item_id)
+            if menu_item and menu_item.stock_qty is not None:
+                menu_item.stock_qty += sale_item.qty
 
     if sale.customer_id is not None:
         customer = db.get(pos_models.LoyaltyCustomer, sale.customer_id)

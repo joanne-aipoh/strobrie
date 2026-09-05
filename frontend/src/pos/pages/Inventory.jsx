@@ -23,12 +23,24 @@ export default function Inventory() {
   const [recipeDraft, setRecipeDraft] = useState([]);
   const [recipeMsg, setRecipeMsg] = useState("");
 
+  const [stockItemId, setStockItemId] = useState(null);
+  const [batchQty, setBatchQty] = useState("");
+  const [stockError, setStockError] = useState("");
+  const [stockMsg, setStockMsg] = useState("");
+
+  function loadMenu() {
+    return posApi.getMenu().then(setMenu);
+  }
+
   useEffect(() => {
     Promise.all([posApi.listInventory(), posApi.getMenu()]).then(([inv, items]) => {
       setInventory(inv);
       setMenu(items);
       if (inv.length > 0) setRestockItemId(inv[0].id);
-      if (items.length > 0) setRecipeItemId(items[0].id);
+      if (items.length > 0) {
+        setRecipeItemId(items[0].id);
+        setStockItemId(items[0].id);
+      }
     });
   }, []);
 
@@ -70,10 +82,30 @@ export default function Inventory() {
     setRecipeMsg("Recipe saved.");
   }
 
+  async function addBatch() {
+    const q = parseInt(batchQty, 10);
+    if (!q || q <= 0) {
+      setStockError("Enter a quantity greater than 0.");
+      return;
+    }
+    await posApi.restockMenuItem(stockItemId, q);
+    await loadMenu();
+    setBatchQty("");
+    setStockError("");
+    setStockMsg("Added to stock.");
+  }
+
+  async function clearStock() {
+    await posApi.setMenuItemStock(stockItemId, null);
+    await loadMenu();
+    setStockMsg("Cleared — this item is unlimited again.");
+  }
+
   if (!inventory || !menu) return <p>Loading&hellip;</p>;
 
   const categories = CATEGORY_ORDER.filter((c) => menu.some((m) => m.category === c));
   const currentItem = menu.find((m) => m.id === recipeItemId);
+  const currentStockItem = menu.find((m) => m.id === stockItemId);
 
   return (
     <>
@@ -188,6 +220,59 @@ export default function Inventory() {
           <button className="log-btn" onClick={saveRecipe}>
             Save recipe
           </button>
+        </div>
+      </div>
+
+      <div className="panel">
+        <h3>Menu item stock</h3>
+        <p style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: -8, marginBottom: 12 }}>
+          For made-in-batches items (like a limited run of cakes) — log what came out of the kitchen and the Sell
+          screen tracks what's left automatically. Items with no stock logged stay unlimited (made to order).
+        </p>
+        <div className="form-field" style={{ marginBottom: 10, maxWidth: 320 }}>
+          <label>Menu item</label>
+          <select
+            value={stockItemId ?? ""}
+            onChange={(e) => {
+              setStockItemId(Number(e.target.value));
+              setStockMsg("");
+              setStockError("");
+            }}
+          >
+            {categories.map((cat) => (
+              <optgroup label={cat} key={cat}>
+                {menu
+                  .filter((m) => m.category === cat)
+                  .map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+        <div style={{ fontSize: 13, marginBottom: 10 }}>
+          Current stock:{" "}
+          <strong>{currentStockItem?.stock_qty === null || currentStockItem?.stock_qty === undefined ? "Unlimited" : currentStockItem.stock_qty}</strong>
+        </div>
+        <div className="form-grid">
+          <div className="form-field">
+            <label>Add batch (qty made)</label>
+            <input type="number" min="1" value={batchQty} onChange={(e) => setBatchQty(e.target.value)} placeholder="e.g. 7" />
+          </div>
+        </div>
+        {stockError && <div className="error-text">{stockError}</div>}
+        {stockMsg && <div style={{ color: "var(--sage)", fontSize: 12.5, marginTop: 4 }}>{stockMsg}</div>}
+        <div style={{ marginTop: 12, display: "flex", gap: 12 }}>
+          <button className="log-btn" style={{ marginTop: 0 }} onClick={addBatch}>
+            Add to stock
+          </button>
+          {currentStockItem?.stock_qty !== null && currentStockItem?.stock_qty !== undefined && (
+            <button className="link-btn" onClick={clearStock}>
+              Clear (make unlimited again)
+            </button>
+          )}
         </div>
       </div>
     </>

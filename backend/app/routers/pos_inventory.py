@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .. import pos_models, pos_schemas
+from .. import models, pos_models, pos_schemas, schemas
 from ..database import get_db
 
 router = APIRouter(prefix="/api/pos", tags=["pos-inventory"])
@@ -20,6 +20,31 @@ def restock(item_id: int, payload: pos_schemas.RestockRequest, db: Session = Dep
     if item is None:
         raise HTTPException(status_code=404, detail="Inventory item not found")
     item.quantity += payload.qty
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.post("/menu-items/{item_id}/restock", response_model=schemas.MenuItemOut)
+def restock_menu_item(item_id: int, payload: schemas.RestockRequest, db: Session = Depends(get_db)):
+    """Log a batch made — adds to stock_qty, treating a currently-unlimited
+    (null) item as starting from 0 (i.e. this is what turns tracking on)."""
+    item = db.get(models.MenuItem, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Menu item not found")
+    item.stock_qty = (item.stock_qty or 0) + payload.qty
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.put("/menu-items/{item_id}/stock", response_model=schemas.MenuItemOut)
+def set_menu_item_stock(item_id: int, payload: schemas.StockSetRequest, db: Session = Depends(get_db)):
+    """Set stock_qty to an exact number, or null to clear it back to unlimited."""
+    item = db.get(models.MenuItem, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Menu item not found")
+    item.stock_qty = payload.stock_qty
     db.commit()
     db.refresh(item)
     return item
