@@ -2,8 +2,11 @@ import { useState } from "react";
 import { NavLink, Navigate, Outlet } from "react-router-dom";
 import "./pos.css";
 import { PosAuthProvider, usePosAuth } from "./PosAuthContext.jsx";
+import { isFlowHost, posPath } from "./posBase.js";
 import Login from "./pages/Login.jsx";
 import ManageStaff from "./pages/ManageStaff.jsx";
+
+const MAIN_SITE_URL = "https://strobrie.com";
 
 function PosShell() {
   const { currentStaff, isManager, logout } = usePosAuth();
@@ -38,18 +41,23 @@ function PosShell() {
             <button className="link-btn" onClick={logout}>
               Switch user
             </button>
+            {isFlowHost && (
+              <a className="link-btn" href={MAIN_SITE_URL}>
+                Main Site
+              </a>
+            )}
           </div>
         </header>
 
         <nav className="tabs">
-          <NavLink to="/pos/sell">Sell</NavLink>
-          <NavLink to="/pos/waste">Waste log</NavLink>
-          <NavLink to="/pos/customers">Customers</NavLink>
-          <NavLink to="/pos/events">Events</NavLink>
-          {isManager && <NavLink to="/pos/inventory">Inventory</NavLink>}
-          {isManager && <NavLink to="/pos/products">Products</NavLink>}
-          {isManager && <NavLink to="/pos/orders">Orders</NavLink>}
-          {isManager && <NavLink to="/pos/reports">Reports</NavLink>}
+          <NavLink to={posPath("/sell")}>Sell</NavLink>
+          <NavLink to={posPath("/waste")}>Waste log</NavLink>
+          <NavLink to={posPath("/customers")}>Customers</NavLink>
+          <NavLink to={posPath("/events")}>Events</NavLink>
+          {isManager && <NavLink to={posPath("/inventory")}>Inventory</NavLink>}
+          {isManager && <NavLink to={posPath("/products")}>Products</NavLink>}
+          {isManager && <NavLink to={posPath("/orders")}>Orders</NavLink>}
+          {isManager && <NavLink to={posPath("/reports")}>Reports</NavLink>}
         </nav>
 
         {showManageStaff && isManager && <ManageStaff />}
@@ -62,7 +70,7 @@ function PosShell() {
 
 function RequireManager({ children }) {
   const { isManager } = usePosAuth();
-  if (!isManager) return <Navigate to="/pos/sell" replace />;
+  if (!isManager) return <Navigate to={posPath("/sell")} replace />;
   return children;
 }
 

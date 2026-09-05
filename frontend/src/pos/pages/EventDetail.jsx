@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { usePosAuth } from "../PosAuthContext.jsx";
 import { posApi } from "../posApi.js";
+import { posPath } from "../posBase.js";
 
 function fmt(n) {
   return "₦" + Math.round(n).toLocaleString();
@@ -83,7 +84,7 @@ export default function EventDetail() {
 
   return (
     <>
-      <button className="link-btn" style={{ marginBottom: 12 }} onClick={() => navigate("/pos/events")}>
+      <button className="link-btn" style={{ marginBottom: 12 }} onClick={() => navigate(posPath("/events"))}>
         &larr; All events
       </button>
       <div className="panel">
