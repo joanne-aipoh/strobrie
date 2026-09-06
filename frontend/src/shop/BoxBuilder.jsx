@@ -18,6 +18,15 @@ export default function BoxBuilder({ product, onAdd, onModeChange }) {
       .boxFlavors(product.id)
       .then((data) => {
         if (cancelled) return;
+        // A product can match the "(Single)"/"(Box of N)" naming pattern
+        // without actually being a build-your-own-box item (e.g. Muffin,
+        // Cinnamon Roll) — those have no flavor trackers, so the box would
+        // otherwise be permanently stuck at 0 picked with nothing to add.
+        if (data.flavors.length === 0) {
+          setState({ status: "not-box", boxSize: 0, flavors: [] });
+          onModeChange?.(false);
+          return;
+        }
         setState({ status: "ready", boxSize: data.box_size, flavors: data.flavors });
         setCounts(Object.fromEntries(data.flavors.map((f) => [f.flavor, 0])));
         onModeChange?.(true);

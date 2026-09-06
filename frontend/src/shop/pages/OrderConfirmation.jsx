@@ -87,7 +87,7 @@ export default function OrderConfirmation() {
               )}
               {item.design_notes && (
                 <div style={{ fontSize: 12.5, color: "var(--color-hot-pink-dark)", marginTop: 2 }}>
-                  Design: &ldquo;{item.design_notes}&rdquo;
+                  Color: &ldquo;{item.design_notes}&rdquo;
                 </div>
               )}
               {item.flavor_breakdown && (

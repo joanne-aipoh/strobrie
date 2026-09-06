@@ -99,7 +99,7 @@ export default function Orders() {
                       )}
                       {item.design_notes && (
                         <div style={{ fontSize: 12, color: "var(--rust-dark)" }}>
-                          Design: &ldquo;{item.design_notes}&rdquo;
+                          Color: &ldquo;{item.design_notes}&rdquo;
                         </div>
                       )}
                       {item.flavor_breakdown && (

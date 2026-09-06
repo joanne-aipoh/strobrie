@@ -4,6 +4,7 @@ import { photoUrl, shopApi } from "../shopApi.js";
 import { useCart } from "../CartContext.jsx";
 import { shopPath } from "../shopBase.js";
 import { groupProducts, cardPhotos } from "../productGrouping.js";
+import { groupCoffee } from "../coffeeGrouping.js";
 import { CAKE_CATEGORIES } from "../cakeCategories.js";
 import { inscriptionLimitForLabel } from "../inscriptionLimit.js";
 import BoxBuilder from "../BoxBuilder.jsx";
@@ -38,6 +39,7 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [inscription, setInscription] = useState("");
+  const [color, setColor] = useState("");
   const [isBoxItem, setIsBoxItem] = useState(false);
 
   useEffect(() => {
@@ -59,7 +61,7 @@ export default function ProductDetail() {
       return;
     }
     const sameCategory = products.filter((p) => p.category === current.category);
-    const cards = groupProducts(sameCategory);
+    const cards = current.category === "Coffee" ? [groupCoffee(sameCategory)] : groupProducts(sameCategory);
     const found = cards.find((c) => {
       if (c.type === "single") return c.product.id === idNum;
       if (c.type === "grouped") return c.variants.some((v) => v.product.id === idNum);
@@ -72,6 +74,7 @@ export default function ProductDetail() {
     setCard(found);
     setActivePhoto(0);
     setInscription("");
+    setColor("");
     if (found.type === "grouped") {
       setVariantIdx(found.variants.findIndex((v) => v.product.id === idNum));
     } else if (found.type === "grouped2d") {
@@ -126,9 +129,14 @@ export default function ProductDetail() {
     applySizeLimit(inscriptionLimitForLabel(card.flavors[flavorIdx].sizeVariants[i].label));
   }
 
+  const isWholeCake = product.name.startsWith("Whole Cake");
+
   function handleAdd() {
-    addItem(product, Math.min(qty, remainingStock ?? Infinity), { inscription });
+    // Reuses the order item's design_notes column — repurposed here to hold
+    // the customer's requested cake color instead of free-form design text.
+    addItem(product, Math.min(qty, remainingStock ?? Infinity), { inscription, designNotes: isWholeCake ? color : undefined });
     setInscription("");
+    setColor("");
     setAdded(true);
     setTimeout(() => setAdded(false), 3000);
   }
@@ -228,6 +236,30 @@ export default function ProductDetail() {
                       {inscription.length}/{inscriptionLimit}
                       {sizeLabel ? ` — fits on ${sizeLabel}` : ""}
                     </div>
+                    {isWholeCake && (
+                      <>
+                        <label style={{ display: "block", fontSize: 13, color: "var(--color-text-soft, #6b6b6b)", margin: "10px 0 6px" }}>
+                          Cake color (optional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={'e.g. "pastel pink and gold"'}
+                          maxLength={100}
+                          value={color}
+                          onChange={(e) => setColor(e.target.value)}
+                          style={{
+                            width: "100%",
+                            fontFamily: "inherit",
+                            fontSize: "0.95rem",
+                            padding: "0.7rem 0.9rem",
+                            borderRadius: 10,
+                            border: "1px solid rgba(0,0,0,0.15)",
+                            background: "var(--color-bg)",
+                            color: "var(--color-text)",
+                          }}
+                        />
+                      </>
+                    )}
                     <p className="form-note" style={{ marginTop: 8, fontWeight: 700 }}>
                       Want a custom design? Contact us directly instead of ordering online.
                     </p>

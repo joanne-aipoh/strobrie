@@ -4,6 +4,7 @@ import { photoUrl, shopApi } from "../shopApi.js";
 import { useCart } from "../CartContext.jsx";
 import { shopPath } from "../shopBase.js";
 import { groupProducts, cardPhotos } from "../productGrouping.js";
+import { groupCoffee } from "../coffeeGrouping.js";
 import { CAKE_CATEGORIES } from "../cakeCategories.js";
 import { inscriptionLimitForLabel } from "../inscriptionLimit.js";
 import BoxBuilder from "../BoxBuilder.jsx";
@@ -18,6 +19,7 @@ function ProductCard({ card }) {
   const [flavorIdx, setFlavorIdx] = useState(0);
   const [sizeIdx, setSizeIdx] = useState(0);
   const [inscription, setInscription] = useState("");
+  const [color, setColor] = useState("");
   const [added, setAdded] = useState(false);
   const [isBoxItem, setIsBoxItem] = useState(false);
 
@@ -124,6 +126,17 @@ function ProductCard({ card }) {
               {inscription.length}/{inscriptionLimit}
               {sizeLabel ? ` — fits on ${sizeLabel}` : ""}
             </div>
+            {product.name.startsWith("Whole Cake") && (
+              <input
+                type="text"
+                className="product-card-variant"
+                placeholder='Cake color (optional), e.g. "pastel pink and gold"'
+                maxLength={100}
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                style={{ width: "100%", boxSizing: "border-box", marginTop: 4 }}
+              />
+            )}
             <div style={{ fontSize: 11, color: "var(--color-text-soft, #6b6b6b)", marginTop: 2, fontWeight: 700 }}>
               Want a custom design? Contact us directly instead of ordering online.
             </div>
@@ -149,8 +162,12 @@ function ProductCard({ card }) {
               className="button button-primary"
               style={{ width: "100%" }}
               onClick={() => {
-                addItem(product, 1, { inscription });
+                // Reuses the order item's design_notes column — repurposed
+                // here to hold the customer's requested cake color.
+                const isWholeCake = product.name.startsWith("Whole Cake");
+                addItem(product, 1, { inscription, designNotes: isWholeCake ? color : undefined });
                 setInscription("");
+                setColor("");
                 setAdded(true);
                 setTimeout(() => setAdded(false), 2000);
               }}
@@ -198,7 +215,7 @@ export default function Catalog() {
           <div key={category} style={{ marginBottom: "2.5rem" }}>
             <h2 style={{ fontSize: "1.4rem", marginBottom: "1rem" }}>{category}</h2>
             <div className="product-grid">
-              {groupProducts(items).map((card) => (
+              {(category === "Coffee" ? [groupCoffee(items)] : groupProducts(items)).map((card) => (
                 <ProductCard card={card} key={card.type === "single" ? card.product.id : card.name} />
               ))}
             </div>

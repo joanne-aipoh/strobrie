@@ -310,7 +310,7 @@ export default function Checkout() {
               )}
               {item.designNotes && (
                 <div style={{ fontSize: 12.5, color: "var(--color-hot-pink-dark)", marginTop: 2 }}>
-                  Design: &ldquo;{item.designNotes}&rdquo;
+                  Color: &ldquo;{item.designNotes}&rdquo;
                 </div>
               )}
               {item.flavorBreakdown && (

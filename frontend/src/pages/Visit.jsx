@@ -70,7 +70,7 @@ export default function Visit() {
       <section className="section section-alt">
         <div className="container visit-grid">
           <div>
-            <h2>Contact Us</h2>
+            <h2>Visit Us</h2>
             <p>HFIA Garden, Off Tafawa Balewa Road, Garki, Abuja, Federal Capital Territory, Nigeria</p>
             <p>Mon&ndash;Fri 8am&ndash;6pm &middot; Sat 9am&ndash;6pm &middot; Sun 10am&ndash;3pm</p>
           </div>
