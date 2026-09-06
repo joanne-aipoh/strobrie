@@ -101,5 +101,10 @@ class OrderItem(Base):
     # flavors): JSON text mapping flavor label -> qty, e.g. '{"Vanilla": 3,
     # "Chocolate": 4, "Carrot": 1}'. Null for ordinary single-flavor items.
     flavor_breakdown: Mapped[str | None] = mapped_column(Text, default=None)
+    # Free-text add-on request for cake/cheesecake line items (e.g. "extra
+    # chocolate flavor layer") — pricing for these varies by size and isn't
+    # itemized online, so staff confirm the extra cost directly with the
+    # customer before making the cake. Null for everything else.
+    addons: Mapped[str | None] = mapped_column(Text, default=None)
 
     order: Mapped["Order"] = relationship(back_populates="items")

@@ -3,6 +3,10 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+# Till-side payment methods only — the shop's online checkout is Paystack
+# card payment exclusively and doesn't use this list.
+PaymentMethod = Literal["Cash", "Moniepoint", "Zenith Transfer", "Palm Pay POS", "GTB Transfer"]
+
 
 # --- Staff / auth -----------------------------------------------------------
 
@@ -34,6 +38,13 @@ class CustomerCreate(BaseModel):
     phone: str = Field(min_length=1, max_length=30)
 
 
+class CustomerUpdate(BaseModel):
+    # For fixing a typo'd name or a mistyped phone number — both optional so
+    # a caller can send just the one field that needs correcting.
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    phone: str | None = Field(default=None, min_length=1, max_length=30)
+
+
 class CustomerOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -59,7 +70,7 @@ class CartLine(BaseModel):
 
 class ChargeRequest(BaseModel):
     staff_id: int
-    payment_method: Literal["Cash", "Card"]
+    payment_method: PaymentMethod
     items: list[CartLine] = Field(min_length=1)
     customer_id: int | None = None
     redeem_points: int = 0
@@ -206,7 +217,7 @@ class TicketSellRequest(BaseModel):
     buyer_name: str = Field(min_length=1, max_length=120)
     buyer_contact: str | None = None
     channel: Literal["paid", "reserved"]
-    payment_method: Literal["Cash", "Card"] = "Cash"
+    payment_method: PaymentMethod = "Cash"
 
 
 class TicketOut(BaseModel):
@@ -226,4 +237,4 @@ class TicketOut(BaseModel):
 
 class CollectPaymentRequest(BaseModel):
     staff_id: int
-    payment_method: Literal["Cash", "Card"] = "Cash"
+    payment_method: PaymentMethod = "Cash"

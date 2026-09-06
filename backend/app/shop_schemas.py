@@ -65,6 +65,10 @@ class CartLine(BaseModel):
     # For a "build your box" item: flavor label -> qty (e.g. {"Vanilla": 3,
     # "Chocolate": 4, "Carrot": 1}), must sum to the box size.
     flavor_breakdown: dict[str, int] | None = Field(default=None)
+    # Free-text add-on request (e.g. "extra chocolate flavor layer") —
+    # cake/cheesecake only. Pricing varies by size and isn't itemized here;
+    # staff confirm the extra cost with the customer before making the cake.
+    addons: str | None = Field(default=None, max_length=300)
 
 
 class OrderCreate(BaseModel):
@@ -103,6 +107,7 @@ class OrderItemOut(BaseModel):
     inscription: str | None
     design_notes: str | None
     flavor_breakdown: str | None
+    addons: str | None
 
 
 class OrderOut(BaseModel):

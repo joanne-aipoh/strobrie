@@ -81,6 +81,7 @@ export default function Checkout() {
           inscription: i.inscription,
           design_notes: i.designNotes,
           flavor_breakdown: i.flavorBreakdown,
+          addons: i.addons,
         })),
         callback_url: `${shopOrigin()}/order-confirmation`,
       });
@@ -311,6 +312,11 @@ export default function Checkout() {
               {item.designNotes && (
                 <div style={{ fontSize: 12.5, color: "var(--color-hot-pink-dark)", marginTop: 2 }}>
                   Color: &ldquo;{item.designNotes}&rdquo;
+                </div>
+              )}
+              {item.addons && (
+                <div style={{ fontSize: 12.5, color: "var(--color-hot-pink-dark)", marginTop: 2 }}>
+                  Add-ons: &ldquo;{item.addons}&rdquo;
                 </div>
               )}
               {item.flavorBreakdown && (

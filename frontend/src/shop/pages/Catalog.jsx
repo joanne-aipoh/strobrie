@@ -20,6 +20,7 @@ function ProductCard({ card }) {
   const [sizeIdx, setSizeIdx] = useState(0);
   const [inscription, setInscription] = useState("");
   const [color, setColor] = useState("");
+  const [addons, setAddons] = useState("");
   const [added, setAdded] = useState(false);
   const [isBoxItem, setIsBoxItem] = useState(false);
 
@@ -137,8 +138,17 @@ function ProductCard({ card }) {
                 style={{ width: "100%", boxSizing: "border-box", marginTop: 4 }}
               />
             )}
+            <input
+              type="text"
+              className="product-card-variant"
+              placeholder='Add-ons (optional), e.g. "extra chocolate flavor layer"'
+              maxLength={200}
+              value={addons}
+              onChange={(e) => setAddons(e.target.value)}
+              style={{ width: "100%", boxSizing: "border-box", marginTop: 4 }}
+            />
             <div style={{ fontSize: 11, color: "var(--color-text-soft, #6b6b6b)", marginTop: 2, fontWeight: 700 }}>
-              Want a custom design? Contact us directly instead of ordering online.
+              Add-ons and custom designs: we'll confirm any extra cost with you before baking.
             </div>
           </div>
         )}
@@ -165,9 +175,10 @@ function ProductCard({ card }) {
                 // Reuses the order item's design_notes column — repurposed
                 // here to hold the customer's requested cake color.
                 const isWholeCake = product.name.startsWith("Whole Cake");
-                addItem(product, 1, { inscription, designNotes: isWholeCake ? color : undefined });
+                addItem(product, 1, { inscription, designNotes: isWholeCake ? color : undefined, addons });
                 setInscription("");
                 setColor("");
+                setAddons("");
                 setAdded(true);
                 setTimeout(() => setAdded(false), 2000);
               }}

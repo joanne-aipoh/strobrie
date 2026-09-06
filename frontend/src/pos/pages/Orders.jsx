@@ -102,6 +102,11 @@ export default function Orders() {
                           Color: &ldquo;{item.design_notes}&rdquo;
                         </div>
                       )}
+                      {item.addons && (
+                        <div style={{ fontSize: 12, color: "var(--rust-dark)" }}>
+                          Add-ons: &ldquo;{item.addons}&rdquo; — confirm extra cost with customer
+                        </div>
+                      )}
                       {item.flavor_breakdown && (
                         <div style={{ fontSize: 12, color: "var(--rust-dark)" }}>
                           {formatFlavorBreakdown(item.flavor_breakdown)}

@@ -90,6 +90,11 @@ export default function OrderConfirmation() {
                   Color: &ldquo;{item.design_notes}&rdquo;
                 </div>
               )}
+              {item.addons && (
+                <div style={{ fontSize: 12.5, color: "var(--color-hot-pink-dark)", marginTop: 2 }}>
+                  Add-ons: &ldquo;{item.addons}&rdquo;
+                </div>
+              )}
               {item.flavor_breakdown && (
                 <div style={{ fontSize: 12.5, color: "var(--color-hot-pink-dark)", marginTop: 2 }}>
                   {formatFlavorBreakdown(item.flavor_breakdown)}

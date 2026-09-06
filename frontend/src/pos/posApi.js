@@ -1,5 +1,9 @@
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
+// Till-side payment methods only — the shop's online checkout is Paystack
+// card payment exclusively and doesn't use this list.
+export const PAYMENT_METHODS = ["Cash", "Moniepoint", "Zenith Transfer", "Palm Pay POS", "GTB Transfer"];
+
 async function request(path, options = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { "Content-Type": "application/json" },
@@ -35,6 +39,7 @@ export const posApi = {
   listCustomers: (search) => request(`/api/pos/customers${search ? `?search=${encodeURIComponent(search)}` : ""}`),
   lookupCustomer: (phone) => request(`/api/pos/customers/lookup?phone=${encodeURIComponent(phone)}`),
   createCustomer: (data) => request("/api/pos/customers", { method: "POST", body: JSON.stringify(data) }),
+  updateCustomer: (id, data) => request(`/api/pos/customers/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
 
   // waste
   listWaste: () => request("/api/pos/waste"),

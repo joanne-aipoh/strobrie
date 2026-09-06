@@ -40,6 +40,7 @@ export default function ProductDetail() {
   const [added, setAdded] = useState(false);
   const [inscription, setInscription] = useState("");
   const [color, setColor] = useState("");
+  const [addons, setAddons] = useState("");
   const [isBoxItem, setIsBoxItem] = useState(false);
 
   useEffect(() => {
@@ -81,6 +82,7 @@ export default function ProductDetail() {
     setActivePhoto(0);
     setInscription("");
     setColor("");
+    setAddons("");
     if (found.type === "grouped") {
       setVariantIdx(found.variants.findIndex((v) => v.product.id === idNum));
     } else if (found.type === "grouped2d") {
@@ -140,9 +142,10 @@ export default function ProductDetail() {
   function handleAdd() {
     // Reuses the order item's design_notes column — repurposed here to hold
     // the customer's requested cake color instead of free-form design text.
-    addItem(product, Math.min(qty, remainingStock ?? Infinity), { inscription, designNotes: isWholeCake ? color : undefined });
+    addItem(product, Math.min(qty, remainingStock ?? Infinity), { inscription, designNotes: isWholeCake ? color : undefined, addons });
     setInscription("");
     setColor("");
+    setAddons("");
     setAdded(true);
     setTimeout(() => setAdded(false), 3000);
   }
@@ -266,8 +269,28 @@ export default function ProductDetail() {
                         />
                       </>
                     )}
+                    <label style={{ display: "block", fontSize: 13, color: "var(--color-text-soft, #6b6b6b)", margin: "10px 0 6px" }}>
+                      Add-ons (optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={'e.g. "extra chocolate flavor layer"'}
+                      maxLength={200}
+                      value={addons}
+                      onChange={(e) => setAddons(e.target.value)}
+                      style={{
+                        width: "100%",
+                        fontFamily: "inherit",
+                        fontSize: "0.95rem",
+                        padding: "0.7rem 0.9rem",
+                        borderRadius: 10,
+                        border: "1px solid rgba(0,0,0,0.15)",
+                        background: "var(--color-bg)",
+                        color: "var(--color-text)",
+                      }}
+                    />
                     <p className="form-note" style={{ marginTop: 8, fontWeight: 700 }}>
-                      Want a custom design? Contact us directly instead of ordering online.
+                      Add-ons and custom designs: we'll confirm any extra cost with you before baking.
                     </p>
                   </div>
                 )}

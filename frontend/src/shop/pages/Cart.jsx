@@ -51,6 +51,11 @@ export default function Cart() {
                         Color: &ldquo;{item.designNotes}&rdquo;
                       </div>
                     )}
+                    {item.addons && (
+                      <div style={{ fontSize: 12.5, color: "var(--color-hot-pink-dark)", marginTop: 2 }}>
+                        Add-ons: &ldquo;{item.addons}&rdquo;
+                      </div>
+                    )}
                     {item.flavorBreakdown && (
                       <div style={{ fontSize: 12.5, color: "var(--color-hot-pink-dark)", marginTop: 2 }}>
                         {formatFlavorBreakdown(item.flavorBreakdown)}

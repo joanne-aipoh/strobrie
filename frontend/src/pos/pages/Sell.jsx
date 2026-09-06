@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { usePosAuth } from "../PosAuthContext.jsx";
-import { posApi } from "../posApi.js";
+import { posApi, PAYMENT_METHODS } from "../posApi.js";
 import { shopApi } from "../../shop/shopApi.js";
 
 const CATEGORY_ORDER = ["Coffee", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Extras", "Breakfast", "Lunch", "Brunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer"];
@@ -393,12 +393,15 @@ export default function Sell() {
         )}
 
         <div className="pay-row">
-          <button className={`pay-btn ${payMethod === "Cash" ? "selected" : ""}`} onClick={() => setPayMethod("Cash")}>
-            Cash
-          </button>
-          <button className={`pay-btn ${payMethod === "Card" ? "selected" : ""}`} onClick={() => setPayMethod("Card")}>
-            Card (terminal)
-          </button>
+          {PAYMENT_METHODS.map((method) => (
+            <button
+              key={method}
+              className={`pay-btn ${payMethod === method ? "selected" : ""}`}
+              onClick={() => setPayMethod(method)}
+            >
+              {method}
+            </button>
+          ))}
         </div>
         {chargeError && <div className="error-text" style={{ marginBottom: 8 }}>{chargeError}</div>}
         <button className="charge-btn" disabled={cart.length === 0 || chargeStatus === "submitting"} onClick={charge}>

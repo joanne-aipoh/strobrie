@@ -23,17 +23,20 @@ export function CartProvider({ children }) {
     }
   }, [items]);
 
-  // A cake with an inscription or design note always gets its own line, even
-  // if the same product is already in the cart — two cakes can carry
-  // different messages/designs. A build-your-box item (flavorBreakdown) also
-  // always gets its own line, since two boxes can be split differently.
-  // Plain lines still merge by product as before.
-  function addItem(product, qty = 1, { inscription, designNotes, flavorBreakdown } = {}) {
+  // A cake with an inscription, design note, or add-on request always gets
+  // its own line, even if the same product is already in the cart — two
+  // cakes can carry different messages/designs/add-ons. A build-your-box
+  // item (flavorBreakdown) also always gets its own line, since two boxes
+  // can be split differently. Plain lines still merge by product as before.
+  function addItem(product, qty = 1, { inscription, designNotes, flavorBreakdown, addons } = {}) {
     const cleanInscription = inscription?.trim() || null;
     const cleanDesignNotes = designNotes?.trim() || null;
+    const cleanAddons = addons?.trim() || null;
     setItems((prev) => {
-      if (!cleanInscription && !cleanDesignNotes && !flavorBreakdown) {
-        const existing = prev.find((i) => i.productId === product.id && !i.inscription && !i.designNotes && !i.flavorBreakdown);
+      if (!cleanInscription && !cleanDesignNotes && !flavorBreakdown && !cleanAddons) {
+        const existing = prev.find(
+          (i) => i.productId === product.id && !i.inscription && !i.designNotes && !i.flavorBreakdown && !i.addons
+        );
         if (existing) {
           return prev.map((i) => (i.lineId === existing.lineId ? { ...i, qty: i.qty + qty } : i));
         }
@@ -50,6 +53,7 @@ export function CartProvider({ children }) {
           inscription: cleanInscription,
           designNotes: cleanDesignNotes,
           flavorBreakdown: flavorBreakdown || null,
+          addons: cleanAddons,
         },
       ];
     });

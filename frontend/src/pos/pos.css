@@ -88,10 +88,10 @@
 .pos-app .qty-ctrl span{font-size:13px;min-width:16px;text-align:center;}
 .pos-app .remove-btn{background:none;border:none;color:var(--rust-dark);font-size:12px;cursor:pointer;padding:0 0 0 6px;}
 .pos-app .cart-total{display:flex;justify-content:space-between;padding:12px 0;font-size:15px;font-weight:700;}
-.pos-app .pay-row{display:flex;gap:8px;margin-bottom:10px;}
+.pos-app .pay-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
 .pos-app .pay-btn{
-  flex:1;padding:9px;border-radius:8px;border:1px solid var(--line);
-  background:var(--cream-2);cursor:pointer;font-size:13px;
+  flex:1 1 calc(33.333% - 6px);padding:9px 6px;border-radius:8px;border:1px solid var(--line);
+  background:var(--cream-2);cursor:pointer;font-size:12.5px;
 }
 .pos-app .pay-btn.selected{background:var(--sage);border-color:var(--sage);color:var(--white);font-weight:600;}
 .pos-app .charge-btn{

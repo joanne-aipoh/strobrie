@@ -187,6 +187,7 @@ def _build_order(payload: shop_schemas.OrderCreate, db: Session) -> shop_models.
                     detail=f'Inscription for {product.name} is too long — {limit} characters max for that size.',
                 )
         design_notes = (line.design_notes or "").strip() or None
+        addons = (line.addons or "").strip() or None
         subtotal += product.price * line.qty
         order_items.append(
             shop_models.OrderItem(
@@ -197,6 +198,7 @@ def _build_order(payload: shop_schemas.OrderCreate, db: Session) -> shop_models.
                 inscription=inscription,
                 design_notes=design_notes,
                 flavor_breakdown=flavor_breakdown_json,
+                addons=addons,
             )
         )
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { usePosAuth } from "../PosAuthContext.jsx";
-import { posApi } from "../posApi.js";
+import { posApi, PAYMENT_METHODS } from "../posApi.js";
 import { posPath } from "../posBase.js";
 
 function fmt(n) {
@@ -153,8 +153,9 @@ export default function EventDetail() {
             <div className="form-field">
               <label>Payment method</label>
               <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-                <option value="Cash">Cash</option>
-                <option value="Card">Card (terminal)</option>
+                {PAYMENT_METHODS.map((method) => (
+                  <option key={method} value={method}>{method}</option>
+                ))}
               </select>
             </div>
           ) : (
@@ -205,8 +206,9 @@ export default function EventDetail() {
                             onChange={(e) => setCheckinPay((prev) => ({ ...prev, [t.id]: e.target.value }))}
                             style={{ fontSize: 12, padding: 4, marginRight: 6 }}
                           >
-                            <option value="Cash">Cash</option>
-                            <option value="Card">Card</option>
+                            {PAYMENT_METHODS.map((method) => (
+                              <option key={method} value={method}>{method}</option>
+                            ))}
                           </select>
                           <button
                             className="log-btn"
