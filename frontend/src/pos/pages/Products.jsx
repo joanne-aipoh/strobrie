@@ -187,6 +187,7 @@ export default function Products() {
   const [products, setProducts] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [settings, setSettings] = useState(null);
 
   function load() {
     return shopApi.adminListProducts().then(setProducts);
@@ -194,7 +195,13 @@ export default function Products() {
 
   useEffect(() => {
     load();
+    shopApi.getSettings().then(setSettings);
   }, []);
+
+  async function toggleBrunchVisible() {
+    const updated = await shopApi.updateSettings({ brunch_visible: !settings.brunch_visible });
+    setSettings(updated);
+  }
 
   if (!products) return <p>Loading&hellip;</p>;
 
@@ -238,6 +245,31 @@ export default function Products() {
           These products power shop.strobrie.com — separate from the till menu. Only "Available online" products
           show up for customers.
         </p>
+
+        {settings && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+              marginBottom: 16,
+              padding: "10px 12px",
+              background: "var(--cream-2)",
+              borderRadius: 8,
+            }}
+          >
+            <div>
+              <strong>Brunch section</strong>
+              <div style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>
+                Brunch only runs Sundays — turn it off the rest of the week so it doesn't show in the shop.
+              </div>
+            </div>
+            <button className="link-btn" onClick={toggleBrunchVisible}>
+              {settings.brunch_visible ? "Visible — turn off" : "Hidden — turn on"}
+            </button>
+          </div>
+        )}
 
         {products.length === 0 && <div className="empty-note">No products yet.</div>}
 

@@ -37,7 +37,31 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     return product
 
 
+def _get_settings(db: Session) -> shop_models.ShopSettings:
+    settings = db.get(shop_models.ShopSettings, 1)
+    if settings is None:
+        settings = shop_models.ShopSettings(id=1)
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
+    return settings
+
+
+@router.get("/settings", response_model=shop_schemas.ShopSettingsOut)
+def get_settings(db: Session = Depends(get_db)):
+    return _get_settings(db)
+
+
 # --- Admin: product management (Flow's Products tab) -------------------
+
+
+@router.put("/admin/settings", response_model=shop_schemas.ShopSettingsOut)
+def update_settings(payload: shop_schemas.ShopSettingsUpdate, db: Session = Depends(get_db)):
+    settings = _get_settings(db)
+    settings.brunch_visible = payload.brunch_visible
+    db.commit()
+    db.refresh(settings)
+    return settings
 
 
 @router.get("/admin/products", response_model=list[shop_schemas.ProductOut])

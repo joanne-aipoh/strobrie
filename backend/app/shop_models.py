@@ -26,6 +26,16 @@ class Product(Base):
     )
 
 
+class ShopSettings(Base):
+    """Singleton row (id always 1) for shop-wide toggles that don't belong to
+    any one product — e.g. showing/hiding the Sunday-only Brunch section."""
+
+    __tablename__ = "shop_settings"
+
+    id: Mapped[int] = mapped_column(primary_key=True, default=1)
+    brunch_visible: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
 class ProductPhoto(Base):
     __tablename__ = "product_photos"
 

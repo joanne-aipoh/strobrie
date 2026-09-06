@@ -4,7 +4,7 @@ import { photoUrl, shopApi } from "../shopApi.js";
 import { useCart } from "../CartContext.jsx";
 import { shopPath } from "../shopBase.js";
 import { groupProducts, cardPhotos } from "../productGrouping.js";
-import { groupCoffee } from "../coffeeGrouping.js";
+import { groupCoffee, groupTea } from "../coffeeGrouping.js";
 import { CAKE_CATEGORIES } from "../cakeCategories.js";
 import { inscriptionLimitForLabel } from "../inscriptionLimit.js";
 import BoxBuilder from "../BoxBuilder.jsx";
@@ -60,8 +60,14 @@ export default function ProductDetail() {
       setError("Product not found");
       return;
     }
-    const sameCategory = products.filter((p) => p.category === current.category);
-    const cards = current.category === "Coffee" ? [groupCoffee(sameCategory)] : groupProducts(sameCategory);
+    let cards;
+    if (current.category === "Coffee") {
+      cards = [groupCoffee(products.filter((p) => p.category === "Coffee"))];
+    } else if (current.category === "Tea") {
+      cards = [groupTea(products.filter((p) => p.category === "Tea"))];
+    } else {
+      cards = groupProducts(products.filter((p) => p.category === current.category));
+    }
     const found = cards.find((c) => {
       if (c.type === "single") return c.product.id === idNum;
       if (c.type === "grouped") return c.variants.some((v) => v.product.id === idNum);

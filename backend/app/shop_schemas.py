@@ -132,6 +132,16 @@ class LoyaltyPointsOut(BaseModel):
     naira_per_point: int
 
 
+class ShopSettingsOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    brunch_visible: bool
+
+
+class ShopSettingsUpdate(BaseModel):
+    brunch_visible: bool
+
+
 class BoxFlavorOption(BaseModel):
     product_id: int
     flavor: str

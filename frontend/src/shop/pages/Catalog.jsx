@@ -4,7 +4,7 @@ import { photoUrl, shopApi } from "../shopApi.js";
 import { useCart } from "../CartContext.jsx";
 import { shopPath } from "../shopBase.js";
 import { groupProducts, cardPhotos } from "../productGrouping.js";
-import { groupCoffee } from "../coffeeGrouping.js";
+import { groupCoffee, groupTea } from "../coffeeGrouping.js";
 import { CAKE_CATEGORIES } from "../cakeCategories.js";
 import { inscriptionLimitForLabel } from "../inscriptionLimit.js";
 import BoxBuilder from "../BoxBuilder.jsx";
@@ -183,25 +183,70 @@ function ProductCard({ card }) {
 export default function Catalog() {
   const [products, setProducts] = useState(null);
   const [error, setError] = useState(null);
+  const [settings, setSettings] = useState(null);
 
   useEffect(() => {
     shopApi
       .listProducts()
       .then(setProducts)
       .catch((err) => setError(err.message));
+    shopApi
+      .getSettings()
+      .then(setSettings)
+      .catch(() => setSettings({ brunch_visible: true })); // fail open — don't hide Brunch over a settings-fetch hiccup
   }, []);
 
   if (error) return <p className="form-error container" style={{ padding: "3rem 1.5rem" }}>Couldn't load products ({error}).</p>;
-  if (!products) return <p className="container" style={{ padding: "3rem 1.5rem" }}>Loading products&hellip;</p>;
+  if (!products || !settings) return <p className="container" style={{ padding: "3rem 1.5rem" }}>Loading products&hellip;</p>;
 
-  // Cakes and Cheesecakes share one grid section — they're both "cake" to a
-  // customer browsing, just split into two backend categories for pricing.
-  const sectionLabel = (category) => (CAKE_CATEGORIES.includes(category) ? "Whole Cakes" : category);
+  // Some categories share one grid section without merging into one card —
+  // each keeps its own card/dropdown, they just sit under one heading.
+  // Cakes/Cheesecakes → "Whole Cakes", Coffee/Tea/Extras (add-ons) →
+  // "Coffee & Tea", Juice/Milkshake/Lemonade/Smoothie → "Drinks".
+  const DRINKS_CATEGORIES = ["Juices", "Milkshakes", "Lemonades", "Smoothies"];
+  function sectionLabel(category) {
+    if (CAKE_CATEGORIES.includes(category)) return "Whole Cakes";
+    if (category === "Coffee" || category === "Tea" || category === "Extras") return "Coffee & Tea";
+    if (DRINKS_CATEGORIES.includes(category)) return "Drinks";
+    return category;
+  }
 
   const byCategory = products.reduce((groups, p) => {
+    if (p.category === "Brunch" && !settings.brunch_visible) return groups;
     (groups[sectionLabel(p.category)] ||= []).push(p);
     return groups;
   }, {});
+
+  // Sections are grouped Food, then Dessert/Cakes, then Drinks — rather than
+  // the alphabetical-by-category order the API returns them in, which
+  // interleaved food and drink sections in a confusing way. Anything not
+  // listed here falls to the end, in whatever order it was encountered.
+  const SECTION_ORDER = [
+    "Breakfast", "Brunch", "Lunch",
+    "Bakery", "Whole Cakes",
+    "Coffee & Tea", "Drinks", "Cocktails", "Mocktails", "Schweppes",
+  ];
+  const orderedSections = Object.entries(byCategory).sort(([a], [b]) => {
+    const ia = SECTION_ORDER.indexOf(a);
+    const ib = SECTION_ORDER.indexOf(b);
+    return (ia === -1 ? SECTION_ORDER.length : ia) - (ib === -1 ? SECTION_ORDER.length : ib);
+  });
+
+  // A shared section can bundle several original categories, but each still
+  // becomes its own card(s) — never merged into one shared dropdown.
+  function cardsForSection(section, items) {
+    if (section === "Coffee & Tea") {
+      return [
+        groupCoffee(items.filter((p) => p.category === "Coffee")),
+        groupTea(items.filter((p) => p.category === "Tea")),
+        ...groupProducts(items.filter((p) => p.category === "Extras")),
+      ];
+    }
+    if (section === "Drinks") {
+      return DRINKS_CATEGORIES.flatMap((cat) => groupProducts(items.filter((p) => p.category === cat)));
+    }
+    return groupProducts(items);
+  }
 
   return (
     <section className="section">
@@ -211,11 +256,16 @@ export default function Catalog() {
 
         {products.length === 0 && <p className="empty-note">Nothing's in the shop yet — check back soon.</p>}
 
-        {Object.entries(byCategory).map(([category, items]) => (
+        {orderedSections.map(([category, items]) => (
           <div key={category} style={{ marginBottom: "2.5rem" }}>
-            <h2 style={{ fontSize: "1.4rem", marginBottom: "1rem" }}>{category}</h2>
+            <h2 style={{ fontSize: "1.4rem", marginBottom: category === "Brunch" ? 2 : "1rem" }}>{category}</h2>
+            {category === "Brunch" && (
+              <p style={{ fontSize: 13, color: "var(--color-text-soft, #6b6b6b)", marginBottom: "1rem" }}>
+                Sundays only.
+              </p>
+            )}
             <div className="product-grid">
-              {(category === "Coffee" ? [groupCoffee(items)] : groupProducts(items)).map((card) => (
+              {cardsForSection(category, items).map((card) => (
                 <ProductCard card={card} key={card.type === "single" ? card.product.id : card.name} />
               ))}
             </div>
