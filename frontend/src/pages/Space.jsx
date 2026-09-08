@@ -92,16 +92,23 @@ function BookingForm() {
 export default function Space() {
   return (
     <section className="section">
-      <div className="container">
-        <h2>Rent Our Space</h2>
-        <p>
-          Up to 50 guests — birthdays, corporate gatherings, brunch parties, and private
-          dinners.
-        </p>
-        <div className="form-card" style={{ maxWidth: 480, margin: "2rem auto 0" }}>
-          <p className="menu-note">Up to 50 guests &middot; from &#8358;350,000</p>
-          <BookingForm />
+      <div className="container form-grid">
+        <div>
+          <h2>Rent Our Space</h2>
+          <p>
+            Up to 50 guests — birthdays, corporate gatherings, brunch parties, and private
+            dinners.
+          </p>
+          <div className="form-card" style={{ maxWidth: 480, marginTop: "1.5rem" }}>
+            <p className="menu-note">Up to 50 guests &middot; from &#8358;350,000</p>
+            <BookingForm />
+          </div>
         </div>
+        <img
+          src="/tableview.jpg"
+          alt="A full table spread at Strobriē, set up for a gathering"
+          style={{ width: "100%", borderRadius: 20, objectFit: "cover", maxHeight: 720, display: "block" }}
+        />
       </div>
     </section>
   );

@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
+import FoodGallery from "../components/FoodGallery.jsx";
 
 export default function Home() {
   return (
     <>
       <section className="hero">
         <div className="container hero-inner">
-          <p className="eyebrow">Cafe &middot; Bakery &middot; Abuja</p>
+          <p className="eyebrow">Cafe &middot; Bakery &middot; Restaurant</p>
           <h1>
             Come in. Take a seat.
             <br />
@@ -31,7 +32,13 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="about" className="section">
+      <section className="section" style={{ paddingTop: 0, paddingBottom: "1.5rem" }}>
+        <div className="container">
+          <FoodGallery />
+        </div>
+      </section>
+
+      <section id="about" className="section" style={{ paddingTop: "1.5rem" }}>
         <div className="container about-grid">
           <div>
             <h2>Our Space</h2>

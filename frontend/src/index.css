@@ -461,3 +461,32 @@ a {
     height: 50px;
   }
 }
+
+.food-gallery {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.food-gallery-item {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+}
+
+.food-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.25s ease;
+}
+
+.food-gallery-item:hover img {
+  transform: scale(1.06);
+}
+
+@media (max-width: 700px) {
+  .food-gallery {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

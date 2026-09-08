@@ -14,12 +14,21 @@ function ShopHeader() {
   return (
     <header className="site-header">
       <div className="container header-inner">
-        <NavLink to={shopPath("/")} className="logo">
-          <span className="logo-name">
-            Strobri<span className="logo-e">ē</span>
-          </span>
-          <span className="logo-sub">shop</span>
-        </NavLink>
+        {isShopHost ? (
+          <a href={MAIN_SITE_URL} className="logo">
+            <span className="logo-name">
+              Strobri<span className="logo-e">ē</span>
+            </span>
+            <span className="logo-sub">shop</span>
+          </a>
+        ) : (
+          <NavLink to="/" className="logo">
+            <span className="logo-name">
+              Strobri<span className="logo-e">ē</span>
+            </span>
+            <span className="logo-sub">shop</span>
+          </NavLink>
+        )}
         <nav className="nav">
           {isShopHost ? <a href={MAIN_SITE_URL}>Main Site</a> : <NavLink to="/">Main Site</NavLink>}
           {!onShopRoot && (
