@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 # Till-side payment methods only — the shop's online checkout is Paystack
 # card payment exclusively and doesn't use this list.
-PaymentMethod = Literal["Cash", "Moniepoint", "Zenith Transfer", "Palm Pay POS", "GTB Transfer"]
+PaymentMethod = Literal["Cash", "Moniepoint", "Palm Pay POS", "GTB Transfer"]
 
 
 # --- Staff / auth -----------------------------------------------------------

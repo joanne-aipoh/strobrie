@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
+import WhatsAppButton from "./components/WhatsAppButton.jsx";
 
 const SHOP_SITE_URL = "https://shop.strobrie.com";
 const isLocalDev = typeof window !== "undefined" && window.location.hostname === "localhost";
@@ -43,6 +44,7 @@ export default function App() {
         <Outlet />
       </main>
       <Footer />
+      <WhatsAppButton />
     </>
   );
 }

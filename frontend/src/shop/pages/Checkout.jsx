@@ -4,6 +4,7 @@ import { useCart } from "../CartContext.jsx";
 import { shopApi } from "../shopApi.js";
 import { shopOrigin, shopPath } from "../shopBase.js";
 import { ABUJA_AREAS } from "../abujaAreas.js";
+import { whatsappLink } from "../../whatsapp.js";
 
 function fmt(n) {
   return `₦${n.toLocaleString("en-NG")}`;
@@ -92,10 +93,36 @@ export default function Checkout() {
     }
   }
 
+  // Builds a pre-filled WhatsApp message for customers who'd rather order by
+  // chatting than pay online — same cart, sent as a readable order request
+  // instead of going through Paystack. Nothing is submitted to the backend
+  // here; staff take it from there in the chat.
+  function buildWhatsAppOrderMessage() {
+    const lines = ["Hi Strobriē! I'd like to order:"];
+    for (const item of items) {
+      let line = `- ${item.qty} × ${item.name} — ${fmt(item.price * item.qty)}`;
+      if (item.inscription) line += ` (Inscription: "${item.inscription}")`;
+      if (item.designNotes) line += ` (Color: "${item.designNotes}")`;
+      if (item.addons) line += ` (Add-ons: "${item.addons}")`;
+      if (item.flavorBreakdown) line += ` (${formatFlavorBreakdown(item.flavorBreakdown)})`;
+      lines.push(line);
+    }
+    lines.push(`Total: ${fmt(total)}`);
+    lines.push("");
+    lines.push(`Name: ${form.customer_name || "—"}`);
+    lines.push(`Phone: ${form.customer_phone || "—"}`);
+    lines.push(`Fulfillment: ${form.fulfillment_method === "delivery" ? "Delivery" : "Pickup"}`);
+    if (form.fulfillment_method === "delivery" && form.delivery_address) {
+      lines.push(`Delivery address: ${form.delivery_address}${form.delivery_area ? ` (${form.delivery_area})` : ""}`);
+    }
+    lines.push(`When: ${form.timing_choice === "asap" ? "As soon as possible" : `${form.requested_date || "—"} ${form.requested_time || ""}`.trim()}`);
+    return lines.join("\n");
+  }
+
   return (
     <section className="section">
       <div className="container form-grid">
-        <div className="form-card">
+        <div className="form-card" style={{ order: 2 }}>
           <h2>Checkout Details</h2>
           <form className="contact-form" onSubmit={handleSubmit}>
             <input
@@ -287,14 +314,23 @@ export default function Checkout() {
               type="submit"
               className="button button-primary"
               disabled={status === "submitting"}
-              style={{ alignSelf: "flex-end" }}
+              style={{ alignSelf: "flex-end", width: "100%", boxSizing: "border-box" }}
             >
               {status === "submitting" ? "Redirecting to payment…" : `Pay ${fmt(total)} with Paystack`}
             </button>
+            <a
+              href={whatsappLink(buildWhatsAppOrderMessage())}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="button button-ghost"
+              style={{ alignSelf: "flex-end", width: "100%", boxSizing: "border-box", textAlign: "center" }}
+            >
+              Order via WhatsApp instead
+            </a>
           </form>
         </div>
 
-        <div className="form-card">
+        <div className="form-card" style={{ order: 1 }}>
           <h2>Order Summary</h2>
           {items.map((item) => (
             <div key={item.lineId} style={{ padding: "0.5rem 0", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>

@@ -2,6 +2,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import "./shop.css";
 import { CartProvider, useCart } from "./CartContext.jsx";
 import { isShopHost, shopPath } from "./shopBase.js";
+import WhatsAppButton from "../components/WhatsAppButton.jsx";
 
 const MAIN_SITE_URL = "https://strobrie.com";
 
@@ -47,6 +48,7 @@ export default function ShopLayout() {
           <p>&copy; {new Date().getFullYear()} Strobriē By Joanne. All rights reserved.</p>
         </div>
       </footer>
+      <WhatsAppButton />
     </CartProvider>
   );
 }

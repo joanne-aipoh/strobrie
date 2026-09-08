@@ -2,7 +2,7 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // Till-side payment methods only — the shop's online checkout is Paystack
 // card payment exclusively and doesn't use this list.
-export const PAYMENT_METHODS = ["Cash", "Moniepoint", "Zenith Transfer", "Palm Pay POS", "GTB Transfer"];
+export const PAYMENT_METHODS = ["Cash", "Moniepoint", "Palm Pay POS", "GTB Transfer"];
 
 async function request(path, options = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
