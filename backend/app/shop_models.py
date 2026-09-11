@@ -33,12 +33,17 @@ class Product(Base):
 
 class ShopSettings(Base):
     """Singleton row (id always 1) for shop-wide toggles that don't belong to
-    any one product — e.g. showing/hiding the Sunday-only Brunch section."""
+    any one product — e.g. hiding a whole category from the shop (Brunch on
+    a weekday, Coffee during a machine outage) without touching every
+    product in it."""
 
     __tablename__ = "shop_settings"
 
     id: Mapped[int] = mapped_column(primary_key=True, default=1)
-    brunch_visible: Mapped[bool] = mapped_column(Boolean, default=True)
+    # JSON list of category names currently hidden from the public shop —
+    # e.g. '["Brunch"]'. Encoded as text since it's a small, rarely-queried
+    # set; not worth a separate table.
+    hidden_categories: Mapped[str] = mapped_column(Text, default="[]")
 
 
 class ProductPhoto(Base):

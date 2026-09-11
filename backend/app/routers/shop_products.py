@@ -1,3 +1,4 @@
+import json
 import os
 import uuid
 
@@ -49,7 +50,8 @@ def _get_settings(db: Session) -> shop_models.ShopSettings:
 
 @router.get("/settings", response_model=shop_schemas.ShopSettingsOut)
 def get_settings(db: Session = Depends(get_db)):
-    return _get_settings(db)
+    settings = _get_settings(db)
+    return shop_schemas.ShopSettingsOut(hidden_categories=json.loads(settings.hidden_categories))
 
 
 # --- Admin: product management (Flow's Products tab) -------------------
@@ -58,10 +60,10 @@ def get_settings(db: Session = Depends(get_db)):
 @router.put("/admin/settings", response_model=shop_schemas.ShopSettingsOut)
 def update_settings(payload: shop_schemas.ShopSettingsUpdate, db: Session = Depends(get_db)):
     settings = _get_settings(db)
-    settings.brunch_visible = payload.brunch_visible
+    settings.hidden_categories = json.dumps(payload.hidden_categories)
     db.commit()
     db.refresh(settings)
-    return settings
+    return shop_schemas.ShopSettingsOut(hidden_categories=json.loads(settings.hidden_categories))
 
 
 @router.get("/admin/products", response_model=list[shop_schemas.ProductOut])

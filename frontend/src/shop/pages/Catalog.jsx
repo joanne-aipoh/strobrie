@@ -209,7 +209,7 @@ export default function Catalog() {
     shopApi
       .getSettings()
       .then(setSettings)
-      .catch(() => setSettings({ brunch_visible: true })); // fail open — don't hide Brunch over a settings-fetch hiccup
+      .catch(() => setSettings({ hidden_categories: [] })); // fail open — don't hide anything over a settings-fetch hiccup
   }, []);
 
   if (error) return <p className="form-error container" style={{ padding: "3rem 1.5rem" }}>Couldn't load products ({error}).</p>;
@@ -228,7 +228,7 @@ export default function Catalog() {
   }
 
   const byCategory = products.reduce((groups, p) => {
-    if (p.category === "Brunch" && !settings.brunch_visible) return groups;
+    if (settings.hidden_categories.includes(p.category)) return groups;
     (groups[sectionLabel(p.category)] ||= []).push(p);
     return groups;
   }, {});

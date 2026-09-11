@@ -24,7 +24,10 @@
   color: var(--ink);
 }
 .pos-app *{box-sizing:border-box;}
-.pos-app .pos-shell{max-width:1000px;margin:0 auto;padding:20px 16px 60px;}
+/* Fixed width, not max-width — Flow is a staff tool used on a till/desktop,
+   so the layout stays pixel-for-pixel identical regardless of window size
+   instead of reflowing; a narrower window just scrolls horizontally. */
+.pos-app .pos-shell{width:1000px;margin:0 auto;padding:20px 16px 60px;}
 .pos-app header.top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;}
 .pos-app .brand{display:flex;align-items:baseline;gap:10px;}
 .pos-app .brand h1{
@@ -52,7 +55,6 @@
 .pos-app nav.tabs button.active{color:var(--rust-dark);border-bottom-color:var(--rust);font-weight:600;}
 
 .pos-app .layout{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start;}
-@media (max-width:760px){ .pos-app .layout{grid-template-columns:1fr;} }
 
 .pos-app .categories{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
 .pos-app .cat-btn{

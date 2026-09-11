@@ -146,13 +146,11 @@ class LoyaltyPointsOut(BaseModel):
 
 
 class ShopSettingsOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    brunch_visible: bool
+    hidden_categories: list[str]
 
 
 class ShopSettingsUpdate(BaseModel):
-    brunch_visible: bool
+    hidden_categories: list[str]
 
 
 class BoxFlavorOption(BaseModel):
