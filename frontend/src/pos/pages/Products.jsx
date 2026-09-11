@@ -49,7 +49,12 @@ function ProductPhotos({ product, onChanged }) {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
+      // A new upload replaces whatever photo(s) this product already had,
+      // rather than piling up alongside them — most products only ever
+      // need the one current photo.
+      const existingIds = product.photos.map((p) => p.id);
       await shopApi.uploadPhoto(product.id, file);
+      await Promise.all(existingIds.map((id) => shopApi.deletePhoto(id)));
       setError("");
       onChanged();
     } catch (err) {
@@ -98,6 +103,11 @@ function ProductPhotos({ product, onChanged }) {
         ))}
       </div>
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleUpload} style={{ fontSize: 12 }} />
+      {product.photos.length > 0 && (
+        <div style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 4 }}>
+          Choosing a new photo replaces the current one.
+        </div>
+      )}
       {error && <div className="error-text">{error}</div>}
     </div>
   );
