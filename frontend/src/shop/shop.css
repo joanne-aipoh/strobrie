@@ -62,6 +62,29 @@
   justify-content: center;
 }
 
+/* Stock badge on the card photo, top-left (the "expand" icon owns
+   top-right) — pink while low, gray once actually sold out. Only appears
+   once a product's stock is being tracked (set via Flow's Inventory page);
+   untracked products are treated as always available and show neither. */
+.product-card-stock-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: #fff;
+}
+
+.product-card-stock-badge.low {
+  background: var(--color-hot-pink-dark);
+}
+
+.product-card-stock-badge.sold-out {
+  background: #666;
+}
+
 .product-card-view-link {
   font-size: 12px;
   color: var(--color-hot-pink-dark);
@@ -128,6 +151,7 @@
 }
 
 .product-detail-main {
+  position: relative;
   aspect-ratio: 4 / 3;
   border-radius: 16px;
   overflow: hidden;

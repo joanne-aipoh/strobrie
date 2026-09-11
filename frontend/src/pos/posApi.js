@@ -56,6 +56,11 @@ export const posApi = {
   listEvents: () => request("/api/pos/events"),
   getEvent: (id) => request(`/api/pos/events/${id}`),
   createEvent: (data) => request("/api/pos/events", { method: "POST", body: JSON.stringify(data) }),
+  updateEvent: (id, data) => request(`/api/pos/events/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  addTier: (eventId, data) => request(`/api/pos/events/${eventId}/tiers`, { method: "POST", body: JSON.stringify(data) }),
+  updateTier: (eventId, tierId, data) =>
+    request(`/api/pos/events/${eventId}/tiers/${tierId}`, { method: "PATCH", body: JSON.stringify(data) }),
+  removeTier: (eventId, tierId) => request(`/api/pos/events/${eventId}/tiers/${tierId}`, { method: "DELETE" }),
   listTickets: (eventId) => request(`/api/pos/events/${eventId}/tickets`),
   sellTicket: (eventId, data) =>
     request(`/api/pos/events/${eventId}/tickets`, { method: "POST", body: JSON.stringify(data) }),

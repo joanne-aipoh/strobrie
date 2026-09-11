@@ -129,6 +129,10 @@ class TicketTier(Base):
     name: Mapped[str] = mapped_column(String(80))
     price: Mapped[int] = mapped_column(Integer, default=0)
     qty: Mapped[int] = mapped_column(Integer, default=0)  # 0 = unlimited
+    # False for tiers too expensive/risky to sell unattended online (e.g. a
+    # multi-session pack) — staff still sell these in person via Flow, they
+    # just don't show up on the public booking page or accept online payment.
+    online_purchasable: Mapped[bool] = mapped_column(Boolean, default=True)
 
     event: Mapped["PosEvent"] = relationship(back_populates="tiers")
 

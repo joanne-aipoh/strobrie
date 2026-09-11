@@ -164,6 +164,10 @@ export default function ProductDetail() {
               ) : (
                 <div className="product-card-placeholder" style={{ height: "100%" }}>No photo yet</div>
               )}
+              {outOfStock && <span className="product-card-stock-badge sold-out">Sold Out</span>}
+              {!outOfStock && remainingStock !== null && remainingStock <= 10 && (
+                <span className="product-card-stock-badge low">Only {remainingStock} left</span>
+              )}
             </div>
             {photos.length > 1 && (
               <div className="product-thumbs">

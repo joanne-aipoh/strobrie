@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from datetime import date as _date  # alias for annotations on fields literally named "date"
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -175,6 +176,7 @@ class TierCreate(BaseModel):
     name: str = Field(min_length=1, max_length=80)
     price: int = Field(ge=0)
     qty: int = Field(ge=0, default=0)
+    online_purchasable: bool = True
 
 
 class TierOut(BaseModel):
@@ -186,6 +188,7 @@ class TierOut(BaseModel):
     qty: int
     sold: int
     remaining: int | None
+    online_purchasable: bool
 
 
 class PosEventCreate(BaseModel):
@@ -209,6 +212,23 @@ class PosEventOut(BaseModel):
     cost_budget: int
     tiers: list[TierOut]
     tickets_sold: int
+
+
+class PosEventUpdate(BaseModel):
+    # All optional — a caller sends just the fields it wants to change.
+    name: str | None = Field(default=None, min_length=1, max_length=150)
+    date: _date | None = None
+    time: str | None = None
+    capacity: int | None = None
+    description: str | None = None
+    cost_budget: int | None = None
+
+
+class TierUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=80)
+    price: int | None = Field(default=None, ge=0)
+    qty: int | None = Field(default=None, ge=0)
+    online_purchasable: bool | None = None
 
 
 class TicketSellRequest(BaseModel):
@@ -284,3 +304,8 @@ class PublicTicketOut(BaseModel):
     channel: str
     paid: bool
     purchase_timestamp: datetime
+    event_name: str
+    event_date: date
+    event_time: str | None
+    event_description: str | None
+    tier_name: str

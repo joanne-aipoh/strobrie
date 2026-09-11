@@ -43,7 +43,24 @@ export default function EventTicketConfirmation() {
           <>
             <h1 style={{ fontSize: "2rem" }}>You're in, {ticket.buyer_name}!</h1>
             <p className="form-success">Payment confirmed — your spot is booked.</p>
-            <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>
+            <div className="form-card" style={{ marginTop: "1rem", maxWidth: 480 }}>
+              <h2 style={{ marginTop: 0 }}>{ticket.event_name}</h2>
+              <p style={{ margin: 0, fontSize: "0.9rem" }}>
+                {new Date(`${ticket.event_date}T00:00:00`).toLocaleDateString("en-NG", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })}
+                {ticket.event_time ? ` — ${ticket.event_time}` : ""}
+              </p>
+              <p style={{ margin: "0.5rem 0 0", fontSize: "0.9rem" }}>{ticket.tier_name}</p>
+              {ticket.event_description && (
+                <p style={{ margin: "0.75rem 0 0", fontSize: "0.85rem", color: "var(--color-text-soft, #6b6b6b)" }}>
+                  {ticket.event_description}
+                </p>
+              )}
+            </div>
+            <p style={{ fontWeight: 600, fontSize: "0.9rem", marginTop: "1rem" }}>
               Show this page (or your confirmation email) at check-in as proof of payment.
             </p>
           </>

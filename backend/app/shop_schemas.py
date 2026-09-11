@@ -78,6 +78,10 @@ class OrderCreate(BaseModel):
     fulfillment_method: Literal["pickup", "delivery"]
     delivery_address: str | None = None
     delivery_area: str | None = Field(default=None, max_length=100)
+    # Which price list to look the area's fee up from — required for
+    # delivery. The fee itself is always recomputed server-side, never
+    # trusted from the client.
+    delivery_method: Literal["bike", "car"] | None = None
     # A note card to include with a delivery — for orders placed on behalf
     # of someone else. Delivery only; ignored for pickup.
     gift_note: str | None = Field(default=None, max_length=300)
@@ -120,6 +124,8 @@ class OrderOut(BaseModel):
     fulfillment_method: str
     delivery_address: str | None
     delivery_area: str | None
+    delivery_method: str | None
+    delivery_fee: int
     gift_note: str | None
     status: str
     requested_at: datetime | None

@@ -27,6 +27,16 @@ function formatTicketedDate(dateStr, time) {
   return time ? `${dateLabel} — ${time}` : dateLabel;
 }
 
+// Calendar-date key (YYYY-MM-DD) in the viewer's local timezone — used to
+// group events onto the same day regardless of what time each one is at.
+function localDateKey(iso) {
+  const d = new Date(iso);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function BuySpotForm({ event }) {
   // Tiers that share the same price are treated as flavor/variant choices of
   // one product (e.g. "pick your breakfast") — shown as a single price with
@@ -174,20 +184,23 @@ function BuySpotForm({ event }) {
   );
 }
 
-function TicketedEventCard({ event }) {
+function TicketedEventCard({ event, featured }) {
   return (
-    <div className="event-card upcoming-card">
+    <div
+      className="event-card upcoming-card"
+      style={featured ? { padding: "2.25rem", maxWidth: 560, margin: "0 auto" } : undefined}
+    >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-        <h3 style={{ margin: 0 }}>{event.name}</h3>
+        <h3 style={{ margin: 0, fontSize: featured ? "1.6rem" : undefined }}>{event.name}</h3>
         {event.spots_remaining !== null && (
           <span
             style={{
               flexShrink: 0,
               background: event.spots_remaining === 0 ? "#e5e5e5" : "var(--color-hot-pink-dark)",
               color: event.spots_remaining === 0 ? "#666" : "#fff",
-              fontSize: 12,
+              fontSize: featured ? 13 : 12,
               fontWeight: 700,
-              padding: "4px 10px",
+              padding: featured ? "5px 12px" : "4px 10px",
               borderRadius: 999,
               whiteSpace: "nowrap",
             }}
@@ -198,7 +211,9 @@ function TicketedEventCard({ event }) {
           </span>
         )}
       </div>
-      <p className="event-date">{formatTicketedDate(event.date, event.time)}</p>
+      <p className="event-date" style={featured ? { fontSize: "0.95rem" } : undefined}>
+        {formatTicketedDate(event.date, event.time)}
+      </p>
       {event.description && <p>{event.description}</p>}
       <BuySpotForm event={event} />
     </div>
@@ -268,6 +283,22 @@ function RsvpForm({ event, onRsvped }) {
   );
 }
 
+function RsvpEventCard({ event, onRsvped, featured }) {
+  return (
+    <div
+      className="event-card upcoming-card"
+      style={featured ? { padding: "2.25rem", maxWidth: 560, margin: "0 auto" } : undefined}
+    >
+      <h3 style={featured ? { fontSize: "1.6rem" } : undefined}>{event.title}</h3>
+      <p className="event-date" style={featured ? { fontSize: "0.95rem" } : undefined}>
+        {formatEventDate(event.start_time)}
+      </p>
+      <p>{event.description}</p>
+      <RsvpForm event={event} onRsvped={onRsvped} />
+    </div>
+  );
+}
+
 export default function Events() {
   const [events, setEvents] = useState(null);
   const [error, setError] = useState(null);
@@ -289,6 +320,25 @@ export default function Events() {
       .catch((err) => setTicketedError(err.message));
   }, []);
 
+  // Both lists come back soonest-first from the backend. Whichever calendar
+  // date is nearest overall (across both event types, time of day ignored)
+  // gets the big, featured treatment up top — every event on that date,
+  // ticketed or RSVP, renders side by side there; everything else stays in
+  // its normal section below.
+  const nextTicketedDate = ticketedEvents?.[0]?.date ?? null;
+  const nextRsvpDate = events?.[0] ? localDateKey(events[0].start_time) : null;
+  const soonestDate = [nextTicketedDate, nextRsvpDate].filter(Boolean).sort()[0] ?? null;
+
+  const featuredTicketed = soonestDate ? (ticketedEvents ?? []).filter((e) => e.date === soonestDate) : [];
+  const featuredRsvp = soonestDate ? (events ?? []).filter((e) => localDateKey(e.start_time) === soonestDate) : [];
+  const featuredItems = [
+    ...featuredTicketed.map((data) => ({ kind: "ticketed", data })),
+    ...featuredRsvp.map((data) => ({ kind: "rsvp", data })),
+  ];
+
+  const remainingTicketed = soonestDate ? (ticketedEvents ?? []).filter((e) => e.date !== soonestDate) : ticketedEvents ?? [];
+  const remainingRsvp = soonestDate ? (events ?? []).filter((e) => localDateKey(e.start_time) !== soonestDate) : events ?? [];
+
   return (
     <>
       <section className="section">
@@ -305,7 +355,34 @@ export default function Events() {
         </div>
       </section>
 
-      <section className="section section-alt">
+      <p style={{ textAlign: "center", fontWeight: 700, fontSize: "1.1rem", margin: 0, padding: "0 1.5rem" }}>
+        Book your spot now. Come back for new upcoming events weekly.
+      </p>
+
+      {featuredItems.length > 0 && (
+        <section className="section section-alt">
+          <div className="container">
+            <h2>Coming Up Next</h2>
+            <div
+              style={
+                featuredItems.length > 1
+                  ? { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "2rem" }
+                  : undefined
+              }
+            >
+              {featuredItems.map((item) =>
+                item.kind === "ticketed" ? (
+                  <TicketedEventCard event={item.data} featured key={`t-${item.data.id}`} />
+                ) : (
+                  <RsvpEventCard event={item.data} onRsvped={loadEvents} featured key={`r-${item.data.id}`} />
+                )
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className={featuredItems.length > 0 ? "section" : "section section-alt"}>
         <div className="container">
           <h2>Breakfast &amp; Yoga</h2>
           <p style={{ marginBottom: "1.5rem" }}>
@@ -319,12 +396,17 @@ export default function Events() {
           {ticketedEvents && ticketedEvents.length === 0 && (
             <p>No sessions posted yet — check back soon.</p>
           )}
+          {ticketedEvents && ticketedEvents.length > 0 && remainingTicketed.length === 0 && (
+            <p className="form-note">See the featured session above — check back for more soon.</p>
+          )}
 
-          <div className="event-grid">
-            {ticketedEvents?.map((event) => (
-              <TicketedEventCard event={event} key={event.id} />
-            ))}
-          </div>
+          {remainingTicketed.length > 0 && (
+            <div className="event-grid">
+              {remainingTicketed.map((event) => (
+                <TicketedEventCard event={event} key={event.id} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -339,17 +421,17 @@ export default function Events() {
           )}
           {!events && !error && <p>Loading events&hellip;</p>}
           {events && events.length === 0 && <p>No upcoming sessions posted yet — check back soon.</p>}
+          {events && events.length > 0 && remainingRsvp.length === 0 && (
+            <p className="form-note">See the featured session above — check back for more soon.</p>
+          )}
 
-          <div className="event-grid">
-            {events?.map((event) => (
-              <div className="event-card upcoming-card" key={event.id}>
-                <h3>{event.title}</h3>
-                <p className="event-date">{formatEventDate(event.start_time)}</p>
-                <p>{event.description}</p>
-                <RsvpForm event={event} onRsvped={loadEvents} />
-              </div>
-            ))}
-          </div>
+          {remainingRsvp.length > 0 && (
+            <div className="event-grid">
+              {remainingRsvp.map((event) => (
+                <RsvpEventCard event={event} onRsvped={loadEvents} key={event.id} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </>

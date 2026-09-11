@@ -106,7 +106,15 @@ export default function OrderConfirmation() {
           {order.points_redeemed > 0 && (
             <div className="cart-summary" style={{ color: "var(--color-hot-pink-dark)" }}>
               <span>Loyalty discount ({order.points_redeemed} pts)</span>
-              <span>&minus;{fmt(order.subtotal - order.total)}</span>
+              <span>&minus;{fmt(order.subtotal - order.total + order.delivery_fee)}</span>
+            </div>
+          )}
+          {order.delivery_fee > 0 && (
+            <div className="cart-summary">
+              <span>
+                {order.delivery_method === "car" ? "Car" : "Bike"} delivery ({order.delivery_area})
+              </span>
+              <span>{fmt(order.delivery_fee)}</span>
             </div>
           )}
           <div className="cart-summary">
@@ -121,7 +129,7 @@ export default function OrderConfirmation() {
               ? "Pickup at the cafe."
               : `Delivery to: ${order.delivery_address}${order.delivery_area ? ` (${order.delivery_area})` : ""}`}
           </p>
-          {order.fulfillment_method === "delivery" && (
+          {order.fulfillment_method === "delivery" && order.delivery_fee === 0 && (
             <p style={{ fontSize: "0.85rem", color: "var(--color-text-soft, #6b6b6b)" }}>
               A delivery fee (car or bike, depending on your location) applies separately — we'll
               confirm the rate with you and add it to your total.

@@ -60,6 +60,14 @@ class Order(Base):
     # Which part of Abuja the customer picked, for confirming the car/bike
     # delivery rate — self-selected from a fixed list, not free text.
     delivery_area: Mapped[str | None] = mapped_column(String(100), default=None)
+    # 'bike' or 'car' — which Loyverse delivery price list delivery_fee was
+    # looked up from. Null for pickup orders.
+    delivery_method: Mapped[str | None] = mapped_column(String(10), default=None)
+    # Recomputed server-side from (delivery_method, delivery_area) via
+    # delivery_fees.delivery_fee_for — never trust a client-sent amount.
+    # 0 for pickup, or an area outside the known list (rate confirmed
+    # manually after the fact, same as before this feature existed).
+    delivery_fee: Mapped[int] = mapped_column(Integer, default=0)
     # A note card to include with a delivery, for orders placed on someone
     # else's behalf ("Happy anniversary! — love, Tobi"). Delivery only.
     gift_note: Mapped[str | None] = mapped_column(Text, default=None)

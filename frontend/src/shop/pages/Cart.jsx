@@ -80,9 +80,11 @@ export default function Cart() {
               <span>{fmt(subtotal)}</span>
             </div>
 
-            <Link to={shopPath("/checkout")} className="button button-primary" style={{ display: "inline-block" }}>
-              Checkout
-            </Link>
+            <div style={{ textAlign: "right" }}>
+              <Link to={shopPath("/checkout")} className="button button-primary" style={{ display: "inline-block" }}>
+                Checkout
+              </Link>
+            </div>
           </>
         )}
       </div>

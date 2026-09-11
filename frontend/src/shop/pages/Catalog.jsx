@@ -66,6 +66,12 @@ function ProductCard({ card }) {
         ) : (
           <div className="product-card-placeholder">No photo yet</div>
         )}
+        {!isBoxItem && outOfStock && (
+          <span className="product-card-stock-badge sold-out">Sold Out</span>
+        )}
+        {!isBoxItem && !outOfStock && remainingStock !== null && remainingStock <= 10 && (
+          <span className="product-card-stock-badge low">Only {remainingStock} left</span>
+        )}
         <span className="product-card-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6" />
@@ -161,9 +167,6 @@ function ProductCard({ card }) {
             setTimeout(() => setAdded(false), 2000);
           }}
         />
-        {!isBoxItem && remainingStock !== null && remainingStock > 0 && remainingStock <= 10 && (
-          <div style={{ fontSize: 11, color: "var(--color-text-soft, #6b6b6b)" }}>Only {remainingStock} left.</div>
-        )}
         {!isBoxItem &&
           (outOfStock ? (
             <span className="form-note">Out of stock</span>

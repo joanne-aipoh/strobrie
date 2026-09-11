@@ -3,18 +3,26 @@ import os
 import re
 import uuid
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from .. import email_utils, paystack, pos_models, shop_models, shop_schemas
+from .. import delivery_fees, email_utils, paystack, pos_models, shop_models, shop_schemas
 from ..database import get_db
 from .pos_sales import NAIRA_PER_POINT_EARNED, NAIRA_PER_POINT_REDEEM
 
 router = APIRouter(prefix="/api/shop", tags=["shop-orders"])
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
+# Riders/staff stop doing deliveries at 5pm Lagos time — enforced here
+# (never trust the client) rather than at the server's own local time, which
+# may run in a different timezone. Mirrors DELIVERY_CUTOFF_HOUR in
+# frontend/src/shop/pages/Checkout.jsx.
+LAGOS_TZ = ZoneInfo("Africa/Lagos")
+DELIVERY_CUTOFF_HOUR = 17
 
 # How many inscription characters reasonably fit iced onto a cake of a given
 # size — mirrors frontend/src/shop/inscriptionLimit.js. Keep the two in sync.
@@ -107,12 +115,27 @@ def _build_order(payload: shop_schemas.OrderCreate, db: Session) -> shop_models.
         raise HTTPException(status_code=400, detail="Delivery address is required for delivery orders")
     if payload.fulfillment_method == "delivery" and not (payload.delivery_area or "").strip():
         raise HTTPException(status_code=400, detail="Please select which part of Abuja you're in")
+    if payload.fulfillment_method == "delivery" and not payload.delivery_method:
+        raise HTTPException(status_code=400, detail="Please choose bike or car delivery")
 
     requested_at = payload.requested_at
     if requested_at is not None:
         now = datetime.now(requested_at.tzinfo or timezone.utc)
         if requested_at < now:
             raise HTTPException(status_code=400, detail="Requested date/time can't be in the past")
+
+    if payload.fulfillment_method == "delivery":
+        # ASAP (requested_at is None) is checked against right now; a
+        # scheduled delivery is checked against its own requested time —
+        # riders don't run past 5pm on any day.
+        check_at = requested_at.astimezone(LAGOS_TZ) if requested_at is not None else datetime.now(LAGOS_TZ)
+        if check_at.hour >= DELIVERY_CUTOFF_HOUR:
+            detail = (
+                "Delivery can only be scheduled before 5pm."
+                if requested_at is not None
+                else "It's past 5pm — delivery orders are closed for today. Please schedule a time before 5pm, or choose pickup."
+            )
+            raise HTTPException(status_code=400, detail=detail)
 
     product_ids = [line.product_id for line in payload.items]
     products = {p.id: p for p in db.query(shop_models.Product).filter(shop_models.Product.id.in_(product_ids))}
@@ -215,8 +238,18 @@ def _build_order(payload: shop_schemas.OrderCreate, db: Session) -> shop_models.
         if payload.redeem_points > 0:
             points_redeemed = max(0, min(payload.redeem_points, loyalty_customer.points))
 
+    delivery_method = payload.delivery_method if payload.fulfillment_method == "delivery" else None
+    delivery_area = payload.delivery_area if payload.fulfillment_method == "delivery" else None
+    delivery_fee = 0
+    if payload.fulfillment_method == "delivery":
+        delivery_fee = delivery_fees.delivery_fee_for(delivery_method, delivery_area)
+        if delivery_fee is None:
+            raise HTTPException(
+                status_code=400, detail="We only deliver to areas on our list — please pick one from the dropdown."
+            )
+
     discount = min(points_redeemed * NAIRA_PER_POINT_REDEEM, subtotal)
-    total = subtotal - discount
+    total = subtotal - discount + delivery_fee
     points_earned = (total // NAIRA_PER_POINT_EARNED) if loyalty_customer else 0
 
     order = shop_models.Order(
@@ -225,7 +258,9 @@ def _build_order(payload: shop_schemas.OrderCreate, db: Session) -> shop_models.
         customer_phone=payload.customer_phone,
         fulfillment_method=payload.fulfillment_method,
         delivery_address=payload.delivery_address,
-        delivery_area=payload.delivery_area if payload.fulfillment_method == "delivery" else None,
+        delivery_area=delivery_area,
+        delivery_method=delivery_method,
+        delivery_fee=delivery_fee,
         gift_note=(payload.gift_note or "").strip() or None if payload.fulfillment_method == "delivery" else None,
         requested_at=requested_at,
         loyalty_customer_id=loyalty_customer.id if loyalty_customer else None,

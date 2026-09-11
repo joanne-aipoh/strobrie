@@ -346,13 +346,13 @@ a {
   margin-top: 1.25rem;
 }
 
-.contact-form input,
+.contact-form input:not([type="radio"]):not([type="checkbox"]),
 .contact-form select,
 .contact-form textarea,
-.booking-form input,
+.booking-form input:not([type="radio"]):not([type="checkbox"]),
 .booking-form select,
 .booking-form textarea,
-.rsvp-form input {
+.rsvp-form input:not([type="radio"]):not([type="checkbox"]) {
   font-family: inherit;
   font-size: 0.95rem;
   padding: 0.7rem 0.9rem;
@@ -361,6 +361,12 @@ a {
   background: var(--color-bg);
   color: var(--color-text);
   width: 100%;
+}
+
+.rsvp-form input[type="radio"],
+.rsvp-form input[type="checkbox"] {
+  width: auto;
+  flex-shrink: 0;
 }
 
 .fulfillment-select {

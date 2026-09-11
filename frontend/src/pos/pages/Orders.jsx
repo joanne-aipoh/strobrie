@@ -52,8 +52,9 @@ export default function Orders() {
                 </div>
                 {order.fulfillment_method === "delivery" && (
                   <div style={{ fontSize: 12.5, color: "var(--rust-dark)", marginTop: 2 }}>
-                    Confirm the car/bike rate for {order.delivery_area || "their area"} with the
-                    customer, add it to what's collected, and pay the rider out separately.
+                    {order.delivery_fee > 0
+                      ? `${order.delivery_method === "car" ? "Car" : "Bike"} delivery fee of ₦${order.delivery_fee.toLocaleString()} already collected — pay the rider out separately.`
+                      : `Area not in the priced list — confirm the car/bike rate for ${order.delivery_area || "their area"} with the customer and collect it separately.`}
                   </div>
                 )}
                 <div style={{ fontSize: 12.5, marginTop: 2 }}>

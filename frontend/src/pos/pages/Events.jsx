@@ -20,7 +20,7 @@ export default function Events() {
   const [capacity, setCapacity] = useState("");
   const [description, setDescription] = useState("");
   const [costBudget, setCostBudget] = useState("");
-  const [tiers, setTiers] = useState([{ name: "General", price: "", qty: "" }]);
+  const [tiers, setTiers] = useState([{ name: "General", price: "", qty: "", online_purchasable: true }]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function Events() {
   }, []);
 
   function addTierRow() {
-    setTiers((prev) => [...prev, { name: "", price: "", qty: "" }]);
+    setTiers((prev) => [...prev, { name: "", price: "", qty: "", online_purchasable: true }]);
   }
   function removeTierRow(idx) {
     setTiers((prev) => prev.filter((_, i) => i !== idx));
@@ -48,7 +48,12 @@ export default function Events() {
     }
     const cleanTiers = tiers
       .filter((t) => t.name.trim())
-      .map((t) => ({ name: t.name.trim(), price: parseFloat(t.price) || 0, qty: parseInt(t.qty) || 0 }));
+      .map((t) => ({
+        name: t.name.trim(),
+        price: parseFloat(t.price) || 0,
+        qty: parseInt(t.qty) || 0,
+        online_purchasable: t.online_purchasable,
+      }));
     if (cleanTiers.length === 0) {
       setError("Add at least one ticket tier with a name.");
       return;
@@ -71,7 +76,7 @@ export default function Events() {
       setCapacity("");
       setDescription("");
       setCostBudget("");
-      setTiers([{ name: "General", price: "", qty: "" }]);
+      setTiers([{ name: "General", price: "", qty: "", online_purchasable: true }]);
       setShowCreate(false);
       setError("");
     } catch (err) {
@@ -165,6 +170,14 @@ export default function Events() {
                   onChange={(e) => updateTier(i, "qty", e.target.value)}
                   style={{ maxWidth: 150 }}
                 />
+                <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, whiteSpace: "nowrap" }}>
+                  <input
+                    type="checkbox"
+                    checked={t.online_purchasable}
+                    onChange={(e) => updateTier(i, "online_purchasable", e.target.checked)}
+                  />
+                  Sell online
+                </label>
                 {tiers.length > 1 && (
                   <button className="remove-btn" onClick={() => removeTierRow(i)}>
                     Remove
@@ -175,6 +188,10 @@ export default function Events() {
             <button className="link-btn" onClick={addTierRow}>
               + Add another tier
             </button>
+            <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 6 }}>
+              Uncheck "Sell online" for tiers too expensive or risky to sell unattended (e.g. a multi-session pack) —
+              you can still sell those in person here, they just won't show on the public booking page.
+            </p>
           </div>
           {error && <div className="error-text" style={{ marginTop: 8 }}>{error}</div>}
           <button className="log-btn" onClick={createEvent}>

@@ -62,9 +62,11 @@ export default function Home() {
             <div className="fact">
               <span className="fact-label">Hours</span>
               <span>
-                Mon&ndash;Fri 8am&ndash;6pm
+                Mon&ndash;Thu 8am&ndash;6pm
                 <br />
-                Sat 9am&ndash;6pm &middot; Sun 10am&ndash;3pm
+                Fri 8am&ndash;9pm &middot; Sat 9am&ndash;9pm
+                <br />
+                Sun 10am&ndash;3pm
               </span>
             </div>
           </div>

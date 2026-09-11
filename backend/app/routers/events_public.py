@@ -33,6 +33,8 @@ def _to_public_event(db: Session, event: pos_models.PosEvent) -> pos_schemas.Pub
     spots_remaining = max(event.capacity - sold_for_event, 0) if event.capacity is not None else None
     tiers_out = []
     for tier in event.tiers:
+        if not tier.online_purchasable:
+            continue
         sold = _tickets_sold_for_tier(db, tier.id)
         tier_remaining = (tier.qty - sold) if tier.qty > 0 else None
         # A tier is only as available as both its own limit AND the event's
@@ -80,6 +82,8 @@ def buy_ticket(event_id: int, payload: pos_schemas.EventBuyRequest, db: Session 
     tier = db.get(pos_models.TicketTier, payload.tier_id)
     if tier is None or tier.pos_event_id != event_id:
         raise HTTPException(status_code=404, detail="Ticket option not found")
+    if not tier.online_purchasable:
+        raise HTTPException(status_code=400, detail="That option isn't available online — please book it in person")
 
     if event.capacity is not None and _tickets_sold_for_event(db, event_id) >= event.capacity:
         raise HTTPException(status_code=400, detail="This session is fully booked")
@@ -141,4 +145,17 @@ def verify_ticket_payment(reference: str, db: Session = Depends(get_db)):
             db.refresh(ticket)
             email_utils.send_ticket_confirmation_email(ticket)
 
-    return ticket
+    return pos_schemas.PublicTicketOut(
+        id=ticket.id,
+        pos_event_id=ticket.pos_event_id,
+        buyer_name=ticket.buyer_name,
+        buyer_email=ticket.buyer_email,
+        channel=ticket.channel,
+        paid=ticket.paid,
+        purchase_timestamp=ticket.purchase_timestamp,
+        event_name=ticket.event.name,
+        event_date=ticket.event.date,
+        event_time=ticket.event.time,
+        event_description=ticket.event.description,
+        tier_name=ticket.tier.name,
+    )

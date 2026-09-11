@@ -99,8 +99,12 @@ def _build_order_email_html(order: shop_models.Order) -> str:
         <table style="width:100%;border-collapse:collapse;font-size:14px;">
           {_item_rows_html(order.items)}
         </table>
-        <table style="width:100%;margin-top:8px;font-size:14px;font-weight:700;">
-          <tr><td style="padding-top:8px;">Total</td><td style="padding-top:8px;text-align:right;">{_fmt_naira(order.total)}</td></tr>
+        <table style="width:100%;margin-top:8px;font-size:14px;">
+          <tr><td style="padding-top:4px;">Subtotal</td><td style="padding-top:4px;text-align:right;">{_fmt_naira(order.subtotal)}</td></tr>
+          {f'<tr><td style="padding-top:4px;">{order.delivery_method.capitalize()} delivery ({order.delivery_area})</td><td style="padding-top:4px;text-align:right;">{_fmt_naira(order.delivery_fee)}</td></tr>' if order.delivery_fee else ""}
+        </table>
+        <table style="width:100%;margin-top:4px;font-size:14px;font-weight:700;">
+          <tr><td style="padding-top:8px;border-top:1px solid rgba(0,0,0,0.1);">Total</td><td style="padding-top:8px;border-top:1px solid rgba(0,0,0,0.1);text-align:right;">{_fmt_naira(order.total)}</td></tr>
         </table>
         <p style="margin:14px 0 0;font-size:14px;">{fulfillment_line}</p>
         <p style="margin:2px 0 0;font-size:14px;">{timing_line}</p>
@@ -178,6 +182,7 @@ def _build_ticket_email_html(ticket: pos_models.Ticket) -> str:
         <h2 style="font-size:1.1rem;color:#c2477a;margin-top:0;">{event.name}</h2>
         <p style="margin:0;font-size:14px;">{date_line}</p>
         <p style="margin:8px 0 0;font-size:14px;">{tier.name} — {_fmt_naira(tier.price)}</p>
+        {f'<p style="margin:10px 0 0;font-size:13px;color:#555;">{event.description}</p>' if event.description else ""}
       </div>
       <p style="margin-top:16px;font-size:13px;font-weight:600;">
         Show this email at check-in as proof of payment.

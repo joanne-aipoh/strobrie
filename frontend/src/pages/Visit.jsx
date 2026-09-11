@@ -72,7 +72,9 @@ export default function Visit() {
           <div>
             <h2>Visit Us</h2>
             <p>HFIA Garden, Off Tafawa Balewa Road, Garki, Abuja, Federal Capital Territory, Nigeria</p>
-            <p>Mon&ndash;Fri 8am&ndash;6pm &middot; Sat 9am&ndash;6pm &middot; Sun 10am&ndash;3pm</p>
+            <p>
+              Mon&ndash;Thu 8am&ndash;6pm &middot; Fri 8am&ndash;9pm &middot; Sat 9am&ndash;9pm &middot; Sun 10am&ndash;3pm
+            </p>
           </div>
           <div>
             <h2>Get in Touch</h2>

@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useCart } from "../CartContext.jsx";
 import { shopApi } from "../shopApi.js";
 import { shopOrigin, shopPath } from "../shopBase.js";
-import { ABUJA_AREAS } from "../abujaAreas.js";
+import { areaOptionsFor, deliveryFeeFor } from "../deliveryAreas.js";
 import { whatsappLink } from "../../whatsapp.js";
 
 function fmt(n) {
@@ -18,6 +18,16 @@ function formatFlavorBreakdown(breakdown) {
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
+// Riders/staff stop doing deliveries at 5pm — mirrors
+// backend/app/routers/shop_orders.py's DELIVERY_CUTOFF_HOUR. Pickup has no
+// such cutoff.
+const DELIVERY_CUTOFF_HOUR = 17;
+const DELIVERY_CUTOFF_LABEL = "5pm";
+
+function isAfterDeliveryCutoff(date) {
+  return date.getHours() >= DELIVERY_CUTOFF_HOUR;
+}
+
 export default function Checkout() {
   const { items, subtotal } = useCart();
   const [form, setForm] = useState({
@@ -26,6 +36,7 @@ export default function Checkout() {
     customer_phone: "",
     fulfillment_method: "pickup",
     delivery_address: "",
+    delivery_method: "bike",
     delivery_area: "",
     gift_note: "",
     timing_choice: "asap",
@@ -51,12 +62,26 @@ export default function Checkout() {
 
   const redeemPoints = loyalty.status === "found" ? Math.max(0, Math.min(Number(form.redeem_points) || 0, loyalty.points)) : 0;
   const discount = Math.min(redeemPoints * loyalty.nairaPerPoint, subtotal);
-  const total = subtotal - discount;
+  const deliveryFee =
+    form.fulfillment_method === "delivery" ? deliveryFeeFor(form.delivery_method, form.delivery_area) : 0;
+  const total = subtotal - discount + deliveryFee;
+
+  const isDelivery = form.fulfillment_method === "delivery";
+  const asapBlockedByCutoff = isDelivery && form.timing_choice === "asap" && isAfterDeliveryCutoff(new Date());
+  const scheduledAfterCutoff =
+    isDelivery &&
+    form.timing_choice === "scheduled" &&
+    form.requested_time &&
+    Number(form.requested_time.split(":")[0]) >= DELIVERY_CUTOFF_HOUR;
 
   if (items.length === 0) return <Navigate to={shopPath("/cart")} replace />;
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (asapBlockedByCutoff || scheduledAfterCutoff) {
+      setError(`Delivery orders close at ${DELIVERY_CUTOFF_LABEL} — please pick a time before then, or choose pickup.`);
+      return;
+    }
     setStatus("submitting");
     setError("");
     try {
@@ -72,6 +97,7 @@ export default function Checkout() {
         fulfillment_method: form.fulfillment_method,
         delivery_address: form.fulfillment_method === "delivery" ? form.delivery_address : null,
         delivery_area: form.fulfillment_method === "delivery" ? form.delivery_area : null,
+        delivery_method: form.fulfillment_method === "delivery" ? form.delivery_method : null,
         gift_note: form.fulfillment_method === "delivery" ? form.gift_note : null,
         requested_at,
         loyalty_phone: loyalty.status === "found" ? form.loyalty_phone.trim() : null,
@@ -114,6 +140,9 @@ export default function Checkout() {
     lines.push(`Fulfillment: ${form.fulfillment_method === "delivery" ? "Delivery" : "Pickup"}`);
     if (form.fulfillment_method === "delivery" && form.delivery_address) {
       lines.push(`Delivery address: ${form.delivery_address}${form.delivery_area ? ` (${form.delivery_area})` : ""}`);
+      if (deliveryFee > 0) {
+        lines.push(`${form.delivery_method === "car" ? "Car" : "Bike"} delivery fee: ${fmt(deliveryFee)}`);
+      }
     }
     lines.push(`When: ${form.timing_choice === "asap" ? "As soon as possible" : `${form.requested_date || "—"} ${form.requested_time || ""}`.trim()}`);
     return lines.join("\n");
@@ -156,11 +185,24 @@ export default function Checkout() {
             </select>
             {form.fulfillment_method === "delivery" && (
               <>
-                <p className="form-note" style={{ margin: 0 }}>
-                  Delivery isn't included in this payment — a car or bike rate applies depending on
-                  your location. We'll confirm the rate with you and it'll be added to what you pay
-                  us for this order.
-                </p>
+                <div>
+                  <label style={{ display: "block", fontSize: 13, color: "var(--color-text-soft, #6b6b6b)", marginBottom: 6 }}>
+                    Bike or car delivery?
+                  </label>
+                  <div style={{ display: "flex", gap: "0.75rem" }}>
+                    {["bike", "car"].map((method) => (
+                      <button
+                        key={method}
+                        type="button"
+                        className={form.delivery_method === method ? "button button-primary" : "button button-ghost"}
+                        style={{ flex: 1, padding: "0.6rem 1rem" }}
+                        onClick={() => setForm({ ...form, delivery_method: method, delivery_area: "" })}
+                      >
+                        {method === "bike" ? "Bike" : "Car"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <textarea
                   placeholder="Delivery address"
                   required
@@ -173,7 +215,7 @@ export default function Checkout() {
                     Ordering for someone else? Add a note card (optional)
                   </label>
                   <textarea
-                    placeholder={'e.g. "Happy anniversary! — love, Tobi"'}
+                    placeholder={'e.g. "Happy Birthday! - Love, Joanne"'}
                     rows={3}
                     maxLength={300}
                     value={form.gift_note}
@@ -182,7 +224,7 @@ export default function Checkout() {
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: 13, color: "var(--color-text-soft, #6b6b6b)", marginBottom: 6 }}>
-                    Which part of Abuja are you in? (helps us confirm the delivery rate)
+                    Which part of Abuja are you in?
                   </label>
                   <select
                     required
@@ -192,12 +234,15 @@ export default function Checkout() {
                     <option value="" disabled>
                       Select your area
                     </option>
-                    {ABUJA_AREAS.map((area) => (
-                      <option key={area} value={area}>
-                        {area}
+                    {areaOptionsFor(form.delivery_method).map(({ name, fee }) => (
+                      <option key={name} value={name}>
+                        {name} — {fmt(fee)}
                       </option>
                     ))}
                   </select>
+                  <p className="form-note" style={{ margin: "6px 0 0" }}>
+                    We only deliver within these areas — for anywhere else, please choose pickup.
+                  </p>
                 </div>
               </>
             )}
@@ -248,18 +293,31 @@ export default function Checkout() {
                   <input
                     type="time"
                     required
+                    max={isDelivery ? "17:00" : undefined}
                     value={form.requested_time}
                     onChange={(e) => setForm({ ...form, requested_time: e.target.value })}
                     style={{ flex: 1 }}
                   />
                 </div>
               )}
+              {isDelivery && (
+                <p className="form-note" style={{ margin: "6px 0 0" }}>
+                  Delivery orders are accepted until {DELIVERY_CUTOFF_LABEL} daily.
+                </p>
+              )}
+              {(asapBlockedByCutoff || scheduledAfterCutoff) && (
+                <p className="form-error" style={{ margin: "6px 0 0" }}>
+                  {asapBlockedByCutoff
+                    ? `It's past ${DELIVERY_CUTOFF_LABEL} — please schedule a delivery time before then, or switch to pickup.`
+                    : `Please pick a delivery time before ${DELIVERY_CUTOFF_LABEL}.`}
+                </p>
+              )}
             </div>
             <div>
               <label style={{ display: "block", fontSize: 13, color: "var(--color-text-soft, #6b6b6b)", marginBottom: 6 }}>
                 Strobrie Loyalty — spend points on this order (optional)
               </label>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: "flex-end" }}>
                 <input
                   type="text"
                   placeholder="Loyalty phone number"
@@ -268,13 +326,14 @@ export default function Checkout() {
                     setForm({ ...form, loyalty_phone: e.target.value });
                     setLoyalty({ status: "idle", points: 0, nairaPerPoint: 1, error: "" });
                   }}
-                  style={{ flex: 1 }}
+                  style={{ flex: "1 1 200px" }}
                 />
                 <button
                   type="button"
                   className="button button-ghost"
                   disabled={loyalty.status === "checking" || !form.loyalty_phone.trim()}
                   onClick={checkLoyaltyPoints}
+                  style={{ flex: "0 0 auto" }}
                 >
                   {loyalty.status === "checking" ? "Checking…" : "Check points"}
                 </button>
@@ -313,7 +372,7 @@ export default function Checkout() {
             <button
               type="submit"
               className="button button-primary"
-              disabled={status === "submitting"}
+              disabled={status === "submitting" || asapBlockedByCutoff || scheduledAfterCutoff}
               style={{ alignSelf: "flex-end", width: "100%", boxSizing: "border-box" }}
             >
               {status === "submitting" ? "Redirecting to payment…" : `Pay ${fmt(total)} with Paystack`}
@@ -372,16 +431,16 @@ export default function Checkout() {
               <span>&minus;{fmt(discount)}</span>
             </div>
           )}
+          {deliveryFee > 0 && (
+            <div className="cart-summary">
+              <span>{form.delivery_method === "car" ? "Car" : "Bike"} delivery ({form.delivery_area})</span>
+              <span>{fmt(deliveryFee)}</span>
+            </div>
+          )}
           <div className="cart-summary">
             <span>Total</span>
             <span>{fmt(total)}</span>
           </div>
-          {form.fulfillment_method === "delivery" && (
-            <p className="form-note" style={{ marginTop: 2 }}>
-              + delivery fee (car/bike, by location) — confirmed separately and added to your total.
-              {form.delivery_area && ` Area: ${form.delivery_area}.`}
-            </p>
-          )}
           {loyalty.status === "found" && (
             <p className="form-note" style={{ marginTop: 6 }}>
               You'll earn {Math.floor(total / 200)} points on this order.
