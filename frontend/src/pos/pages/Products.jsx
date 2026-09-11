@@ -256,12 +256,12 @@ function ProductRow({ product, categories, editingId, setEditingId, selected, on
   return (
     <div className="panel" style={{ background: "var(--cream-2)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-        <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
           <input
             type="checkbox"
             checked={selected}
             onChange={onToggleSelect}
-            style={{ marginTop: 4 }}
+            style={{ marginTop: 4, flexShrink: 0 }}
             aria-label={`Select ${product.name}`}
           />
           <div>

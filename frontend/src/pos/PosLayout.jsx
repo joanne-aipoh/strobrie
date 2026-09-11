@@ -54,10 +54,8 @@ function PosShell() {
           <NavLink to={posPath("/customers")}>Customer Loyalty</NavLink>
           {isManager && <NavLink to={posPath("/products")}>Products</NavLink>}
           <NavLink to={posPath("/events")}>Events</NavLink>
-          {isManager && <NavLink to={posPath("/inventory")}>Inventory</NavLink>}
           {isManager && <NavLink to={posPath("/orders")}>Orders</NavLink>}
           {isManager && <NavLink to={posPath("/reports")}>Reports</NavLink>}
-          <NavLink to={posPath("/waste")}>Waste log</NavLink>
         </nav>
 
         {showManageStaff && isManager && <ManageStaff />}
