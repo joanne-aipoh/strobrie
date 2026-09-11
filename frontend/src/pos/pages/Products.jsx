@@ -322,8 +322,12 @@ export default function Products() {
     shopApi.getSettings().then(setSettings);
   }, []);
 
-  async function toggleBrunchVisible() {
-    const updated = await shopApi.updateSettings({ brunch_visible: !settings.brunch_visible });
+  async function toggleCategoryVisible(cat) {
+    const hidden = settings.hidden_categories.includes(cat);
+    const hidden_categories = hidden
+      ? settings.hidden_categories.filter((c) => c !== cat)
+      : [...settings.hidden_categories, cat];
+    const updated = await shopApi.updateSettings({ hidden_categories });
     setSettings(updated);
   }
 
@@ -394,28 +398,11 @@ export default function Products() {
         </p>
 
         {settings && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 10,
-              marginBottom: 16,
-              padding: "10px 12px",
-              background: "var(--cream-2)",
-              borderRadius: 8,
-            }}
-          >
-            <div>
-              <strong>Brunch section</strong>
-              <div style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>
-                Brunch only runs Sundays — turn it off the rest of the week so it doesn't show in the shop.
-              </div>
-            </div>
-            <button className="link-btn" onClick={toggleBrunchVisible}>
-              {settings.brunch_visible ? "Visible — turn off" : "Hidden — turn on"}
-            </button>
-          </div>
+          <p style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: -4, marginBottom: 12 }}>
+            Each category below has a "Hide from shop"/"Show in shop" toggle — hides that whole
+            section from customers (e.g. Brunch on a weekday, Cocktails) while it stays fully
+            sellable here in Flow.
+          </p>
         )}
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
@@ -466,6 +453,7 @@ export default function Products() {
         {[...byCategory.entries()].map(([cat, items]) => {
           const isOpen = isFiltering || openCategories.has(cat);
           const allSelected = items.every((p) => selectedIds.has(p.id));
+          const catHidden = settings?.hidden_categories.includes(cat);
           return (
             <div key={cat} style={{ marginBottom: 10 }}>
               <div
@@ -496,6 +484,19 @@ export default function Products() {
                 <strong style={{ flex: 1 }}>
                   {cat} <span style={{ color: "var(--ink-soft)", fontWeight: 400 }}>({items.length})</span>
                 </strong>
+                {catHidden && <span className="checkin-badge out">Hidden from shop</span>}
+                {settings && (
+                  <button
+                    className="link-btn"
+                    style={{ fontSize: 12 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleCategoryVisible(cat);
+                    }}
+                  >
+                    {catHidden ? "Show in shop" : "Hide from shop"}
+                  </button>
+                )}
                 <span style={{ color: "var(--ink-soft)" }}>{isOpen ? "▲" : "▼"}</span>
               </div>
               {isOpen && (
