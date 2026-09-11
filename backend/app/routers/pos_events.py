@@ -13,6 +13,11 @@ def _tickets_sold_for_tier(db: Session, tier_id: int) -> int:
     return db.scalar(stmt) or 0
 
 
+def _tickets_sold_for_event(db: Session, event_id: int) -> int:
+    stmt = select(func.count(pos_models.Ticket.id)).where(pos_models.Ticket.pos_event_id == event_id)
+    return db.scalar(stmt) or 0
+
+
 def _to_event_out(db: Session, event: pos_models.PosEvent) -> pos_schemas.PosEventOut:
     tiers_out = []
     total_sold = 0
@@ -111,6 +116,18 @@ def update_event(event_id: int, payload: pos_schemas.PosEventUpdate, db: Session
     db.commit()
     db.refresh(event)
     return _to_event_out(db, event)
+
+
+@router.delete("/events/{event_id}", status_code=204)
+def delete_event(event_id: int, db: Session = Depends(get_db)):
+    event = db.get(pos_models.PosEvent, event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+    if _tickets_sold_for_event(db, event_id) > 0:
+        raise HTTPException(status_code=400, detail="Can't delete an event that already has tickets sold")
+
+    db.delete(event)
+    db.commit()
 
 
 @router.post("/events/{event_id}/tiers", response_model=pos_schemas.TierOut, status_code=201)

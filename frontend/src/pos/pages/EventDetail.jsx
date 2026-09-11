@@ -79,6 +79,16 @@ export default function EventDetail() {
     await load();
   }
 
+  async function deleteEvent() {
+    if (!window.confirm(`Delete "${event.name}"? This can't be undone.`)) return;
+    try {
+      await posApi.deleteEvent(eventId);
+      navigate(posPath("/events"));
+    } catch (err) {
+      setEditError(err.message);
+    }
+  }
+
   function startEdit() {
     setEditFields({
       name: event.name,
@@ -226,6 +236,11 @@ export default function EventDetail() {
               {isManager && (
                 <button className="link-btn" style={{ marginLeft: 10, fontSize: 12 }} onClick={startEdit}>
                   Edit
+                </button>
+              )}
+              {isManager && tickets.length === 0 && (
+                <button className="remove-btn" style={{ marginLeft: 10, fontSize: 12 }} onClick={deleteEvent}>
+                  Delete event
                 </button>
               )}
             </h3>

@@ -57,6 +57,7 @@ export const posApi = {
   getEvent: (id) => request(`/api/pos/events/${id}`),
   createEvent: (data) => request("/api/pos/events", { method: "POST", body: JSON.stringify(data) }),
   updateEvent: (id, data) => request(`/api/pos/events/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteEvent: (id) => request(`/api/pos/events/${id}`, { method: "DELETE" }),
   addTier: (eventId, data) => request(`/api/pos/events/${eventId}/tiers`, { method: "POST", body: JSON.stringify(data) }),
   updateTier: (eventId, tierId, data) =>
     request(`/api/pos/events/${eventId}/tiers/${tierId}`, { method: "PATCH", body: JSON.stringify(data) }),
