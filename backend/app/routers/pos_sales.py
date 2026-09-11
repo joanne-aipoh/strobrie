@@ -43,9 +43,12 @@ def charge(payload: pos_schemas.ChargeRequest, db: Session = Depends(get_db)):
         stmt = select(shop_models.Product).where(shop_models.Product.id.in_(menu_item_ids))
         products_by_id = {p.id: p for p in db.scalars(stmt)}
 
-    # Fail fast, before any mutation, if a tracked item doesn't have enough stock.
+    # Fail fast, before any mutation, if a tracked item doesn't have enough stock,
+    # or it's been marked unavailable today (e.g. out of an ingredient it needs).
     for line in payload.items:
         product = products_by_id.get(line.menu_item_id)
+        if product and product.unavailable:
+            raise HTTPException(status_code=400, detail=f"{product.name} isn't available today")
         if product and product.stock_qty is not None and line.qty > product.stock_qty:
             raise HTTPException(status_code=400, detail=f"Not enough {product.name} in stock ({product.stock_qty} left)")
 

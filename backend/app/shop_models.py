@@ -17,6 +17,11 @@ class Product(Base):
     category: Mapped[str] = mapped_column(String(50))
     price: Mapped[int] = mapped_column(Integer)
     stock_qty: Mapped[int | None] = mapped_column(Integer, default=None)  # null = unlimited
+    # A quick day-to-day "86" toggle for a made-to-order item that can't be
+    # made right now (e.g. out of chicken today) — separate from stock_qty,
+    # which tracks a countable batch. Blocks ordering in Flow and the shop
+    # without touching any stock number, so it's a one-click on/off.
+    unavailable: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

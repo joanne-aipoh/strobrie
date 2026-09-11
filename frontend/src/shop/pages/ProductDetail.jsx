@@ -116,7 +116,7 @@ export default function ProductDetail() {
   }
 
   const remainingStock = product.stock_qty == null ? null : Math.max(0, product.stock_qty - qtyInCart(product.id));
-  const outOfStock = remainingStock !== null && remainingStock <= 0;
+  const outOfStock = product.unavailable || (remainingStock !== null && remainingStock <= 0);
   const sizeLabel = card.type === "grouped2d" ? card.flavors[flavorIdx].sizeVariants[sizeIdx].label : null;
   const inscriptionLimit = CAKE_CATEGORIES.includes(product.category) ? inscriptionLimitForLabel(sizeLabel) : 200;
   const photos = cardPhotos(card, product);
@@ -164,7 +164,11 @@ export default function ProductDetail() {
               ) : (
                 <div className="product-card-placeholder" style={{ height: "100%" }}>No photo yet</div>
               )}
-              {outOfStock && <span className="product-card-stock-badge sold-out">Sold Out</span>}
+              {outOfStock && (
+                <span className="product-card-stock-badge sold-out">
+                  {product.unavailable ? "Unavailable Today" : "Sold Out"}
+                </span>
+              )}
               {!outOfStock && remainingStock !== null && remainingStock <= 10 && (
                 <span className="product-card-stock-badge low">Only {remainingStock} left</span>
               )}
@@ -220,7 +224,7 @@ export default function ProductDetail() {
             {product.description && <p>{product.description}</p>}
 
             {outOfStock ? (
-              <p className="form-note">Currently out of stock.</p>
+              <p className="form-note">{product.unavailable ? "Not available today." : "Currently out of stock."}</p>
             ) : (
               <>
                 {CAKE_CATEGORIES.includes(product.category) && (

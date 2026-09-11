@@ -138,7 +138,7 @@ function ProductForm({ initial, onSubmit, onCancel, categories }) {
         category: form.category.trim(),
         price,
         stock_qty: form.stock_qty === "" ? null : parseInt(form.stock_qty, 10),
-        ...(initial ? { is_active: form.is_active } : {}),
+        ...(initial ? { is_active: form.is_active, unavailable: form.unavailable } : {}),
       });
     } catch (err) {
       setError(err.message);
@@ -213,7 +213,21 @@ function ProductRow({ product, categories, editingId, setEditingId, selected, on
       category: product.category,
       price: product.price,
       stock_qty: product.stock_qty,
+      unavailable: product.unavailable,
       is_active: !product.is_active,
+    });
+    await onChanged();
+  }
+
+  async function toggleUnavailable() {
+    await shopApi.updateProduct(product.id, {
+      name: product.name,
+      description: product.description,
+      category: product.category,
+      price: product.price,
+      stock_qty: product.stock_qty,
+      is_active: product.is_active,
+      unavailable: !product.unavailable,
     });
     await onChanged();
   }
@@ -229,6 +243,7 @@ function ProductRow({ product, categories, editingId, setEditingId, selected, on
             price: String(product.price),
             stock_qty: product.stock_qty === null ? "" : String(product.stock_qty),
             is_active: product.is_active,
+            unavailable: product.unavailable,
           }}
           categories={categories}
           onSubmit={handleUpdate}
@@ -255,12 +270,19 @@ function ProductRow({ product, categories, editingId, setEditingId, selected, on
               {fmt(product.price)} &middot; {product.stock_qty === null ? "unlimited stock" : `${product.stock_qty} in stock`}
             </div>
             {product.description && <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 4 }}>{product.description}</div>}
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, marginTop: 6 }}>
+              <input type="checkbox" checked={product.unavailable} onChange={toggleUnavailable} />
+              Not available today (e.g. out of an ingredient it needs)
+            </label>
             <RestockControl product={product} onChanged={onChanged} />
           </div>
         </div>
-        <span className={`checkin-badge ${product.is_active ? "in" : "out"}`}>
-          {product.is_active ? "Available online" : "Hidden"}
-        </span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
+          <span className={`checkin-badge ${product.is_active ? "in" : "out"}`}>
+            {product.is_active ? "Available online" : "Hidden"}
+          </span>
+          {product.unavailable && <span className="checkin-badge out">Unavailable Today</span>}
+        </div>
       </div>
       <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
         <button className="link-btn" onClick={() => setEditingId(product.id)}>

@@ -37,7 +37,7 @@ function ProductCard({ card }) {
   }
   const photos = cardPhotos(card, product);
   const remainingStock = product.stock_qty == null ? null : Math.max(0, product.stock_qty - qtyInCart(product.id));
-  const outOfStock = remainingStock !== null && remainingStock <= 0;
+  const outOfStock = product.unavailable || (remainingStock !== null && remainingStock <= 0);
 
   const sizeLabel = card.type === "grouped2d" ? card.flavors[flavorIdx].sizeVariants[sizeIdx].label : null;
   const inscriptionLimit = CAKE_CATEGORIES.includes(product.category) ? inscriptionLimitForLabel(sizeLabel) : 200;
@@ -67,7 +67,9 @@ function ProductCard({ card }) {
           <div className="product-card-placeholder">No photo yet</div>
         )}
         {!isBoxItem && outOfStock && (
-          <span className="product-card-stock-badge sold-out">Sold Out</span>
+          <span className="product-card-stock-badge sold-out">
+            {product.unavailable ? "Unavailable Today" : "Sold Out"}
+          </span>
         )}
         {!isBoxItem && !outOfStock && remainingStock !== null && remainingStock <= 10 && (
           <span className="product-card-stock-badge low">Only {remainingStock} left</span>
@@ -169,7 +171,7 @@ function ProductCard({ card }) {
         />
         {!isBoxItem &&
           (outOfStock ? (
-            <span className="form-note">Out of stock</span>
+            <span className="form-note">{product.unavailable ? "Not available today" : "Out of stock"}</span>
           ) : (
             <button
               className="button button-primary"

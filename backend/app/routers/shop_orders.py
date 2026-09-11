@@ -184,6 +184,8 @@ def _build_order(payload: shop_schemas.OrderCreate, db: Session) -> shop_models.
         product = products.get(line.product_id)
         if product is None or not product.is_active:
             raise HTTPException(status_code=400, detail=f"Product {line.product_id} is not available")
+        if product.unavailable:
+            raise HTTPException(status_code=400, detail=f"{product.name} isn't available today")
         if product.stock_qty is not None and qty_by_product[line.product_id] > product.stock_qty:
             raise HTTPException(status_code=400, detail=f"Not enough stock for {product.name}")
 

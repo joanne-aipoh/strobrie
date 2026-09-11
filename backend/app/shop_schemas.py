@@ -24,6 +24,7 @@ class ProductOut(BaseModel):
     category: str
     price: int
     stock_qty: int | None
+    unavailable: bool
     is_active: bool
     sort_order: int
     photos: list[ProductPhotoOut]
@@ -43,6 +44,7 @@ class ProductUpdate(BaseModel):
     category: str = Field(min_length=1, max_length=50)
     price: int = Field(ge=0)
     stock_qty: int | None = Field(default=None, ge=0)
+    unavailable: bool = False
     is_active: bool = True
 
 
