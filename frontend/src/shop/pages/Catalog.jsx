@@ -160,6 +160,33 @@ function ProductCard({ card }) {
             </div>
           </div>
         )}
+        {product.category === "Tea" && (
+          <div style={{ marginTop: 6 }}>
+            <div style={{ fontSize: 11, color: "var(--color-text-soft, #6b6b6b)", marginBottom: 4 }}>
+              Sweetener (optional, no extra cost)
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              {["None", "Honey", "Sugar"].map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className="button"
+                  style={{
+                    flex: 1,
+                    padding: "0.4rem 0.5rem",
+                    fontSize: 12,
+                    background: (addons || "None") === option ? "var(--color-hot-pink-dark)" : "var(--color-bg)",
+                    color: (addons || "None") === option ? "#fff" : "var(--color-text)",
+                    border: "1px solid rgba(0,0,0,0.15)",
+                  }}
+                  onClick={() => setAddons(option === "None" ? "" : option)}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <BoxBuilder
           product={product}
           onModeChange={setIsBoxItem}
