@@ -225,6 +225,19 @@ def _build_order(payload: shop_schemas.OrderCreate, db: Session) -> shop_models.
             )
         )
 
+    # Reserve stock now, at order creation — not later at payment
+    # verification — so Flow (in-person sales) and the shop both see the
+    # reduced count immediately and can't both sell the last one. Released
+    # back in verify_payment if the payment doesn't succeed.
+    for product_id, qty in qty_by_product.items():
+        product = products[product_id]
+        if product.stock_qty is not None:
+            product.stock_qty -= qty
+    for tracker_id, flavor_qty in flavor_qty_by_tracker_id.items():
+        tracker = flavor_trackers[tracker_id]
+        if tracker.stock_qty is not None:
+            tracker.stock_qty -= flavor_qty
+
     loyalty_customer = None
     points_redeemed = 0
     if payload.loyalty_phone:
@@ -306,27 +319,17 @@ def verify_payment(reference: str, db: Session = Depends(get_db)):
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    if order.payment_status != "paid":
+    if order.payment_status == "unpaid":
         try:
             data = paystack.verify_transaction(reference)
         except paystack.PaystackError as e:
             raise HTTPException(status_code=502, detail=str(e))
 
         if data.get("status") == "success":
+            # Stock for these items was already reserved when the order was
+            # created (see _build_order) — nothing to deduct here.
             order.payment_status = "paid"
             order.status = "paid"
-            for item in order.items:
-                if item.product_id is not None:
-                    product = db.get(shop_models.Product, item.product_id)
-                    if product and product.stock_qty is not None:
-                        product.stock_qty = max(0, product.stock_qty - item.qty)
-                    if product and item.flavor_breakdown:
-                        breakdown = json.loads(item.flavor_breakdown)
-                        trackers = _resolve_flavor_trackers(db, product, breakdown.keys())
-                        for label, flavor_qty in breakdown.items():
-                            tracker = trackers.get(label)
-                            if tracker and tracker.stock_qty is not None:
-                                tracker.stock_qty = max(0, tracker.stock_qty - flavor_qty)
             if order.loyalty_customer_id is not None:
                 customer = db.get(pos_models.LoyaltyCustomer, order.loyalty_customer_id)
                 if customer:
@@ -337,7 +340,21 @@ def verify_payment(reference: str, db: Session = Depends(get_db)):
                     customer.total_spent += order.total
             just_paid = True
         else:
+            # Payment didn't go through — release the stock reserved at
+            # creation back, so it's available to sell again.
             order.payment_status = "failed"
+            for item in order.items:
+                if item.product_id is not None:
+                    product = db.get(shop_models.Product, item.product_id)
+                    if product and product.stock_qty is not None:
+                        product.stock_qty += item.qty
+                    if product and item.flavor_breakdown:
+                        breakdown = json.loads(item.flavor_breakdown)
+                        trackers = _resolve_flavor_trackers(db, product, breakdown.keys())
+                        for label, flavor_qty in breakdown.items():
+                            tracker = trackers.get(label)
+                            if tracker and tracker.stock_qty is not None:
+                                tracker.stock_qty += flavor_qty
             just_paid = False
         db.commit()
         db.refresh(order)
