@@ -270,9 +270,12 @@ function ProductRow({ product, categories, editingId, setEditingId, selected, on
               {fmt(product.price)} &middot; {product.stock_qty === null ? "unlimited stock" : `${product.stock_qty} in stock`}
             </div>
             {product.description && <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 4 }}>{product.description}</div>}
-            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, marginTop: 6 }}>
+            <label
+              title="Use this if you can't make it today (e.g. out of an ingredient it needs) — separate from stock count."
+              style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, marginTop: 6, whiteSpace: "nowrap" }}
+            >
               <input type="checkbox" checked={product.unavailable} onChange={toggleUnavailable} />
-              Not available today (e.g. out of an ingredient it needs)
+              Not available today
             </label>
             <RestockControl product={product} onChanged={onChanged} />
           </div>
