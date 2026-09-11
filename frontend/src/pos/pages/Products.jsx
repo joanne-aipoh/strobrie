@@ -255,50 +255,50 @@ function ProductRow({ product, categories, editingId, setEditingId, selected, on
 
   return (
     <div className="panel" style={{ background: "var(--cream-2)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-          <input
-            type="checkbox"
-            checked={selected}
-            onChange={onToggleSelect}
-            style={{ marginTop: 4, flexShrink: 0 }}
-            aria-label={`Select ${product.name}`}
-          />
-          <div>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggleSelect}
+          style={{ marginTop: 4, flexShrink: 0 }}
+          aria-label={`Select ${product.name}`}
+        />
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
             <strong>{product.name}</strong>
-            <div style={{ fontSize: 13, marginTop: 2 }}>
-              {fmt(product.price)} &middot; {product.stock_qty === null ? "unlimited stock" : `${product.stock_qty} in stock`}
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end", flexShrink: 0 }}>
+              <span className={`checkin-badge ${product.is_active ? "in" : "out"}`}>
+                {product.is_active ? "Available online" : "Hidden"}
+              </span>
+              {product.unavailable && <span className="checkin-badge out">Unavailable Today</span>}
             </div>
-            {product.description && <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 4 }}>{product.description}</div>}
-            <label
-              title="Use this if you can't make it today (e.g. out of an ingredient it needs) — separate from stock count."
-              style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, marginTop: 6, whiteSpace: "nowrap" }}
-            >
-              <input type="checkbox" checked={product.unavailable} onChange={toggleUnavailable} />
-              Not available today
-            </label>
-            <RestockControl product={product} onChanged={onChanged} />
           </div>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
-          <span className={`checkin-badge ${product.is_active ? "in" : "out"}`}>
-            {product.is_active ? "Available online" : "Hidden"}
-          </span>
-          {product.unavailable && <span className="checkin-badge out">Unavailable Today</span>}
+          <div style={{ fontSize: 13, marginTop: 2 }}>
+            {fmt(product.price)} &middot; {product.stock_qty === null ? "unlimited stock" : `${product.stock_qty} in stock`}
+          </div>
+          {product.description && <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 4 }}>{product.description}</div>}
+          <label
+            title="Use this if you can't make it today (e.g. out of an ingredient it needs) — separate from stock count."
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, marginTop: 6, whiteSpace: "nowrap" }}
+          >
+            <input type="checkbox" checked={product.unavailable} onChange={toggleUnavailable} />
+            Not available today
+          </label>
+          <RestockControl product={product} onChanged={onChanged} />
+          <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
+            <button className="link-btn" onClick={() => setEditingId(product.id)}>
+              Edit
+            </button>
+            <button className="link-btn" onClick={toggleActive}>
+              {product.is_active ? "Hide from shop" : "Show in shop"}
+            </button>
+            <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={handleDelete}>
+              Delete
+            </button>
+          </div>
+          <ProductPhotos product={product} onChanged={onChanged} />
         </div>
       </div>
-      <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
-        <button className="link-btn" onClick={() => setEditingId(product.id)}>
-          Edit
-        </button>
-        <button className="link-btn" onClick={toggleActive}>
-          {product.is_active ? "Hide from shop" : "Show in shop"}
-        </button>
-        <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={handleDelete}>
-          Delete
-        </button>
-      </div>
-      <ProductPhotos product={product} onChanged={onChanged} />
     </div>
   );
 }
