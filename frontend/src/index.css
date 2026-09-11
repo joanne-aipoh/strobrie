@@ -382,7 +382,7 @@ a {
 .contact-form button,
 .booking-form button,
 .rsvp-form button {
-  align-self: flex-start;
+  align-self: flex-end;
 }
 
 .form-success {
