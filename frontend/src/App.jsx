@@ -30,7 +30,7 @@ function Footer() {
   return (
     <footer className="site-footer">
       <div className="container">
-        <p>&copy; {new Date().getFullYear()} Strobriē By Joanne. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} Strobriē Limited. All rights reserved.</p>
       </div>
     </footer>
   );

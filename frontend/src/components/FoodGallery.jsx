@@ -3,6 +3,12 @@
 // uploads (backend/uploads/products) so it's always real food, no stock art.
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
+// Same shop-link pattern as the main nav (App.jsx) — a relative /shop route
+// in local dev, the shop's own subdomain in production.
+const SHOP_SITE_URL = "https://shop.strobrie.com";
+const isLocalDev = typeof window !== "undefined" && window.location.hostname === "localhost";
+const shopHref = isLocalDev ? "/shop" : SHOP_SITE_URL;
+
 // Laid out to match the position/flow of Joanne's reference grid exactly
 // (position-for-position closest content match — our real photos standing
 // in for her example image's categories: bar dessert, individual cake, a
@@ -30,9 +36,9 @@ export default function FoodGallery() {
   return (
     <div className="food-gallery">
       {GALLERY_ITEMS.map((item) => (
-        <div className="food-gallery-item" key={item.file}>
+        <a className="food-gallery-item" key={item.file} href={shopHref}>
           <img src={`${API_BASE}/uploads/products/${item.file}`} alt={item.label} loading="lazy" />
-        </div>
+        </a>
       ))}
     </div>
   );
