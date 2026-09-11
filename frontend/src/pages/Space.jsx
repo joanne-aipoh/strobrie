@@ -99,6 +99,10 @@ export default function Space() {
             Up to 50 guests — birthdays, corporate gatherings, brunch parties, and private
             dinners.
           </p>
+          <p>
+            Choose the setting that fits your event — our cozy indoor space, or the open-air green
+            patio.
+          </p>
           <div className="form-card" style={{ maxWidth: 480, marginTop: "1.5rem" }}>
             <p className="menu-note">Up to 50 guests &middot; from &#8358;350,000</p>
             <BookingForm />

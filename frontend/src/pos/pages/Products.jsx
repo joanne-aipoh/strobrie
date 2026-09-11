@@ -183,11 +183,100 @@ function ProductForm({ initial, onSubmit, onCancel, categories }) {
   );
 }
 
+function ProductRow({ product, categories, editingId, setEditingId, selected, onToggleSelect, onChanged }) {
+  async function handleUpdate(data) {
+    await shopApi.updateProduct(product.id, data);
+    await onChanged();
+    setEditingId(null);
+  }
+
+  async function handleDelete() {
+    if (!window.confirm("Delete this product? This also removes its photos.")) return;
+    await shopApi.deleteProduct(product.id);
+    await onChanged();
+  }
+
+  async function toggleActive() {
+    await shopApi.updateProduct(product.id, {
+      name: product.name,
+      description: product.description,
+      category: product.category,
+      price: product.price,
+      stock_qty: product.stock_qty,
+      is_active: !product.is_active,
+    });
+    await onChanged();
+  }
+
+  if (editingId === product.id) {
+    return (
+      <div className="panel" style={{ background: "var(--cream-2)" }}>
+        <ProductForm
+          initial={{
+            name: product.name,
+            description: product.description || "",
+            category: product.category,
+            price: String(product.price),
+            stock_qty: product.stock_qty === null ? "" : String(product.stock_qty),
+            is_active: product.is_active,
+          }}
+          categories={categories}
+          onSubmit={handleUpdate}
+          onCancel={() => setEditingId(null)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="panel" style={{ background: "var(--cream-2)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+        <div style={{ display: "flex", gap: 10 }}>
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onToggleSelect}
+            style={{ marginTop: 4 }}
+            aria-label={`Select ${product.name}`}
+          />
+          <div>
+            <strong>{product.name}</strong>
+            <div style={{ fontSize: 13, marginTop: 2 }}>
+              {fmt(product.price)} &middot; {product.stock_qty === null ? "unlimited stock" : `${product.stock_qty} in stock`}
+            </div>
+            {product.description && <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 4 }}>{product.description}</div>}
+            <RestockControl product={product} onChanged={onChanged} />
+          </div>
+        </div>
+        <span className={`checkin-badge ${product.is_active ? "in" : "out"}`}>
+          {product.is_active ? "Available online" : "Hidden"}
+        </span>
+      </div>
+      <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
+        <button className="link-btn" onClick={() => setEditingId(product.id)}>
+          Edit
+        </button>
+        <button className="link-btn" onClick={toggleActive}>
+          {product.is_active ? "Hide from shop" : "Show in shop"}
+        </button>
+        <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={handleDelete}>
+          Delete
+        </button>
+      </div>
+      <ProductPhotos product={product} onChanged={onChanged} />
+    </div>
+  );
+}
+
 export default function Products() {
   const [products, setProducts] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [settings, setSettings] = useState(null);
+  const [search, setSearch] = useState("");
+  const [trackedOnly, setTrackedOnly] = useState(false);
+  const [openCategories, setOpenCategories] = useState(() => new Set());
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
 
   function load() {
     return shopApi.adminListProducts().then(setProducts);
@@ -207,34 +296,57 @@ export default function Products() {
 
   const categories = [...new Set(products.map((p) => p.category))];
 
+  const searchTerm = search.trim().toLowerCase();
+  const filtered = products.filter((p) => {
+    if (trackedOnly && p.stock_qty === null) return false;
+    if (searchTerm && !p.name.toLowerCase().includes(searchTerm)) return false;
+    return true;
+  });
+
+  // Category order follows first appearance in the full (unfiltered) list —
+  // stable regardless of which categories the current filter happens to hit.
+  const byCategory = new Map();
+  for (const p of filtered) {
+    if (!byCategory.has(p.category)) byCategory.set(p.category, []);
+    byCategory.get(p.category).push(p);
+  }
+
+  // While actively searching/filtering, every matching category auto-opens
+  // so results aren't hidden behind a collapsed group.
+  const isFiltering = searchTerm !== "" || trackedOnly;
+
+  function toggleCategory(cat) {
+    setOpenCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
+  }
+
+  function toggleSelect(id) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function deleteSelected() {
+    if (selectedIds.size === 0) return;
+    if (!window.confirm(`Delete ${selectedIds.size} selected product${selectedIds.size === 1 ? "" : "s"}? This also removes their photos.`)) {
+      return;
+    }
+    await Promise.all([...selectedIds].map((id) => shopApi.deleteProduct(id)));
+    setSelectedIds(new Set());
+    await load();
+  }
+
   async function handleCreate(data) {
     await shopApi.createProduct(data);
     await load();
     setShowAdd(false);
-  }
-
-  async function handleUpdate(id, data) {
-    await shopApi.updateProduct(id, data);
-    await load();
-    setEditingId(null);
-  }
-
-  async function handleDelete(id) {
-    if (!window.confirm("Delete this product? This also removes its photos.")) return;
-    await shopApi.deleteProduct(id);
-    await load();
-  }
-
-  async function toggleActive(product) {
-    await shopApi.updateProduct(product.id, {
-      name: product.name,
-      description: product.description,
-      category: product.category,
-      price: product.price,
-      stock_qty: product.stock_qty,
-      is_active: !product.is_active,
-    });
-    await load();
   }
 
   return (
@@ -271,55 +383,104 @@ export default function Products() {
           </div>
         )}
 
-        {products.length === 0 && <div className="empty-note">No products yet.</div>}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
+          <input
+            type="text"
+            placeholder="Search products by name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ flex: 1, minWidth: 200 }}
+          />
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, whiteSpace: "nowrap" }}>
+            <input type="checkbox" checked={trackedOnly} onChange={(e) => setTrackedOnly(e.target.checked)} />
+            Tracked stock only
+          </label>
+        </div>
+        <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: -6, marginBottom: 12 }}>
+          {products.length} products total. Anything with "unlimited stock" is made to order and never needs
+          counting — check "Tracked stock only" to hide those and see just what's actually being tracked.
+        </p>
 
-        {products.map((product) => (
-          <div key={product.id} className="panel" style={{ background: "var(--cream-2)" }}>
-            {editingId === product.id ? (
-              <ProductForm
-                initial={{
-                  name: product.name,
-                  description: product.description || "",
-                  category: product.category,
-                  price: String(product.price),
-                  stock_qty: product.stock_qty === null ? "" : String(product.stock_qty),
-                  is_active: product.is_active,
-                }}
-                categories={categories}
-                onSubmit={(data) => handleUpdate(product.id, data)}
-                onCancel={() => setEditingId(null)}
-              />
-            ) : (
-              <>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-                  <div>
-                    <strong>{product.name}</strong> <span style={{ color: "var(--ink-soft)", fontSize: 12.5 }}>({product.category})</span>
-                    <div style={{ fontSize: 13, marginTop: 2 }}>
-                      {fmt(product.price)} &middot; {product.stock_qty === null ? "unlimited stock" : `${product.stock_qty} in stock`}
-                    </div>
-                    {product.description && <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 4 }}>{product.description}</div>}
-                    <RestockControl product={product} onChanged={load} />
-                  </div>
-                  <span className={`checkin-badge ${product.is_active ? "in" : "out"}`}>
-                    {product.is_active ? "Available online" : "Hidden"}
-                  </span>
-                </div>
-                <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
-                  <button className="link-btn" onClick={() => setEditingId(product.id)}>
-                    Edit
-                  </button>
-                  <button className="link-btn" onClick={() => toggleActive(product)}>
-                    {product.is_active ? "Hide from shop" : "Show in shop"}
-                  </button>
-                  <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={() => handleDelete(product.id)}>
-                    Delete
-                  </button>
-                </div>
-                <ProductPhotos product={product} onChanged={load} />
-              </>
-            )}
+        {selectedIds.size > 0 && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+              marginBottom: 12,
+              padding: "8px 12px",
+              background: "var(--cream-2)",
+              borderRadius: 8,
+            }}
+          >
+            <span style={{ fontSize: 13 }}>{selectedIds.size} selected</span>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button className="link-btn" onClick={() => setSelectedIds(new Set())}>
+                Clear
+              </button>
+              <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={deleteSelected}>
+                Delete selected
+              </button>
+            </div>
           </div>
-        ))}
+        )}
+
+        {filtered.length === 0 && <div className="empty-note">No products match.</div>}
+
+        {[...byCategory.entries()].map(([cat, items]) => {
+          const isOpen = isFiltering || openCategories.has(cat);
+          const allSelected = items.every((p) => selectedIds.has(p.id));
+          return (
+            <div key={cat} style={{ marginBottom: 10 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "8px 4px",
+                  cursor: "pointer",
+                  borderBottom: "1px solid var(--line)",
+                }}
+                onClick={() => toggleCategory(cat)}
+              >
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={() =>
+                    setSelectedIds((prev) => {
+                      const next = new Set(prev);
+                      if (allSelected) items.forEach((p) => next.delete(p.id));
+                      else items.forEach((p) => next.add(p.id));
+                      return next;
+                    })
+                  }
+                />
+                <strong style={{ flex: 1 }}>
+                  {cat} <span style={{ color: "var(--ink-soft)", fontWeight: 400 }}>({items.length})</span>
+                </strong>
+                <span style={{ color: "var(--ink-soft)" }}>{isOpen ? "▲" : "▼"}</span>
+              </div>
+              {isOpen && (
+                <div style={{ marginTop: 8 }}>
+                  {items.map((product) => (
+                    <ProductRow
+                      key={product.id}
+                      product={product}
+                      categories={categories}
+                      editingId={editingId}
+                      setEditingId={setEditingId}
+                      selected={selectedIds.has(product.id)}
+                      onToggleSelect={() => toggleSelect(product.id)}
+                      onChanged={load}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
 
         <button className="link-btn" style={{ marginTop: 6 }} onClick={() => setShowAdd((v) => !v)}>
           {showAdd ? "Cancel" : "+ Add product"}

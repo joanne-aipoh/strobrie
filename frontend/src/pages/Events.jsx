@@ -1,12 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
 
-const STATIC_OFFERINGS = [
-  { title: "Art Events", description: "Community art sessions in the cafe." },
-  { title: "Pottery", description: "Hands-on pottery sessions for all skill levels." },
-  { title: "Sip & Paint", description: "Drinks, canvases, and good company." },
-];
-
 function formatEventDate(iso) {
   return new Date(iso).toLocaleString("en-NG", {
     weekday: "short",
@@ -344,14 +338,10 @@ export default function Events() {
       <section className="section">
         <div className="container">
           <h2>Events</h2>
-          <div className="event-grid">
-            {STATIC_OFFERINGS.map((offering) => (
-              <div className="event-card" key={offering.title}>
-                <h3>{offering.title}</h3>
-                <p>{offering.description}</p>
-              </div>
-            ))}
-          </div>
+          <p>
+            From art nights and pottery sessions to Sunday morning yoga and everything in between, we host a mix
+            of paid and drop-in events throughout the month — see what's coming up below.
+          </p>
         </div>
       </section>
 
