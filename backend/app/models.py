@@ -49,6 +49,8 @@ class BookingRequest(Base):
     name: Mapped[str] = mapped_column(String(120))
     email: Mapped[str] = mapped_column(String(255))
     event_type: Mapped[str] = mapped_column(String(30))
+    # Which of the three rentable spaces — 'indoor' | 'green_patio' | 'front_lawn'.
+    space: Mapped[str] = mapped_column(String(30), default="indoor")
     guest_count: Mapped[int] = mapped_column(Integer)
     preferred_date: Mapped[datetime] = mapped_column(Date)
     notes: Mapped[str | None] = mapped_column(Text, default=None)
