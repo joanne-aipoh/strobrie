@@ -5,7 +5,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from urllib.parse import quote
 
-from . import shop_models
+from . import pos_models, shop_models
 
 # Same business number as the frontend's WhatsApp button/checkout link
 # (frontend/src/whatsapp.js) — kept in sync manually since this is Python,
@@ -13,8 +13,7 @@ from . import shop_models
 WHATSAPP_NUMBER = "2348090701995"
 
 
-def _whatsapp_link(order_id: int) -> str:
-    message = f"Hi Strobriē! I have a question about my order #{order_id}."
+def _whatsapp_link(message: str) -> str:
     return f"https://wa.me/{WHATSAPP_NUMBER}?text={quote(message)}"
 
 # Sends via Gmail SMTP using the shop's own Gmail account — no separate
@@ -108,7 +107,7 @@ def _build_order_email_html(order: shop_models.Order) -> str:
       </div>
       <p style="margin-top:20px;font-size:13px;color:#6b6b6b;">
         Questions about your order?
-        <a href="{_whatsapp_link(order.id)}" style="color:#c2477a;font-weight:600;text-decoration:none;">
+        <a href="{_whatsapp_link(f'Hi Strobriē! I have a question about my order #{order.id}.')}" style="color:#c2477a;font-weight:600;text-decoration:none;">
           Message us on WhatsApp
         </a>.
       </p>
@@ -139,3 +138,67 @@ def send_order_confirmation_email(order: shop_models.Order) -> bool:
     except Exception as e:  # noqa: BLE001 — best-effort send, never break checkout over this
         print(f"WARNING: failed to send order confirmation email for order #{order.id}: {e}")
         return False
+
+
+def _send(to_email: str, subject: str, html: str, error_context: str) -> bool:
+    """Shared best-effort sender — returns False (and prints a warning)
+    instead of raising, so a missing/broken mailbox never breaks checkout."""
+    if not SMTP_USER or not SMTP_PASSWORD:
+        print(f"WARNING: SMTP_USER/SMTP_PASSWORD not set — skipping {error_context}.")
+        return False
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"{SMTP_FROM_NAME} <{SMTP_USER}>"
+    msg["To"] = to_email
+    msg.attach(MIMEText(html, "html"))
+
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.sendmail(SMTP_USER, [to_email], msg.as_string())
+        return True
+    except Exception as e:  # noqa: BLE001 — best-effort send
+        print(f"WARNING: failed to send {error_context}: {e}")
+        return False
+
+
+def _build_ticket_email_html(ticket: pos_models.Ticket) -> str:
+    event = ticket.event
+    tier = ticket.tier
+    date_line = event.date.strftime("%A, %d %B %Y") + (f" — {event.time}" if event.time else "")
+    return f"""
+    <div style="font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto;color:#1a1a1a;">
+      <h1 style="font-size:1.4rem;color:#1a1a1a;margin-bottom:4px;">You're in, {ticket.buyer_name}!</h1>
+      <p style="color:#2f7d4f;font-weight:600;margin-top:0;">
+        Payment confirmed — your spot for {event.name} is booked.
+      </p>
+      <div style="background:#fdf2ed;border-radius:16px;padding:20px;margin-top:16px;">
+        <h2 style="font-size:1.1rem;color:#c2477a;margin-top:0;">{event.name}</h2>
+        <p style="margin:0;font-size:14px;">{date_line}</p>
+        <p style="margin:8px 0 0;font-size:14px;">{tier.name} — {_fmt_naira(tier.price)}</p>
+      </div>
+      <p style="margin-top:16px;font-size:13px;font-weight:600;">
+        Show this email at check-in as proof of payment.
+      </p>
+      <p style="margin-top:20px;font-size:13px;color:#6b6b6b;">
+        Questions about your booking?
+        <a href="{_whatsapp_link(f"Hi Strobriē! I have a question about my {event.name} booking (ticket #{ticket.id}).")}" style="color:#c2477a;font-weight:600;text-decoration:none;">
+          Message us on WhatsApp
+        </a>.
+      </p>
+      <p style="margin-top:24px;font-size:13px;color:#6b6b6b;">— Strobriē By Joanne</p>
+    </div>
+    """
+
+
+def send_ticket_confirmation_email(ticket: pos_models.Ticket) -> bool:
+    if not ticket.buyer_email:
+        return False
+    return _send(
+        to_email=ticket.buyer_email,
+        subject=f"You're in — {ticket.event.name}",
+        html=_build_ticket_email_html(ticket),
+        error_context=f"ticket confirmation email for ticket #{ticket.id}",
+    )

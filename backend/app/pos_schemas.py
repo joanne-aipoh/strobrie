@@ -238,3 +238,49 @@ class TicketOut(BaseModel):
 class CollectPaymentRequest(BaseModel):
     staff_id: int
     payment_method: PaymentMethod = "Cash"
+
+
+# --- Public event/ticket purchase (customer-facing, Paystack) --------------
+
+
+class PublicTierOut(BaseModel):
+    id: int
+    name: str
+    price: int
+    remaining: int | None
+
+
+class PublicEventOut(BaseModel):
+    id: int
+    name: str
+    date: date
+    time: str | None
+    description: str | None
+    spots_remaining: int | None
+    tiers: list[PublicTierOut]
+
+
+class EventBuyRequest(BaseModel):
+    tier_id: int
+    buyer_name: str = Field(min_length=1, max_length=120)
+    buyer_email: str = Field(min_length=3, max_length=255)
+    buyer_contact: str = Field(min_length=1, max_length=120)
+    callback_url: str | None = None
+
+
+class EventCheckoutResponse(BaseModel):
+    ticket_id: int
+    authorization_url: str
+    reference: str
+
+
+class PublicTicketOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    pos_event_id: int
+    buyer_name: str
+    buyer_email: str | None
+    channel: str
+    paid: bool
+    purchase_timestamp: datetime
