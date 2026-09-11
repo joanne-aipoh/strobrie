@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { shopApi } from "../shopApi.js";
 import { useCart } from "../CartContext.jsx";
 import { shopPath } from "../shopBase.js";
+import { whatsappLink } from "../../whatsapp.js";
 
 function fmt(n) {
   return `₦${n.toLocaleString("en-NG")}`;
@@ -138,7 +139,20 @@ export default function OrderConfirmation() {
           )}
         </div>
 
-        <Link to={shopPath("/")} className="link-btn" style={{ display: "inline-block", marginTop: "1.5rem" }}>
+        <p style={{ marginTop: "1.5rem", fontSize: "0.9rem" }}>
+          Questions about your order?{" "}
+          <a
+            href={whatsappLink(`Hi Strobriē! I have a question about my order #${order.id}.`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "var(--color-hot-pink-dark)", fontWeight: 600 }}
+          >
+            Message us on WhatsApp
+          </a>
+          .
+        </p>
+
+        <Link to={shopPath("/")} className="link-btn" style={{ display: "inline-block", marginTop: "1rem" }}>
           &larr; Continue shopping
         </Link>
       </div>

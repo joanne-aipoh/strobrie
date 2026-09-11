@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from .. import paystack, pos_models, shop_models, shop_schemas
+from .. import email_utils, paystack, pos_models, shop_models, shop_schemas
 from ..database import get_db
 from .pos_sales import NAIRA_PER_POINT_EARNED, NAIRA_PER_POINT_REDEEM
 
@@ -300,10 +300,15 @@ def verify_payment(reference: str, db: Session = Depends(get_db)):
                     order.points_redeemed = max(0, min(order.points_redeemed, customer.points))
                     customer.points = customer.points - order.points_redeemed + order.points_earned
                     customer.total_spent += order.total
+            just_paid = True
         else:
             order.payment_status = "failed"
+            just_paid = False
         db.commit()
         db.refresh(order)
+
+        if just_paid:
+            email_utils.send_order_confirmation_email(order)
 
     return order
 
