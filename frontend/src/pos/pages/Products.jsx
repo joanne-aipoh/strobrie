@@ -472,7 +472,7 @@ export default function Products() {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 10,
+                  gap: 6,
                   padding: "8px 4px",
                   cursor: "pointer",
                   borderBottom: "1px solid var(--line)",
@@ -483,6 +483,7 @@ export default function Products() {
                   type="checkbox"
                   checked={allSelected}
                   onClick={(e) => e.stopPropagation()}
+                  style={{ margin: 0, flexShrink: 0 }}
                   onChange={() =>
                     setSelectedIds((prev) => {
                       const next = new Set(prev);
