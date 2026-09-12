@@ -64,9 +64,9 @@ export default function Home() {
               <span>
                 Mon&ndash;Thu 8am&ndash;6pm
                 <br />
-                Fri 8am&ndash;9pm
+                Fri 8am&ndash;9pm &middot; Sat 9am&ndash;9pm
                 <br />
-                Sat 9am&ndash;9pm &middot; Sun 10am&ndash;3pm
+                Sun 10am&ndash;3pm
               </span>
             </div>
           </div>
