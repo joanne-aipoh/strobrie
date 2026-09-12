@@ -7,6 +7,17 @@ function fmt(n) {
 
 const BLANK_FORM = { name: "", description: "", category: "", price: "", stock_qty: "" };
 
+// A tracked batch sitting this many days or more gets flagged for review —
+// not auto-discounted, just surfaced so a person decides (mark it down,
+// or pull it if it's gone off). Adjust to taste.
+const STALE_STOCK_DAYS = 3;
+
+function daysSinceRestock(product) {
+  if (product.stock_qty === null || !product.stock_updated_at) return null;
+  const ms = Date.now() - new Date(product.stock_updated_at).getTime();
+  return Math.floor(ms / (1000 * 60 * 60 * 24));
+}
+
 function RestockControl({ product, onChanged }) {
   const [qty, setQty] = useState("");
   const [error, setError] = useState("");
@@ -276,6 +287,27 @@ function ProductRow({ product, categories, editingId, setEditingId, selected, on
           <div style={{ fontSize: 13, marginTop: 2 }}>
             {fmt(product.price)} &middot; {product.stock_qty === null ? "unlimited stock" : `${product.stock_qty} in stock`}
           </div>
+          {(() => {
+            const days = daysSinceRestock(product);
+            if (days === null || days < STALE_STOCK_DAYS || product.stock_qty <= 0) return null;
+            return (
+              <div
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  color: "var(--rust-dark)",
+                  background: "var(--cream)",
+                  border: "1px solid var(--rust-dark)",
+                  borderRadius: 6,
+                  padding: "4px 8px",
+                  marginTop: 6,
+                  display: "inline-block",
+                }}
+              >
+                Restocked {days} day{days === 1 ? "" : "s"} ago &middot; {product.stock_qty} left — worth a discount or a freshness check?
+              </div>
+            );
+          })()}
           {product.description && <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 4 }}>{product.description}</div>}
           <label
             title="Use this if you can't make it today (e.g. out of an ingredient it needs) — separate from stock count."

@@ -24,6 +24,7 @@ class ProductOut(BaseModel):
     category: str
     price: int
     stock_qty: int | None
+    stock_updated_at: datetime | None
     unavailable: bool
     is_active: bool
     sort_order: int

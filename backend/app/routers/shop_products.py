@@ -1,6 +1,7 @@
 import json
 import os
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy import select
@@ -90,8 +91,11 @@ def update_product(product_id: int, payload: shop_schemas.ProductUpdate, db: Ses
     product = db.get(shop_models.Product, product_id)
     if product is None:
         raise HTTPException(status_code=404, detail="Product not found")
+    stock_qty_changed = payload.stock_qty != product.stock_qty
     for field, value in payload.model_dump().items():
         setattr(product, field, value)
+    if stock_qty_changed and product.stock_qty is not None:
+        product.stock_updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(product)
     return product
@@ -105,6 +109,7 @@ def restock_product(product_id: int, payload: shop_schemas.RestockRequest, db: S
     if product is None:
         raise HTTPException(status_code=404, detail="Product not found")
     product.stock_qty = (product.stock_qty or 0) + payload.qty
+    product.stock_updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(product)
     return product

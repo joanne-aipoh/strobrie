@@ -17,6 +17,10 @@ class Product(Base):
     category: Mapped[str] = mapped_column(String(50))
     price: Mapped[int] = mapped_column(Integer)
     stock_qty: Mapped[int | None] = mapped_column(Integer, default=None)  # null = unlimited
+    # When stock_qty was last set (restocked, or edited directly) — lets Flow
+    # flag a batch that's been sitting for a while so staff can decide
+    # whether to discount it or pull it, rather than an automatic price cut.
+    stock_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     # A quick day-to-day "86" toggle for a made-to-order item that can't be
     # made right now (e.g. out of chicken today) — separate from stock_qty,
     # which tracks a countable batch. Blocks ordering in Flow and the shop
