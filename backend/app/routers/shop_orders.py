@@ -30,9 +30,15 @@ INSCRIPTION_LIMIT_BY_SIZE = {'4"': 20, '6"': 30, '8"': 40, '10"': 50, '12"': 60,
 DEFAULT_INSCRIPTION_LIMIT = 40
 SIZE_IN_NAME_RE = re.compile(r'\((\d+)"')
 
+# Whole cakes and cheesecakes are made to order and need a day's notice —
+# no same-day or ASAP orders online for these; a customer needing one sooner
+# calls/WhatsApps instead. Mirrors CAKE_CATEGORIES in
+# frontend/src/shop/cakeCategories.js.
+CAKE_CATEGORIES = {"Cakes", "Cheesecakes"}
+
 
 def inscription_limit_for_product(product: "shop_models.Product") -> int:
-    if product.category not in ("Cakes", "Cheesecakes"):
+    if product.category not in CAKE_CATEGORIES:
         return 200
     m = SIZE_IN_NAME_RE.search(product.name)
     if not m:
@@ -139,6 +145,19 @@ def _build_order(payload: shop_schemas.OrderCreate, db: Session) -> shop_models.
 
     product_ids = [line.product_id for line in payload.items]
     products = {p.id: p for p in db.query(shop_models.Product).filter(shop_models.Product.id.in_(product_ids))}
+
+    # Whole cakes/cheesecakes are made to order — need at least a day's
+    # notice, so no ASAP and no same-day scheduling for them. Checked
+    # against Lagos' calendar date, not the server's own timezone.
+    if any(p.category in CAKE_CATEGORIES for p in products.values()):
+        today_lagos = datetime.now(LAGOS_TZ).date()
+        requested_date_lagos = requested_at.astimezone(LAGOS_TZ).date() if requested_at is not None else today_lagos
+        if requested_date_lagos <= today_lagos:
+            raise HTTPException(
+                status_code=400,
+                detail="Whole cakes and cheesecakes need at least a day's notice — please choose a date "
+                "from tomorrow onward, or call/WhatsApp us for a same-day order.",
+            )
 
     # A cake can appear as several lines (different inscriptions/design
     # notes) — check stock against the total requested across all of a

@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useCart } from "../CartContext.jsx";
 import { shopApi } from "../shopApi.js";
 import { shopOrigin, shopPath } from "../shopBase.js";
 import { areaOptionsFor, deliveryFeeFor } from "../deliveryAreas.js";
 import { whatsappLink } from "../../whatsapp.js";
+import { CAKE_CATEGORIES } from "../cakeCategories.js";
 
 function fmt(n) {
   return `₦${n.toLocaleString("en-NG")}`;
@@ -17,6 +18,11 @@ function formatFlavorBreakdown(breakdown) {
 }
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
+const tomorrowStr = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+};
 
 // Riders/staff stop doing deliveries at 5pm — mirrors
 // backend/app/routers/shop_orders.py's DELIVERY_CUTOFF_HOUR. Pickup has no
@@ -74,12 +80,32 @@ export default function Checkout() {
     form.requested_time &&
     Number(form.requested_time.split(":")[0]) >= DELIVERY_CUTOFF_HOUR;
 
+  // Whole cakes/cheesecakes are made to order — no ASAP, and "today" isn't
+  // far enough ahead either. Mirrors the backend's own check in
+  // shop_orders.py, which is the authoritative one.
+  const hasCakeItem = items.some((i) => CAKE_CATEGORIES.includes(i.category));
+  const cakeNeedsMoreNotice =
+    hasCakeItem && (form.timing_choice === "asap" || (form.timing_choice === "scheduled" && form.requested_date <= todayStr()));
+
+  useEffect(() => {
+    if (hasCakeItem && form.timing_choice === "asap") {
+      setForm((f) => ({ ...f, timing_choice: "scheduled" }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasCakeItem]);
+
   if (items.length === 0) return <Navigate to={shopPath("/cart")} replace />;
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (asapBlockedByCutoff || scheduledAfterCutoff) {
       setError(`Delivery orders close at ${DELIVERY_CUTOFF_LABEL} — please pick a time before then, or choose pickup.`);
+      return;
+    }
+    if (cakeNeedsMoreNotice) {
+      setError(
+        "Whole cakes and cheesecakes need at least a day's notice — please choose a date from tomorrow onward, or call/WhatsApp us for a same-day order."
+      );
       return;
     }
     setStatus("submitting");
@@ -254,6 +280,7 @@ export default function Checkout() {
                 <button
                   type="button"
                   className="button"
+                  disabled={hasCakeItem}
                   style={{
                     flex: 1,
                     alignSelf: "stretch",
@@ -285,7 +312,7 @@ export default function Checkout() {
                   <input
                     type="date"
                     required
-                    min={todayStr()}
+                    min={hasCakeItem ? tomorrowStr() : todayStr()}
                     value={form.requested_date}
                     onChange={(e) => setForm({ ...form, requested_date: e.target.value })}
                     style={{ flex: 1 }}
@@ -305,11 +332,30 @@ export default function Checkout() {
                   Delivery orders are accepted until {DELIVERY_CUTOFF_LABEL} daily.
                 </p>
               )}
+              {hasCakeItem && (
+                <p className="form-note" style={{ margin: "6px 0 0" }}>
+                  Whole cakes &amp; cheesecakes need at least a day's notice — pick a date from tomorrow
+                  onward. Need it today?{" "}
+                  <a
+                    href={whatsappLink("Hi Strobriē! I'd like to order a cake for today — is that possible?")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    WhatsApp us
+                  </a>
+                  .
+                </p>
+              )}
               {(asapBlockedByCutoff || scheduledAfterCutoff) && (
                 <p className="form-error" style={{ margin: "6px 0 0" }}>
                   {asapBlockedByCutoff
                     ? `It's past ${DELIVERY_CUTOFF_LABEL} — please schedule a delivery time before then, or switch to pickup.`
                     : `Please pick a delivery time before ${DELIVERY_CUTOFF_LABEL}.`}
+                </p>
+              )}
+              {cakeNeedsMoreNotice && form.requested_date && (
+                <p className="form-error" style={{ margin: "6px 0 0" }}>
+                  Please pick a date from tomorrow onward for a whole cake or cheesecake.
                 </p>
               )}
             </div>
@@ -372,7 +418,7 @@ export default function Checkout() {
             <button
               type="submit"
               className="button button-primary"
-              disabled={status === "submitting" || asapBlockedByCutoff || scheduledAfterCutoff}
+              disabled={status === "submitting" || asapBlockedByCutoff || scheduledAfterCutoff || cakeNeedsMoreNotice}
               style={{ alignSelf: "flex-end", width: "100%", boxSizing: "border-box" }}
             >
               {status === "submitting" ? "Redirecting to payment…" : `Pay ${fmt(total)} with Paystack`}

@@ -47,6 +47,7 @@ export function CartProvider({ children }) {
           lineId: `${product.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           productId: product.id,
           name: product.name,
+          category: product.category,
           price: product.price,
           qty,
           photo: product.photos?.[0]?.url ?? null,
