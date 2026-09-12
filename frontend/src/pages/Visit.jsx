@@ -75,6 +75,21 @@ export default function Visit() {
             <p>
               Mon&ndash;Thu 8am&ndash;6pm &middot; Fri 8am&ndash;9pm &middot; Sat 9am&ndash;9pm &middot; Sun 10am&ndash;3pm
             </p>
+            <div style={{ marginTop: "1.5rem" }}>
+              <p style={{ fontWeight: 700, marginBottom: "0.5rem" }}>Enjoyed your visit? Leave us a review!</p>
+              <a
+                href="https://g.page/r/CWGBB7Y1Vzl9EAE/review"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "inline-block" }}
+              >
+                <img
+                  src="/google-review-qr.png"
+                  alt="Scan to leave Strobriē a Google review"
+                  style={{ width: 140, height: 140, borderRadius: 12, border: "1px solid rgba(0,0,0,0.1)" }}
+                />
+              </a>
+            </div>
           </div>
           <div>
             <h2>Get in Touch</h2>
