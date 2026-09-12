@@ -77,30 +77,6 @@ export default function Visit() {
               <br />
               Sat 9am&ndash;9pm &middot; Sun 10am&ndash;3pm
             </p>
-            <div style={{ marginTop: "1.5rem" }}>
-              <p style={{ fontWeight: 700, marginBottom: "0.25rem" }}>Enjoyed your visit?</p>
-              <a
-                href="https://g.page/r/CWGBB7Y1Vzl9EAE/review"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: "inline-block", fontWeight: 700, marginBottom: "0.75rem" }}
-              >
-                Leave a review
-              </a>
-              <br />
-              <a
-                href="https://g.page/r/CWGBB7Y1Vzl9EAE/review"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: "inline-block" }}
-              >
-                <img
-                  src="/google-review-qr.png"
-                  alt="Scan to leave Strobriē a Google review"
-                  style={{ width: 140, height: 140, borderRadius: 12, border: "1px solid rgba(0,0,0,0.1)" }}
-                />
-              </a>
-            </div>
           </div>
           <div>
             <h2>Get in Touch</h2>
@@ -120,6 +96,33 @@ export default function Visit() {
               for customized designs.
             </p>
           </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container" style={{ textAlign: "center" }}>
+          <p style={{ fontWeight: 700, marginBottom: "0.25rem" }}>Enjoyed your visit?</p>
+          <a
+            href="https://g.page/r/CWGBB7Y1Vzl9EAE/review"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "inline-block", fontWeight: 700, marginBottom: "0.75rem" }}
+          >
+            Leave a review
+          </a>
+          <br />
+          <a
+            href="https://g.page/r/CWGBB7Y1Vzl9EAE/review"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "inline-block" }}
+          >
+            <img
+              src="/google-review-qr.png"
+              alt="Scan to leave Strobriē a Google review"
+              style={{ width: 140, height: 140, borderRadius: 12, border: "1px solid rgba(0,0,0,0.1)" }}
+            />
+          </a>
         </div>
       </section>
     </>
