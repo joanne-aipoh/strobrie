@@ -77,6 +77,7 @@ export default function Visit() {
             </p>
             <div style={{ marginTop: "1.5rem" }}>
               <p style={{ fontWeight: 700, marginBottom: "0.25rem" }}>Enjoyed your visit?</p>
+              <div style={{ textAlign: "center" }}>
               <a
                 href="https://g.page/r/CWGBB7Y1Vzl9EAE/review"
                 target="_blank"
@@ -98,6 +99,7 @@ export default function Visit() {
                   style={{ width: 140, height: 140, borderRadius: 12, border: "1px solid rgba(0,0,0,0.1)" }}
                 />
               </a>
+              </div>
             </div>
           </div>
           <div>
