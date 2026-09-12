@@ -317,6 +317,10 @@ a {
   gap: 2.5rem;
 }
 
+.visit-grid-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
 .visit-grid h2 {
   font-size: 1.5rem;
 }
