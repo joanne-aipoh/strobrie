@@ -76,7 +76,16 @@ export default function Visit() {
               Mon&ndash;Thu 8am&ndash;6pm &middot; Fri 8am&ndash;9pm &middot; Sat 9am&ndash;9pm &middot; Sun 10am&ndash;3pm
             </p>
             <div style={{ marginTop: "1.5rem" }}>
-              <p style={{ fontWeight: 700, marginBottom: "0.5rem" }}>Enjoyed your visit? Leave us a review!</p>
+              <p style={{ fontWeight: 700, marginBottom: "0.25rem" }}>Enjoyed your visit?</p>
+              <a
+                href="https://g.page/r/CWGBB7Y1Vzl9EAE/review"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "inline-block", fontWeight: 700, marginBottom: "0.75rem" }}
+              >
+                Leave a review
+              </a>
+              <br />
               <a
                 href="https://g.page/r/CWGBB7Y1Vzl9EAE/review"
                 target="_blank"
