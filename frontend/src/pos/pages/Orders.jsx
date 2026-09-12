@@ -3,6 +3,13 @@ import { shopApi } from "../../shop/shopApi.js";
 
 const STATUSES = ["pending", "paid", "fulfilled", "cancelled"];
 
+const STATUS_COLORS = {
+  pending: { bg: "#fdf1d9", text: "#92600a", border: "#e8b95e" },
+  paid: { bg: "#dfeaf7", text: "#1d4f8c", border: "#7ea9d8" },
+  fulfilled: { bg: "#dff0e0", text: "#1e7d34", border: "#7cc48c" },
+  cancelled: { bg: "#f7dede", text: "#9c2626", border: "#e08a8a" },
+};
+
 function fmt(n) {
   return `₦${n.toLocaleString("en-NG")}`;
 }
@@ -15,6 +22,7 @@ function formatFlavorBreakdown(json) {
 
 export default function Orders() {
   const [orders, setOrders] = useState(null);
+  const [showFulfilled, setShowFulfilled] = useState(false);
 
   function load() {
     return shopApi.adminListOrders().then(setOrders);
@@ -31,14 +39,35 @@ export default function Orders() {
 
   if (!orders) return <p>Loading&hellip;</p>;
 
+  // Fulfilled orders are done — keep them out of the working list by default
+  // so it doesn't pile up with orders that no longer need attention.
+  const fulfilledCount = orders.filter((o) => o.status === "fulfilled").length;
+  const visibleOrders = showFulfilled ? orders : orders.filter((o) => o.status !== "fulfilled");
+
   return (
     <div className="panel">
       <h3>Shop Orders ({orders.length})</h3>
-      {orders.length === 0 ? (
-        <div className="empty-note">No orders yet.</div>
+      {fulfilledCount > 0 && (
+        <button
+          className="link-btn"
+          style={{ marginBottom: 10 }}
+          onClick={() => setShowFulfilled((v) => !v)}
+        >
+          {showFulfilled ? "Hide fulfilled orders" : `Show ${fulfilledCount} fulfilled order${fulfilledCount === 1 ? "" : "s"}`}
+        </button>
+      )}
+      {visibleOrders.length === 0 ? (
+        <div className="empty-note">{orders.length === 0 ? "No orders yet." : "No orders need attention right now."}</div>
       ) : (
-        orders.map((order) => (
-          <div key={order.id} className="panel" style={{ background: "var(--cream-2)" }}>
+        visibleOrders.map((order) => (
+          <div
+            key={order.id}
+            className="panel"
+            style={{
+              background: "var(--cream-2)",
+              borderLeft: `4px solid ${STATUS_COLORS[order.status]?.border || "transparent"}`,
+            }}
+          >
             <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
               <div>
                 <strong>Order #{order.id}</strong> &middot; {order.customer_name} ({order.customer_email},{" "}
@@ -48,7 +77,10 @@ export default function Orders() {
                   {order.fulfillment_method === "pickup"
                     ? "Pickup"
                     : `Delivery (${order.delivery_area || "area not set"}): ${order.delivery_address}`}{" "}
-                  &middot; Payment: {order.payment_status}
+                  &middot; Payment:{" "}
+                  <strong style={{ color: order.payment_status === "paid" ? "#1e7d34" : "#9c2626" }}>
+                    {order.payment_status}
+                  </strong>
                 </div>
                 {order.fulfillment_method === "delivery" && (
                   <div style={{ fontSize: 12.5, color: "var(--rust-dark)", marginTop: 2 }}>
@@ -79,10 +111,22 @@ export default function Orders() {
                   </div>
                 )}
               </div>
-              <select value={order.status} onChange={(e) => changeStatus(order.id, e.target.value)}>
+              <select
+                value={order.status}
+                onChange={(e) => changeStatus(order.id, e.target.value)}
+                style={{
+                  background: STATUS_COLORS[order.status]?.bg,
+                  color: STATUS_COLORS[order.status]?.text,
+                  border: `1px solid ${STATUS_COLORS[order.status]?.border}`,
+                  fontWeight: 600,
+                  textTransform: "capitalize",
+                  borderRadius: 6,
+                  padding: "4px 8px",
+                }}
+              >
                 {STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
+                  <option key={s} value={s} style={{ textTransform: "capitalize" }}>
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
                   </option>
                 ))}
               </select>
