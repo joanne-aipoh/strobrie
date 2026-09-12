@@ -98,27 +98,29 @@ export default function Visit() {
           </div>
           <div>
             <h2>Enjoyed your visit?</h2>
-            <a
-              href="https://g.page/r/CWGBB7Y1Vzl9EAE/review"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ display: "inline-block", fontWeight: 700, marginBottom: "0.75rem" }}
-            >
-              Leave a review
-            </a>
-            <br />
-            <a
-              href="https://g.page/r/CWGBB7Y1Vzl9EAE/review"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ display: "inline-block" }}
-            >
-              <img
-                src="/google-review-qr.png"
-                alt="Scan to leave Strobriē a Google review"
-                style={{ width: 140, height: 140, borderRadius: 12, border: "1px solid rgba(0,0,0,0.1)" }}
-              />
-            </a>
+            <div style={{ textAlign: "center" }}>
+              <a
+                href="https://g.page/r/CWGBB7Y1Vzl9EAE/review"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "inline-block", fontWeight: 700, marginBottom: "0.75rem" }}
+              >
+                Leave a review
+              </a>
+              <br />
+              <a
+                href="https://g.page/r/CWGBB7Y1Vzl9EAE/review"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "inline-block" }}
+              >
+                <img
+                  src="/google-review-qr.png"
+                  alt="Scan to leave Strobriē a Google review"
+                  style={{ width: 140, height: 140, borderRadius: 12, border: "1px solid rgba(0,0,0,0.1)" }}
+                />
+              </a>
+            </div>
           </div>
         </div>
       </section>
