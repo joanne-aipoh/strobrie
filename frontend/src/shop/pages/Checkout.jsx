@@ -45,6 +45,7 @@ export default function Checkout() {
     delivery_method: "bike",
     delivery_area: "",
     gift_note: "",
+    customer_notes: "",
     timing_choice: "asap",
     requested_date: "",
     requested_time: "",
@@ -125,6 +126,7 @@ export default function Checkout() {
         delivery_area: form.fulfillment_method === "delivery" ? form.delivery_area : null,
         delivery_method: form.fulfillment_method === "delivery" ? form.delivery_method : null,
         gift_note: form.fulfillment_method === "delivery" ? form.gift_note : null,
+        customer_notes: form.customer_notes.trim() || null,
         requested_at,
         loyalty_phone: loyalty.status === "found" ? form.loyalty_phone.trim() : null,
         redeem_points: redeemPoints,
@@ -171,6 +173,7 @@ export default function Checkout() {
       }
     }
     lines.push(`When: ${form.timing_choice === "asap" ? "As soon as possible" : `${form.requested_date || "—"} ${form.requested_time || ""}`.trim()}`);
+    if (form.customer_notes.trim()) lines.push(`Notes: ${form.customer_notes.trim()}`);
     return lines.join("\n");
   }
 
@@ -358,6 +361,18 @@ export default function Checkout() {
                   Please pick a date from tomorrow onward for a whole cake or cheesecake.
                 </p>
               )}
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 13, color: "var(--color-text-soft, #6b6b6b)", marginBottom: 6 }}>
+                Anything else we should know? (optional)
+              </label>
+              <textarea
+                placeholder="Special requests, allergies, or anything else for us"
+                rows={3}
+                maxLength={500}
+                value={form.customer_notes}
+                onChange={(e) => setForm({ ...form, customer_notes: e.target.value })}
+              />
             </div>
             <div>
               <label style={{ display: "block", fontSize: 13, color: "var(--color-text-soft, #6b6b6b)", marginBottom: 6 }}>

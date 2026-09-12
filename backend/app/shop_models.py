@@ -85,6 +85,9 @@ class Order(Base):
     # A note card to include with a delivery, for orders placed on someone
     # else's behalf ("Happy anniversary! — love, Tobi"). Delivery only.
     gift_note: Mapped[str | None] = mapped_column(Text, default=None)
+    # Free-text special instructions from the customer at checkout — anything
+    # else they want staff to know, not tied to delivery or gifting.
+    customer_notes: Mapped[str | None] = mapped_column(Text, default=None)
     # Loyalty: points spent as a discount and points earned on this order —
     # same mechanics as an in-person Flow sale, just tied to an online order.
     loyalty_customer_id: Mapped[int | None] = mapped_column(ForeignKey("loyalty_customers.id"), default=None)

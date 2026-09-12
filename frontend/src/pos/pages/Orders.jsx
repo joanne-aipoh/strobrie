@@ -4,7 +4,7 @@ import { shopApi } from "../../shop/shopApi.js";
 const STATUSES = ["pending", "paid", "fulfilled", "cancelled"];
 
 const STATUS_COLORS = {
-  pending: { bg: "#fdf1d9", text: "#92600a", border: "#e8b95e" },
+  pending: { bg: "#fde4d0", text: "#b3500a", border: "#f0975a" },
   paid: { bg: "#dfeaf7", text: "#1d4f8c", border: "#7ea9d8" },
   fulfilled: { bg: "#dff0e0", text: "#1e7d34", border: "#7cc48c" },
   cancelled: { bg: "#f7dede", text: "#9c2626", border: "#e08a8a" },
@@ -70,8 +70,8 @@ export default function Orders() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
               <div>
-                <strong>Order #{order.id}</strong> &middot; {order.customer_name} ({order.customer_email},{" "}
-                {order.customer_phone})
+                <strong>Order #{order.id}</strong> &middot; <strong>{order.customer_name.split(" ")[0]}</strong> (
+                {order.customer_email}, {order.customer_phone})
                 <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 2 }}>
                   {new Date(order.created_at).toLocaleString()} &middot;{" "}
                   {order.fulfillment_method === "pickup"
@@ -95,12 +95,17 @@ export default function Orders() {
                       Requested for: {new Date(order.requested_at).toLocaleString()}
                     </span>
                   ) : (
-                    <span style={{ color: "var(--ink-soft)" }}>No preferred time — as soon as possible</span>
+                    <span style={{ color: "var(--ink-soft)" }}>Now</span>
                   )}
                 </div>
                 {order.gift_note && (
                   <div style={{ fontSize: 12.5, color: "var(--rust-dark)", marginTop: 2 }}>
                     Note card: &ldquo;{order.gift_note}&rdquo;
+                  </div>
+                )}
+                {order.customer_notes && (
+                  <div style={{ fontSize: 12.5, color: "var(--rust-dark)", marginTop: 2 }}>
+                    Notes: &ldquo;{order.customer_notes}&rdquo;
                   </div>
                 )}
                 {(order.points_redeemed > 0 || order.points_earned > 0) && (

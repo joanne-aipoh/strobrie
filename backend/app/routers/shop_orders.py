@@ -296,6 +296,7 @@ def _build_order(payload: shop_schemas.OrderCreate, db: Session) -> shop_models.
         delivery_method=delivery_method,
         delivery_fee=delivery_fee,
         gift_note=(payload.gift_note or "").strip() or None if payload.fulfillment_method == "delivery" else None,
+        customer_notes=(payload.customer_notes or "").strip() or None,
         requested_at=requested_at,
         loyalty_customer_id=loyalty_customer.id if loyalty_customer else None,
         points_redeemed=points_redeemed,

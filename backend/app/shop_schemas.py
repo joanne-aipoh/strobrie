@@ -88,6 +88,8 @@ class OrderCreate(BaseModel):
     # A note card to include with a delivery — for orders placed on behalf
     # of someone else. Delivery only; ignored for pickup.
     gift_note: str | None = Field(default=None, max_length=300)
+    # Anything else the customer wants staff to know — not tied to delivery.
+    customer_notes: str | None = Field(default=None, max_length=500)
     # When the customer wants the order ready — for a same-day order leave
     # this unset (ASAP); for a cake ordered days ahead, a future date/time.
     requested_at: datetime | None = None
@@ -130,6 +132,7 @@ class OrderOut(BaseModel):
     delivery_method: str | None
     delivery_fee: int
     gift_note: str | None
+    customer_notes: str | None
     status: str
     requested_at: datetime | None
     points_redeemed: int
