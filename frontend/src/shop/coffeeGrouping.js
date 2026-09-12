@@ -10,12 +10,10 @@ const COLD_COFFEE_NAMES = new Set(["Dalgona Whipped Coffee"]);
 const MATCHA_RE = /matcha/i;
 const COLD_PREFIX_RE = /^(Iced\s|Ice Blended)/i;
 const ICED_TEA_RE = /^Iced Tea – /i;
-// Only "Tea Bag Selection" stays Hot Tea for now — everything else in the
-// Tea category (Honey Ginger Lemon Tea, Brown Sugar Milk Tea, Mango Passion
-// Fruit Tea, plus the existing "Iced Tea – X" items) is actually served
-// cold, so it all goes under Iced Tea. Pending a breakdown of what Tea Bag
-// Selection itself covers.
-const HOT_TEA_NAMES = new Set(["Tea Bag Selection"]);
+// "Tea Bag Selection" and "Honey Ginger Lemon Tea" are Hot Tea — the rest
+// (Brown Sugar Milk Tea, Mango Passion Fruit Tea, plus the existing "Iced
+// Tea – X" items) are actually served cold, so they group under Iced Tea.
+const HOT_TEA_NAMES = new Set(["Tea Bag Selection", "Honey Ginger Lemon Tea"]);
 
 function classifyCoffee(p) {
   if (MATCHA_RE.test(p.name)) return { group: "Matcha", label: p.name };
