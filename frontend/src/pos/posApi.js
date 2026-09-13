@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 // Till-side payment methods only — the shop's online checkout is Paystack
 // card payment exclusively and doesn't use this list.

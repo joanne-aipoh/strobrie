@@ -1,7 +1,7 @@
 // A dense Instagram-style photo grid of real menu items — same look as the
 // account's own grid feed. Pulls straight from the shop's product photo
 // uploads (backend/uploads/products) so it's always real food, no stock art.
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 // Same shop-link pattern as the main nav (App.jsx) — a relative /shop route
 // in local dev, the shop's own subdomain in production.
