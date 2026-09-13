@@ -13,6 +13,11 @@ def _tickets_sold_for_tier(db: Session, tier_id: int) -> int:
     return db.scalar(stmt) or 0
 
 
+def _tickets_sold_for_event(db: Session, event_id: int) -> int:
+    stmt = select(func.count(pos_models.Ticket.id)).where(pos_models.Ticket.pos_event_id == event_id)
+    return db.scalar(stmt) or 0
+
+
 def _to_event_out(db: Session, event: pos_models.PosEvent) -> pos_schemas.PosEventOut:
     tiers_out = []
     total_sold = 0
@@ -21,7 +26,15 @@ def _to_event_out(db: Session, event: pos_models.PosEvent) -> pos_schemas.PosEve
         total_sold += sold
         remaining = (tier.qty - sold) if tier.qty > 0 else None
         tiers_out.append(
-            pos_schemas.TierOut(id=tier.id, name=tier.name, price=tier.price, qty=tier.qty, sold=sold, remaining=remaining)
+            pos_schemas.TierOut(
+                id=tier.id,
+                name=tier.name,
+                price=tier.price,
+                qty=tier.qty,
+                sold=sold,
+                remaining=remaining,
+                online_purchasable=tier.online_purchasable,
+            )
         )
     return pos_schemas.PosEventOut(
         id=event.id,
@@ -80,11 +93,92 @@ def create_event(payload: pos_schemas.PosEventCreate, db: Session = Depends(get_
         cost_budget=payload.cost_budget,
         created_by_staff_id=staff.id,
     )
-    event.tiers = [pos_models.TicketTier(name=t.name, price=t.price, qty=t.qty) for t in payload.tiers]
+    event.tiers = [
+        pos_models.TicketTier(name=t.name, price=t.price, qty=t.qty, online_purchasable=t.online_purchasable)
+        for t in payload.tiers
+    ]
     db.add(event)
     db.commit()
     db.refresh(event)
     return _to_event_out(db, event)
+
+
+@router.patch("/events/{event_id}", response_model=pos_schemas.PosEventOut)
+def update_event(event_id: int, payload: pos_schemas.PosEventUpdate, db: Session = Depends(get_db)):
+    event = db.get(pos_models.PosEvent, event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    updates = payload.model_dump(exclude_unset=True)
+    for field, value in updates.items():
+        setattr(event, field, value)
+
+    db.commit()
+    db.refresh(event)
+    return _to_event_out(db, event)
+
+
+@router.delete("/events/{event_id}", status_code=204)
+def delete_event(event_id: int, db: Session = Depends(get_db)):
+    event = db.get(pos_models.PosEvent, event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+    if _tickets_sold_for_event(db, event_id) > 0:
+        raise HTTPException(status_code=400, detail="Can't delete an event that already has tickets sold")
+
+    db.delete(event)
+    db.commit()
+
+
+@router.post("/events/{event_id}/tiers", response_model=pos_schemas.TierOut, status_code=201)
+def add_tier(event_id: int, payload: pos_schemas.TierCreate, db: Session = Depends(get_db)):
+    event = db.get(pos_models.PosEvent, event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    tier = pos_models.TicketTier(
+        pos_event_id=event_id,
+        name=payload.name,
+        price=payload.price,
+        qty=payload.qty,
+        online_purchasable=payload.online_purchasable,
+    )
+    db.add(tier)
+    db.commit()
+    db.refresh(tier)
+    return pos_schemas.TierOut(id=tier.id, name=tier.name, price=tier.price, qty=tier.qty, sold=0, remaining=(tier.qty or None), online_purchasable=tier.online_purchasable)
+
+
+@router.patch("/events/{event_id}/tiers/{tier_id}", response_model=pos_schemas.TierOut)
+def update_tier(event_id: int, tier_id: int, payload: pos_schemas.TierUpdate, db: Session = Depends(get_db)):
+    tier = db.get(pos_models.TicketTier, tier_id)
+    if tier is None or tier.pos_event_id != event_id:
+        raise HTTPException(status_code=404, detail="Ticket tier not found")
+
+    updates = payload.model_dump(exclude_unset=True)
+    for field, value in updates.items():
+        setattr(tier, field, value)
+
+    db.commit()
+    db.refresh(tier)
+    sold = _tickets_sold_for_tier(db, tier.id)
+    remaining = (tier.qty - sold) if tier.qty > 0 else None
+    return pos_schemas.TierOut(
+        id=tier.id, name=tier.name, price=tier.price, qty=tier.qty, sold=sold, remaining=remaining,
+        online_purchasable=tier.online_purchasable,
+    )
+
+
+@router.delete("/events/{event_id}/tiers/{tier_id}", status_code=204)
+def delete_tier(event_id: int, tier_id: int, db: Session = Depends(get_db)):
+    tier = db.get(pos_models.TicketTier, tier_id)
+    if tier is None or tier.pos_event_id != event_id:
+        raise HTTPException(status_code=404, detail="Ticket tier not found")
+    if _tickets_sold_for_tier(db, tier.id) > 0:
+        raise HTTPException(status_code=400, detail="Can't remove a tier that already has tickets sold")
+
+    db.delete(tier)
+    db.commit()
 
 
 @router.get("/events/{event_id}/tickets", response_model=list[pos_schemas.TicketOut])

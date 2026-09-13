@@ -7,6 +7,17 @@ function fmt(n) {
 
 const BLANK_FORM = { name: "", description: "", category: "", price: "", stock_qty: "" };
 
+// A tracked batch sitting this many days or more gets flagged for review —
+// not auto-discounted, just surfaced so a person decides (mark it down,
+// or pull it if it's gone off). Adjust to taste.
+const STALE_STOCK_DAYS = 3;
+
+function daysSinceRestock(product) {
+  if (product.stock_qty === null || !product.stock_updated_at) return null;
+  const ms = Date.now() - new Date(product.stock_updated_at).getTime();
+  return Math.floor(ms / (1000 * 60 * 60 * 24));
+}
+
 function RestockControl({ product, onChanged }) {
   const [qty, setQty] = useState("");
   const [error, setError] = useState("");
@@ -49,7 +60,12 @@ function ProductPhotos({ product, onChanged }) {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
+      // A new upload replaces whatever photo(s) this product already had,
+      // rather than piling up alongside them — most products only ever
+      // need the one current photo.
+      const existingIds = product.photos.map((p) => p.id);
       await shopApi.uploadPhoto(product.id, file);
+      await Promise.all(existingIds.map((id) => shopApi.deletePhoto(id)));
       setError("");
       onChanged();
     } catch (err) {
@@ -98,6 +114,11 @@ function ProductPhotos({ product, onChanged }) {
         ))}
       </div>
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleUpload} style={{ fontSize: 12 }} />
+      {product.photos.length > 0 && (
+        <div style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 4 }}>
+          Choosing a new photo replaces the current one.
+        </div>
+      )}
       {error && <div className="error-text">{error}</div>}
     </div>
   );
@@ -128,7 +149,7 @@ function ProductForm({ initial, onSubmit, onCancel, categories }) {
         category: form.category.trim(),
         price,
         stock_qty: form.stock_qty === "" ? null : parseInt(form.stock_qty, 10),
-        ...(initial ? { is_active: form.is_active } : {}),
+        ...(initial ? { is_active: form.is_active, unavailable: form.unavailable } : {}),
       });
     } catch (err) {
       setError(err.message);
@@ -183,10 +204,146 @@ function ProductForm({ initial, onSubmit, onCancel, categories }) {
   );
 }
 
+function ProductRow({ product, categories, editingId, setEditingId, selected, onToggleSelect, onChanged }) {
+  async function handleUpdate(data) {
+    await shopApi.updateProduct(product.id, data);
+    await onChanged();
+    setEditingId(null);
+  }
+
+  async function handleDelete() {
+    if (!window.confirm("Delete this product? This also removes its photos.")) return;
+    await shopApi.deleteProduct(product.id);
+    await onChanged();
+  }
+
+  async function toggleActive() {
+    await shopApi.updateProduct(product.id, {
+      name: product.name,
+      description: product.description,
+      category: product.category,
+      price: product.price,
+      stock_qty: product.stock_qty,
+      unavailable: product.unavailable,
+      is_active: !product.is_active,
+    });
+    await onChanged();
+  }
+
+  async function toggleUnavailable() {
+    await shopApi.updateProduct(product.id, {
+      name: product.name,
+      description: product.description,
+      category: product.category,
+      price: product.price,
+      stock_qty: product.stock_qty,
+      is_active: product.is_active,
+      unavailable: !product.unavailable,
+    });
+    await onChanged();
+  }
+
+  if (editingId === product.id) {
+    return (
+      <div className="panel" style={{ background: "var(--cream-2)" }}>
+        <ProductForm
+          initial={{
+            name: product.name,
+            description: product.description || "",
+            category: product.category,
+            price: String(product.price),
+            stock_qty: product.stock_qty === null ? "" : String(product.stock_qty),
+            is_active: product.is_active,
+            unavailable: product.unavailable,
+          }}
+          categories={categories}
+          onSubmit={handleUpdate}
+          onCancel={() => setEditingId(null)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="panel" style={{ background: "var(--cream-2)" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggleSelect}
+          style={{ marginTop: 4, flexShrink: 0 }}
+          aria-label={`Select ${product.name}`}
+        />
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+            <strong>{product.name}</strong>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end", flexShrink: 0 }}>
+              <span className={`checkin-badge ${product.is_active ? "in" : "out"}`}>
+                {product.is_active ? "Available online" : "Hidden"}
+              </span>
+              {product.unavailable && <span className="checkin-badge out">Unavailable Today</span>}
+            </div>
+          </div>
+          <div style={{ fontSize: 13, marginTop: 2 }}>
+            {fmt(product.price)} &middot; {product.stock_qty === null ? "unlimited stock" : `${product.stock_qty} in stock`}
+          </div>
+          {(() => {
+            const days = daysSinceRestock(product);
+            if (days === null || days < STALE_STOCK_DAYS || product.stock_qty <= 0) return null;
+            return (
+              <div
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  color: "var(--rust-dark)",
+                  background: "var(--cream)",
+                  border: "1px solid var(--rust-dark)",
+                  borderRadius: 6,
+                  padding: "4px 8px",
+                  marginTop: 6,
+                  display: "inline-block",
+                }}
+              >
+                Restocked {days} day{days === 1 ? "" : "s"} ago &middot; {product.stock_qty} left — worth a discount or a freshness check?
+              </div>
+            );
+          })()}
+          {product.description && <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 4 }}>{product.description}</div>}
+          <label
+            title="Use this if you can't make it today (e.g. out of an ingredient it needs) — separate from stock count."
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, marginTop: 6, whiteSpace: "nowrap" }}
+          >
+            <input type="checkbox" checked={product.unavailable} onChange={toggleUnavailable} />
+            Not available today
+          </label>
+          <RestockControl product={product} onChanged={onChanged} />
+          <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
+            <button className="link-btn" onClick={() => setEditingId(product.id)}>
+              Edit
+            </button>
+            <button className="link-btn" onClick={toggleActive}>
+              {product.is_active ? "Hide from shop" : "Show in shop"}
+            </button>
+            <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={handleDelete}>
+              Delete
+            </button>
+          </div>
+          <ProductPhotos product={product} onChanged={onChanged} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Products() {
   const [products, setProducts] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [settings, setSettings] = useState(null);
+  const [search, setSearch] = useState("");
+  const [trackedOnly, setTrackedOnly] = useState(false);
+  const [openCategories, setOpenCategories] = useState(() => new Set());
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
 
   function load() {
     return shopApi.adminListProducts().then(setProducts);
@@ -194,40 +351,73 @@ export default function Products() {
 
   useEffect(() => {
     load();
+    shopApi.getSettings().then(setSettings);
   }, []);
+
+  async function toggleCategoryVisible(cat) {
+    const hidden = settings.hidden_categories.includes(cat);
+    const hidden_categories = hidden
+      ? settings.hidden_categories.filter((c) => c !== cat)
+      : [...settings.hidden_categories, cat];
+    const updated = await shopApi.updateSettings({ hidden_categories });
+    setSettings(updated);
+  }
 
   if (!products) return <p>Loading&hellip;</p>;
 
   const categories = [...new Set(products.map((p) => p.category))];
 
+  const searchTerm = search.trim().toLowerCase();
+  const filtered = products.filter((p) => {
+    if (trackedOnly && p.stock_qty === null) return false;
+    if (searchTerm && !p.name.toLowerCase().includes(searchTerm)) return false;
+    return true;
+  });
+
+  // Category order follows first appearance in the full (unfiltered) list —
+  // stable regardless of which categories the current filter happens to hit.
+  const byCategory = new Map();
+  for (const p of filtered) {
+    if (!byCategory.has(p.category)) byCategory.set(p.category, []);
+    byCategory.get(p.category).push(p);
+  }
+
+  // While actively searching/filtering, every matching category auto-opens
+  // so results aren't hidden behind a collapsed group.
+  const isFiltering = searchTerm !== "" || trackedOnly;
+
+  function toggleCategory(cat) {
+    setOpenCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
+  }
+
+  function toggleSelect(id) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function deleteSelected() {
+    if (selectedIds.size === 0) return;
+    if (!window.confirm(`Delete ${selectedIds.size} selected product${selectedIds.size === 1 ? "" : "s"}? This also removes their photos.`)) {
+      return;
+    }
+    await Promise.all([...selectedIds].map((id) => shopApi.deleteProduct(id)));
+    setSelectedIds(new Set());
+    await load();
+  }
+
   async function handleCreate(data) {
     await shopApi.createProduct(data);
     await load();
     setShowAdd(false);
-  }
-
-  async function handleUpdate(id, data) {
-    await shopApi.updateProduct(id, data);
-    await load();
-    setEditingId(null);
-  }
-
-  async function handleDelete(id) {
-    if (!window.confirm("Delete this product? This also removes its photos.")) return;
-    await shopApi.deleteProduct(id);
-    await load();
-  }
-
-  async function toggleActive(product) {
-    await shopApi.updateProduct(product.id, {
-      name: product.name,
-      description: product.description,
-      category: product.category,
-      price: product.price,
-      stock_qty: product.stock_qty,
-      is_active: !product.is_active,
-    });
-    await load();
   }
 
   return (
@@ -239,55 +429,127 @@ export default function Products() {
           show up for customers.
         </p>
 
-        {products.length === 0 && <div className="empty-note">No products yet.</div>}
+        {settings && (
+          <p style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: -4, marginBottom: 12 }}>
+            Each category below has a "Hide from shop"/"Show in shop" toggle — hides that whole
+            section from customers (e.g. Brunch on a weekday, Cocktails) while it stays fully
+            sellable here in Flow.
+          </p>
+        )}
 
-        {products.map((product) => (
-          <div key={product.id} className="panel" style={{ background: "var(--cream-2)" }}>
-            {editingId === product.id ? (
-              <ProductForm
-                initial={{
-                  name: product.name,
-                  description: product.description || "",
-                  category: product.category,
-                  price: String(product.price),
-                  stock_qty: product.stock_qty === null ? "" : String(product.stock_qty),
-                  is_active: product.is_active,
-                }}
-                categories={categories}
-                onSubmit={(data) => handleUpdate(product.id, data)}
-                onCancel={() => setEditingId(null)}
-              />
-            ) : (
-              <>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-                  <div>
-                    <strong>{product.name}</strong> <span style={{ color: "var(--ink-soft)", fontSize: 12.5 }}>({product.category})</span>
-                    <div style={{ fontSize: 13, marginTop: 2 }}>
-                      {fmt(product.price)} &middot; {product.stock_qty === null ? "unlimited stock" : `${product.stock_qty} in stock`}
-                    </div>
-                    {product.description && <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 4 }}>{product.description}</div>}
-                    <RestockControl product={product} onChanged={load} />
-                  </div>
-                  <span className={`checkin-badge ${product.is_active ? "in" : "out"}`}>
-                    {product.is_active ? "Available online" : "Hidden"}
-                  </span>
-                </div>
-                <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
-                  <button className="link-btn" onClick={() => setEditingId(product.id)}>
-                    Edit
-                  </button>
-                  <button className="link-btn" onClick={() => toggleActive(product)}>
-                    {product.is_active ? "Hide from shop" : "Show in shop"}
-                  </button>
-                  <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={() => handleDelete(product.id)}>
-                    Delete
-                  </button>
-                </div>
-                <ProductPhotos product={product} onChanged={load} />
-              </>
-            )}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
+          <input
+            type="text"
+            placeholder="Search products by name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ flex: 1, minWidth: 200 }}
+          />
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, whiteSpace: "nowrap" }}>
+            <input type="checkbox" checked={trackedOnly} onChange={(e) => setTrackedOnly(e.target.checked)} />
+            Tracked stock only
+          </label>
+        </div>
+        <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: -6, marginBottom: 12 }}>
+          {products.length} products total. Anything with "unlimited stock" is made to order and never needs
+          counting — check "Tracked stock only" to hide those and see just what's actually being tracked.
+        </p>
+
+        {selectedIds.size > 0 && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+              marginBottom: 12,
+              padding: "8px 12px",
+              background: "var(--cream-2)",
+              borderRadius: 8,
+            }}
+          >
+            <span style={{ fontSize: 13 }}>{selectedIds.size} selected</span>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button className="link-btn" onClick={() => setSelectedIds(new Set())}>
+                Clear
+              </button>
+              <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={deleteSelected}>
+                Delete selected
+              </button>
+            </div>
           </div>
-        ))}
+        )}
+
+        {filtered.length === 0 && <div className="empty-note">No products match.</div>}
+
+        {[...byCategory.entries()].map(([cat, items]) => {
+          const isOpen = isFiltering || openCategories.has(cat);
+          const allSelected = items.every((p) => selectedIds.has(p.id));
+          const catHidden = settings?.hidden_categories.includes(cat);
+          return (
+            <div key={cat} style={{ marginBottom: 10 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "8px 4px",
+                  cursor: "pointer",
+                  borderBottom: "1px solid var(--line)",
+                }}
+                onClick={() => toggleCategory(cat)}
+              >
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ margin: 0, flexShrink: 0 }}
+                  onChange={() =>
+                    setSelectedIds((prev) => {
+                      const next = new Set(prev);
+                      if (allSelected) items.forEach((p) => next.delete(p.id));
+                      else items.forEach((p) => next.add(p.id));
+                      return next;
+                    })
+                  }
+                />
+                <strong style={{ flex: 1 }}>
+                  {cat} <span style={{ color: "var(--ink-soft)", fontWeight: 400 }}>({items.length})</span>
+                </strong>
+                {catHidden && <span className="checkin-badge out">Hidden from shop</span>}
+                {settings && (
+                  <button
+                    className="link-btn"
+                    style={{ fontSize: 12 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleCategoryVisible(cat);
+                    }}
+                  >
+                    {catHidden ? "Show in shop" : "Hide from shop"}
+                  </button>
+                )}
+                <span style={{ color: "var(--ink-soft)" }}>{isOpen ? "▲" : "▼"}</span>
+              </div>
+              {isOpen && (
+                <div style={{ marginTop: 8 }}>
+                  {items.map((product) => (
+                    <ProductRow
+                      key={product.id}
+                      product={product}
+                      categories={categories}
+                      editingId={editingId}
+                      setEditingId={setEditingId}
+                      selected={selectedIds.has(product.id)}
+                      onToggleSelect={() => toggleSelect(product.id)}
+                      onChanged={load}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
 
         <button className="link-btn" style={{ marginTop: 6 }} onClick={() => setShowAdd((v) => !v)}>
           {showAdd ? "Cancel" : "+ Add product"}

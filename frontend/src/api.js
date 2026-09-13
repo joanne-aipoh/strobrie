@@ -33,4 +33,14 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  // Ticketed events (paid — Breakfast & Yoga etc.), separate from the free
+  // RSVP events above.
+  getTicketedEvents: () => request("/api/ticketed-events"),
+  buyTicket: (eventId, data) =>
+    request(`/api/ticketed-events/${eventId}/buy`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  verifyTicket: (reference) => request(`/api/ticketed-events/tickets/verify/${reference}`),
 };

@@ -9,8 +9,10 @@ from ..database import get_db
 
 router = APIRouter(prefix="/api/pos/sales", tags=["pos-sales"])
 
-POINTS_PER_100_NAIRA = 1
-NAIRA_PER_POINT_REDEEM = 10
+# Earn rate: 1 point per ₦200 spent = 0.5%. Redeem rate: each point is worth
+# ₦1 off — points are just money, tracked as whole naira.
+NAIRA_PER_POINT_EARNED = 200
+NAIRA_PER_POINT_REDEEM = 1
 
 
 @router.get("", response_model=list[pos_schemas.SaleOut])
@@ -41,9 +43,12 @@ def charge(payload: pos_schemas.ChargeRequest, db: Session = Depends(get_db)):
         stmt = select(shop_models.Product).where(shop_models.Product.id.in_(menu_item_ids))
         products_by_id = {p.id: p for p in db.scalars(stmt)}
 
-    # Fail fast, before any mutation, if a tracked item doesn't have enough stock.
+    # Fail fast, before any mutation, if a tracked item doesn't have enough stock,
+    # or it's been marked unavailable today (e.g. out of an ingredient it needs).
     for line in payload.items:
         product = products_by_id.get(line.menu_item_id)
+        if product and product.unavailable:
+            raise HTTPException(status_code=400, detail=f"{product.name} isn't available today")
         if product and product.stock_qty is not None and line.qty > product.stock_qty:
             raise HTTPException(status_code=400, detail=f"Not enough {product.name} in stock ({product.stock_qty} left)")
 
@@ -54,7 +59,7 @@ def charge(payload: pos_schemas.ChargeRequest, db: Session = Depends(get_db)):
         points_redeemed = max(0, min(payload.redeem_points, customer.points))
         discount = min(points_redeemed * NAIRA_PER_POINT_REDEEM, subtotal)
     total = subtotal - discount
-    points_earned = (total // 100) * POINTS_PER_100_NAIRA
+    points_earned = total // NAIRA_PER_POINT_EARNED
 
     # Deduct ingredients per recipe, remembering exactly what was deducted so a void can restore it.
     menu_item_ids = [line.menu_item_id for line in payload.items if line.menu_item_id is not None]

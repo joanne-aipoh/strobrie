@@ -7,7 +7,10 @@
 
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  /* Fixed card width (not 1fr) — resizing the window changes how many
+     cards fit per row, never how big any one card's photo is. */
+  grid-template-columns: repeat(auto-fill, 240px);
+  justify-content: start;
   gap: 1.5rem;
 }
 
@@ -22,15 +25,75 @@
 
 .product-card-image {
   display: block;
+  position: relative;
   aspect-ratio: 4 / 3;
   background: var(--color-bg-alt);
+  overflow: hidden;
+  /* Locks this flex item to its aspect-ratio box regardless of the photo's
+     own dimensions — without this, a flex column's "auto" flex-basis falls
+     back to the <img>'s intrinsic size (varies per photo), overriding the
+     aspect-ratio and making cards in the same row different heights. */
+  flex: none;
 }
 
 .product-card-image img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+/* Corner badge on every card photo, hinting that the photo/name open a
+   bigger product page — visible always (not just on hover), since hover
+   doesn't exist on mobile where most shoppers are. */
+.product-card-expand {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Stock badge on the card photo, top-left (the "expand" icon owns
+   top-right) — pink while low, gray once actually sold out. Only appears
+   once a product's stock is being tracked (set via Flow's Inventory page);
+   untracked products are treated as always available and show neither. */
+.product-card-stock-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: #fff;
+}
+
+.product-card-stock-badge.low {
+  background: var(--color-hot-pink-dark);
+}
+
+.product-card-stock-badge.sold-out {
+  background: #666;
+}
+
+.product-card-view-link {
+  font-size: 12px;
+  color: var(--color-hot-pink-dark);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.product-card-view-link:hover {
+  text-decoration: underline;
 }
 
 .product-card-placeholder {
@@ -49,6 +112,15 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  flex: 1;
+}
+
+/* Cards in the same grid row get stretched to equal height by CSS Grid —
+   pin the Add to cart button (or "Out of stock" note) to the bottom of
+   that stretched space so every button lines up across a row, regardless
+   of how much varies above it (dropdowns, inscription field, etc). */
+.product-card-body > :last-child {
+  margin-top: auto;
 }
 
 .product-card-name {
@@ -62,6 +134,15 @@
   color: var(--color-hot-pink-dark);
 }
 
+.product-card-variant {
+  font-size: 0.9rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #e5d9d3);
+  background: #fff;
+  color: var(--color-text);
+}
+
 .product-detail {
   display: grid;
   grid-template-columns: 1.1fr 1fr;
@@ -70,6 +151,7 @@
 }
 
 .product-detail-main {
+  position: relative;
   aspect-ratio: 4 / 3;
   border-radius: 16px;
   overflow: hidden;
@@ -192,7 +274,34 @@
   }
 
   .cart-list-row {
-    grid-template-columns: 48px 1fr;
+    grid-template-columns: 48px 1fr auto;
+    grid-template-areas:
+      "photo info info"
+      "stepper stepper total"
+      "remove remove remove";
     row-gap: 0.5rem;
+  }
+
+  .cart-list-photo {
+    grid-area: photo;
+  }
+
+  .cart-list-info {
+    grid-area: info;
+  }
+
+  .cart-list-row .qty-stepper {
+    grid-area: stepper;
+    margin: 0;
+  }
+
+  .cart-list-line-total {
+    grid-area: total;
+    justify-self: end;
+  }
+
+  .cart-list-row .remove-btn {
+    grid-area: remove;
+    justify-self: start;
   }
 }

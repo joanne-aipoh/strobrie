@@ -129,6 +129,10 @@ class TicketTier(Base):
     name: Mapped[str] = mapped_column(String(80))
     price: Mapped[int] = mapped_column(Integer, default=0)
     qty: Mapped[int] = mapped_column(Integer, default=0)  # 0 = unlimited
+    # False for tiers too expensive/risky to sell unattended online (e.g. a
+    # multi-session pack) — staff still sell these in person via Flow, they
+    # just don't show up on the public booking page or accept online payment.
+    online_purchasable: Mapped[bool] = mapped_column(Boolean, default=True)
 
     event: Mapped["PosEvent"] = relationship(back_populates="tiers")
 
@@ -141,11 +145,21 @@ class Ticket(Base):
     tier_id: Mapped[int] = mapped_column(ForeignKey("ticket_tiers.id"))
     buyer_name: Mapped[str] = mapped_column(String(120))
     buyer_contact: Mapped[str | None] = mapped_column(String(120), default=None)
-    channel: Mapped[str] = mapped_column(String(20))  # 'paid-now' | 'reserved'
+    # Only set for tickets bought online (needed to initialize a Paystack
+    # transaction and send the confirmation email) — null for tickets sold
+    # in person via Flow, where buyer_contact alone is enough.
+    buyer_email: Mapped[str | None] = mapped_column(String(255), default=None)
+    channel: Mapped[str] = mapped_column(String(20))  # 'paid-now' | 'reserved' | 'online'
     paid: Mapped[bool] = mapped_column(Boolean, default=False)
     payment_method: Mapped[str | None] = mapped_column(String(20), default=None)
+    # Paystack transaction reference — only set for 'online' tickets, used to
+    # verify payment the same way shop orders do.
+    payment_reference: Mapped[str | None] = mapped_column(String(100), default=None)
     checked_in: Mapped[bool] = mapped_column(Boolean, default=False)
     purchase_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    sold_by_staff_id: Mapped[int] = mapped_column(ForeignKey("staff.id"))
+    # Null for online self-service purchases — only set when a staff member
+    # sold/recorded the ticket in person via Flow.
+    sold_by_staff_id: Mapped[int | None] = mapped_column(ForeignKey("staff.id"), default=None)
 
     tier: Mapped["TicketTier"] = relationship()
+    event: Mapped["PosEvent"] = relationship()

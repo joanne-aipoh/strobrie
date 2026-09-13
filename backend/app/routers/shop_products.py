@@ -1,5 +1,7 @@
+import json
 import os
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy import select
@@ -37,7 +39,32 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     return product
 
 
+def _get_settings(db: Session) -> shop_models.ShopSettings:
+    settings = db.get(shop_models.ShopSettings, 1)
+    if settings is None:
+        settings = shop_models.ShopSettings(id=1)
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
+    return settings
+
+
+@router.get("/settings", response_model=shop_schemas.ShopSettingsOut)
+def get_settings(db: Session = Depends(get_db)):
+    settings = _get_settings(db)
+    return shop_schemas.ShopSettingsOut(hidden_categories=json.loads(settings.hidden_categories))
+
+
 # --- Admin: product management (Flow's Products tab) -------------------
+
+
+@router.put("/admin/settings", response_model=shop_schemas.ShopSettingsOut)
+def update_settings(payload: shop_schemas.ShopSettingsUpdate, db: Session = Depends(get_db)):
+    settings = _get_settings(db)
+    settings.hidden_categories = json.dumps(payload.hidden_categories)
+    db.commit()
+    db.refresh(settings)
+    return shop_schemas.ShopSettingsOut(hidden_categories=json.loads(settings.hidden_categories))
 
 
 @router.get("/admin/products", response_model=list[shop_schemas.ProductOut])
@@ -64,8 +91,11 @@ def update_product(product_id: int, payload: shop_schemas.ProductUpdate, db: Ses
     product = db.get(shop_models.Product, product_id)
     if product is None:
         raise HTTPException(status_code=404, detail="Product not found")
+    stock_qty_changed = payload.stock_qty != product.stock_qty
     for field, value in payload.model_dump().items():
         setattr(product, field, value)
+    if stock_qty_changed and product.stock_qty is not None:
+        product.stock_updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(product)
     return product
@@ -79,6 +109,7 @@ def restock_product(product_id: int, payload: shop_schemas.RestockRequest, db: S
     if product is None:
         raise HTTPException(status_code=404, detail="Product not found")
     product.stock_qty = (product.stock_qty or 0) + payload.qty
+    product.stock_updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(product)
     return product

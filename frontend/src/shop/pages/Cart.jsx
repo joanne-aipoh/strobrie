@@ -7,6 +7,12 @@ function fmt(n) {
   return `₦${n.toLocaleString("en-NG")}`;
 }
 
+function formatFlavorBreakdown(breakdown) {
+  return Object.entries(breakdown)
+    .map(([label, qty]) => `${qty} ${label}`)
+    .join(", ");
+}
+
 export default function Cart() {
   const { items, setQty, removeItem, subtotal } = useCart();
 
@@ -26,7 +32,7 @@ export default function Cart() {
           <>
             <div className="cart-list">
               {items.map((item) => (
-                <div className="cart-list-row" key={item.productId}>
+                <div className="cart-list-row" key={item.lineId}>
                   {item.photo ? (
                     <img src={photoUrl(item.photo)} alt="" className="cart-list-photo" />
                   ) : (
@@ -35,14 +41,34 @@ export default function Cart() {
                   <div className="cart-list-info">
                     <div className="cart-list-name">{item.name}</div>
                     <div className="cart-list-price">{fmt(item.price)} each</div>
+                    {item.inscription && (
+                      <div style={{ fontSize: 12.5, color: "var(--color-hot-pink-dark)", marginTop: 2 }}>
+                        Inscription: &ldquo;{item.inscription}&rdquo;
+                      </div>
+                    )}
+                    {item.designNotes && (
+                      <div style={{ fontSize: 12.5, color: "var(--color-hot-pink-dark)", marginTop: 2 }}>
+                        Color: &ldquo;{item.designNotes}&rdquo;
+                      </div>
+                    )}
+                    {item.addons && (
+                      <div style={{ fontSize: 12.5, color: "var(--color-hot-pink-dark)", marginTop: 2 }}>
+                        Add-ons: &ldquo;{item.addons}&rdquo;
+                      </div>
+                    )}
+                    {item.flavorBreakdown && (
+                      <div style={{ fontSize: 12.5, color: "var(--color-hot-pink-dark)", marginTop: 2 }}>
+                        {formatFlavorBreakdown(item.flavorBreakdown)}
+                      </div>
+                    )}
                   </div>
                   <div className="qty-stepper">
-                    <button onClick={() => setQty(item.productId, item.qty - 1)}>&minus;</button>
+                    <button onClick={() => setQty(item.lineId, item.qty - 1)}>&minus;</button>
                     <span>{item.qty}</span>
-                    <button onClick={() => setQty(item.productId, item.qty + 1)}>+</button>
+                    <button onClick={() => setQty(item.lineId, item.qty + 1)}>+</button>
                   </div>
                   <div className="cart-list-line-total">{fmt(item.price * item.qty)}</div>
-                  <button className="remove-btn" onClick={() => removeItem(item.productId)}>
+                  <button className="remove-btn" onClick={() => removeItem(item.lineId)}>
                     Remove
                   </button>
                 </div>
@@ -54,9 +80,11 @@ export default function Cart() {
               <span>{fmt(subtotal)}</span>
             </div>
 
-            <Link to={shopPath("/checkout")} className="button button-primary" style={{ display: "inline-block" }}>
-              Checkout
-            </Link>
+            <div style={{ textAlign: "right" }}>
+              <Link to={shopPath("/checkout")} className="button button-primary" style={{ display: "inline-block" }}>
+                Checkout
+              </Link>
+            </div>
           </>
         )}
       </div>

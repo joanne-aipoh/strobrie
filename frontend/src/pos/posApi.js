@@ -1,5 +1,9 @@
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
+// Till-side payment methods only — the shop's online checkout is Paystack
+// card payment exclusively and doesn't use this list.
+export const PAYMENT_METHODS = ["Cash", "Moniepoint", "Palmpay", "Zenith Transfer"];
+
 async function request(path, options = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { "Content-Type": "application/json" },
@@ -35,6 +39,7 @@ export const posApi = {
   listCustomers: (search) => request(`/api/pos/customers${search ? `?search=${encodeURIComponent(search)}` : ""}`),
   lookupCustomer: (phone) => request(`/api/pos/customers/lookup?phone=${encodeURIComponent(phone)}`),
   createCustomer: (data) => request("/api/pos/customers", { method: "POST", body: JSON.stringify(data) }),
+  updateCustomer: (id, data) => request(`/api/pos/customers/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
 
   // waste
   listWaste: () => request("/api/pos/waste"),
@@ -51,6 +56,12 @@ export const posApi = {
   listEvents: () => request("/api/pos/events"),
   getEvent: (id) => request(`/api/pos/events/${id}`),
   createEvent: (data) => request("/api/pos/events", { method: "POST", body: JSON.stringify(data) }),
+  updateEvent: (id, data) => request(`/api/pos/events/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteEvent: (id) => request(`/api/pos/events/${id}`, { method: "DELETE" }),
+  addTier: (eventId, data) => request(`/api/pos/events/${eventId}/tiers`, { method: "POST", body: JSON.stringify(data) }),
+  updateTier: (eventId, tierId, data) =>
+    request(`/api/pos/events/${eventId}/tiers/${tierId}`, { method: "PATCH", body: JSON.stringify(data) }),
+  removeTier: (eventId, tierId) => request(`/api/pos/events/${eventId}/tiers/${tierId}`, { method: "DELETE" }),
   listTickets: (eventId) => request(`/api/pos/events/${eventId}/tickets`),
   sellTicket: (eventId, data) =>
     request(`/api/pos/events/${eventId}/tickets`, { method: "POST", body: JSON.stringify(data) }),

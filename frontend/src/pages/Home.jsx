@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
+import FoodGallery from "../components/FoodGallery.jsx";
 
 export default function Home() {
   return (
     <>
       <section className="hero">
         <div className="container hero-inner">
-          <p className="eyebrow">Cafe &middot; Bakery &middot; Abuja</p>
+          <p className="eyebrow">Cafe &middot; Bakery &middot; Restaurant</p>
           <h1>
             Come in. Take a seat.
             <br />
@@ -31,7 +32,13 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="about" className="section">
+      <section className="section" style={{ paddingTop: 0, paddingBottom: "1.5rem" }}>
+        <div className="container">
+          <FoodGallery />
+        </div>
+      </section>
+
+      <section id="about" className="section" style={{ paddingTop: "1.5rem" }}>
         <div className="container about-grid">
           <div>
             <h2>Our Space</h2>
@@ -46,7 +53,7 @@ export default function Home() {
           <div className="about-facts">
             <div className="fact">
               <span className="fact-label">Where</span>
-              <span>Abuja, Nigeria</span>
+              <span>HFIA Garden, Off Tafawa Balewa Road, Garki, Abuja, Federal Capital Territory, Nigeria</span>
             </div>
             <div className="fact">
               <span className="fact-label">Service</span>
@@ -55,9 +62,11 @@ export default function Home() {
             <div className="fact">
               <span className="fact-label">Hours</span>
               <span>
-                Mon&ndash;Fri 8am&ndash;6pm
+                Mon&ndash;Thu 8am&ndash;6pm
                 <br />
-                Sat 9am&ndash;6pm &middot; Sun 10am&ndash;3pm
+                Fri 8am&ndash;9pm &middot; Sat 9am&ndash;9pm
+                <br />
+                Sun 10am&ndash;3pm
               </span>
             </div>
           </div>

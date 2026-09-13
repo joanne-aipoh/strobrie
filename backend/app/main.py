@@ -11,6 +11,7 @@ from .routers import (
     bookings,
     contact,
     events,
+    events_public,
     pos_customers,
     pos_events,
     pos_inventory,
@@ -48,6 +49,7 @@ app.include_router(pos_customers.router)
 app.include_router(pos_waste.router)
 app.include_router(pos_inventory.router)
 app.include_router(pos_events.router)
+app.include_router(events_public.router)
 app.include_router(shop_products.router)
 app.include_router(shop_orders.router)
 

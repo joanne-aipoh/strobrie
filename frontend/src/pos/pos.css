@@ -24,7 +24,10 @@
   color: var(--ink);
 }
 .pos-app *{box-sizing:border-box;}
-.pos-app .pos-shell{max-width:1000px;margin:0 auto;padding:20px 16px 60px;}
+/* Fixed width, not max-width — Flow is a staff tool used on a till/desktop,
+   so the layout stays pixel-for-pixel identical regardless of window size
+   instead of reflowing; a narrower window just scrolls horizontally. */
+.pos-app .pos-shell{width:1000px;margin:0 auto;padding:20px 16px 60px;}
 .pos-app header.top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;}
 .pos-app .brand{display:flex;align-items:baseline;gap:10px;}
 .pos-app .brand h1{
@@ -52,7 +55,6 @@
 .pos-app nav.tabs button.active{color:var(--rust-dark);border-bottom-color:var(--rust);font-weight:600;}
 
 .pos-app .layout{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start;}
-@media (max-width:760px){ .pos-app .layout{grid-template-columns:1fr;} }
 
 .pos-app .categories{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
 .pos-app .cat-btn{
@@ -88,10 +90,10 @@
 .pos-app .qty-ctrl span{font-size:13px;min-width:16px;text-align:center;}
 .pos-app .remove-btn{background:none;border:none;color:var(--rust-dark);font-size:12px;cursor:pointer;padding:0 0 0 6px;}
 .pos-app .cart-total{display:flex;justify-content:space-between;padding:12px 0;font-size:15px;font-weight:700;}
-.pos-app .pay-row{display:flex;gap:8px;margin-bottom:10px;}
+.pos-app .pay-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
 .pos-app .pay-btn{
-  flex:1;padding:9px;border-radius:8px;border:1px solid var(--line);
-  background:var(--cream-2);cursor:pointer;font-size:13px;
+  flex:1 1 calc(33.333% - 6px);padding:9px 6px;border-radius:8px;border:1px solid var(--line);
+  background:var(--cream-2);cursor:pointer;font-size:12.5px;
 }
 .pos-app .pay-btn.selected{background:var(--sage);border-color:var(--sage);color:var(--white);font-weight:600;}
 .pos-app .charge-btn{

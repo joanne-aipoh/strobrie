@@ -1,7 +1,12 @@
 from datetime import date, datetime
+from datetime import date as _date  # alias for annotations on fields literally named "date"
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+# Till-side payment methods only — the shop's online checkout is Paystack
+# card payment exclusively and doesn't use this list.
+PaymentMethod = Literal["Cash", "Moniepoint", "Palmpay", "Zenith Transfer"]
 
 
 # --- Staff / auth -----------------------------------------------------------
@@ -34,6 +39,13 @@ class CustomerCreate(BaseModel):
     phone: str = Field(min_length=1, max_length=30)
 
 
+class CustomerUpdate(BaseModel):
+    # For fixing a typo'd name or a mistyped phone number — both optional so
+    # a caller can send just the one field that needs correcting.
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    phone: str | None = Field(default=None, min_length=1, max_length=30)
+
+
 class CustomerOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -59,7 +71,7 @@ class CartLine(BaseModel):
 
 class ChargeRequest(BaseModel):
     staff_id: int
-    payment_method: Literal["Cash", "Card"]
+    payment_method: PaymentMethod
     items: list[CartLine] = Field(min_length=1)
     customer_id: int | None = None
     redeem_points: int = 0
@@ -164,6 +176,7 @@ class TierCreate(BaseModel):
     name: str = Field(min_length=1, max_length=80)
     price: int = Field(ge=0)
     qty: int = Field(ge=0, default=0)
+    online_purchasable: bool = True
 
 
 class TierOut(BaseModel):
@@ -175,6 +188,7 @@ class TierOut(BaseModel):
     qty: int
     sold: int
     remaining: int | None
+    online_purchasable: bool
 
 
 class PosEventCreate(BaseModel):
@@ -200,13 +214,30 @@ class PosEventOut(BaseModel):
     tickets_sold: int
 
 
+class PosEventUpdate(BaseModel):
+    # All optional — a caller sends just the fields it wants to change.
+    name: str | None = Field(default=None, min_length=1, max_length=150)
+    date: _date | None = None
+    time: str | None = None
+    capacity: int | None = None
+    description: str | None = None
+    cost_budget: int | None = None
+
+
+class TierUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=80)
+    price: int | None = Field(default=None, ge=0)
+    qty: int | None = Field(default=None, ge=0)
+    online_purchasable: bool | None = None
+
+
 class TicketSellRequest(BaseModel):
     staff_id: int
     tier_id: int
     buyer_name: str = Field(min_length=1, max_length=120)
     buyer_contact: str | None = None
     channel: Literal["paid", "reserved"]
-    payment_method: Literal["Cash", "Card"] = "Cash"
+    payment_method: PaymentMethod = "Cash"
 
 
 class TicketOut(BaseModel):
@@ -226,4 +257,55 @@ class TicketOut(BaseModel):
 
 class CollectPaymentRequest(BaseModel):
     staff_id: int
-    payment_method: Literal["Cash", "Card"] = "Cash"
+    payment_method: PaymentMethod = "Cash"
+
+
+# --- Public event/ticket purchase (customer-facing, Paystack) --------------
+
+
+class PublicTierOut(BaseModel):
+    id: int
+    name: str
+    price: int
+    remaining: int | None
+
+
+class PublicEventOut(BaseModel):
+    id: int
+    name: str
+    date: date
+    time: str | None
+    description: str | None
+    spots_remaining: int | None
+    tiers: list[PublicTierOut]
+
+
+class EventBuyRequest(BaseModel):
+    tier_id: int
+    buyer_name: str = Field(min_length=1, max_length=120)
+    buyer_email: str = Field(min_length=3, max_length=255)
+    buyer_contact: str = Field(min_length=1, max_length=120)
+    callback_url: str | None = None
+
+
+class EventCheckoutResponse(BaseModel):
+    ticket_id: int
+    authorization_url: str
+    reference: str
+
+
+class PublicTicketOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    pos_event_id: int
+    buyer_name: str
+    buyer_email: str | None
+    channel: str
+    paid: bool
+    purchase_timestamp: datetime
+    event_name: str
+    event_date: date
+    event_time: str | None
+    event_description: str | None
+    tier_name: str

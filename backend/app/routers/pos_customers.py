@@ -40,3 +40,25 @@ def create_customer(payload: pos_schemas.CustomerCreate, db: Session = Depends(g
     db.commit()
     db.refresh(customer)
     return customer
+
+
+@router.patch("/{customer_id}", response_model=pos_schemas.CustomerOut)
+def update_customer(customer_id: int, payload: pos_schemas.CustomerUpdate, db: Session = Depends(get_db)):
+    customer = db.get(pos_models.LoyaltyCustomer, customer_id)
+    if customer is None:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    if payload.name is not None:
+        customer.name = payload.name.strip()
+    if payload.phone is not None:
+        new_phone = payload.phone.strip()
+        clash = (
+            db.query(pos_models.LoyaltyCustomer)
+            .filter(pos_models.LoyaltyCustomer.phone == new_phone, pos_models.LoyaltyCustomer.id != customer_id)
+            .first()
+        )
+        if clash:
+            raise HTTPException(status_code=400, detail="Another customer already has that phone number")
+        customer.phone = new_phone
+    db.commit()
+    db.refresh(customer)
+    return customer
