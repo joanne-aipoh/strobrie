@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { shopApi } from "../../shop/shopApi.js";
+import { formatRequestedAt } from "../../shop/formatRequestedAt.js";
 
 const STATUSES = ["pending", "paid", "fulfilled", "cancelled"];
 
@@ -92,7 +93,7 @@ export default function Orders() {
                 <div style={{ fontSize: 12.5, marginTop: 2 }}>
                   {order.requested_at ? (
                     <span style={{ color: "var(--rust-dark)", fontWeight: 600 }}>
-                      Requested for: {new Date(order.requested_at).toLocaleString()}
+                      Requested for: {formatRequestedAt(order.requested_at)}
                     </span>
                   ) : (
                     <span style={{ color: "var(--ink-soft)" }}>Now</span>

@@ -4,6 +4,7 @@ import { shopApi } from "../shopApi.js";
 import { useCart } from "../CartContext.jsx";
 import { shopPath } from "../shopBase.js";
 import { whatsappLink } from "../../whatsapp.js";
+import { formatRequestedAt } from "../formatRequestedAt.js";
 
 function fmt(n) {
   return `₦${n.toLocaleString("en-NG")}`;
@@ -137,7 +138,7 @@ export default function OrderConfirmation() {
           )}
           <p style={{ fontSize: "0.9rem" }}>
             {order.requested_at
-              ? `Requested for: ${new Date(order.requested_at).toLocaleString()}`
+              ? `Requested for: ${formatRequestedAt(order.requested_at)}`
               : "As soon as possible."}
           </p>
           {order.gift_note && (

@@ -6,6 +6,7 @@ import { shopOrigin, shopPath } from "../shopBase.js";
 import { areaOptionsFor, deliveryFeeFor } from "../deliveryAreas.js";
 import { whatsappLink } from "../../whatsapp.js";
 import { CAKE_CATEGORIES } from "../cakeCategories.js";
+import { formatRequestedAt } from "../formatRequestedAt.js";
 
 function fmt(n) {
   return `₦${n.toLocaleString("en-NG")}`;
@@ -34,27 +35,49 @@ function isAfterDeliveryCutoff(date) {
   return date.getHours() >= DELIVERY_CUTOFF_HOUR;
 }
 
+const DRAFT_KEY = "strobrie-checkout-draft";
+const DEFAULT_FORM = {
+  customer_name: "",
+  customer_email: "",
+  customer_phone: "",
+  fulfillment_method: "pickup",
+  delivery_address: "",
+  delivery_method: "bike",
+  delivery_area: "",
+  gift_note: "",
+  customer_notes: "",
+  timing_choice: "asap",
+  requested_date: "",
+  requested_time: "",
+  loyalty_phone: "",
+  redeem_points: "",
+};
+
+// So a customer who navigates away or refreshes mid-checkout by mistake
+// doesn't have to retype their name, address, etc. from scratch.
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    return raw ? { ...DEFAULT_FORM, ...JSON.parse(raw) } : DEFAULT_FORM;
+  } catch {
+    return DEFAULT_FORM;
+  }
+}
+
 export default function Checkout() {
   const { items, subtotal } = useCart();
-  const [form, setForm] = useState({
-    customer_name: "",
-    customer_email: "",
-    customer_phone: "",
-    fulfillment_method: "pickup",
-    delivery_address: "",
-    delivery_method: "bike",
-    delivery_area: "",
-    gift_note: "",
-    customer_notes: "",
-    timing_choice: "asap",
-    requested_date: "",
-    requested_time: "",
-    loyalty_phone: "",
-    redeem_points: "",
-  });
+  const [form, setForm] = useState(loadDraft);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
   const [loyalty, setLoyalty] = useState({ status: "idle", points: 0, nairaPerPoint: 1, error: "" });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+    } catch {
+      // localStorage unavailable — the draft just won't survive a refresh
+    }
+  }, [form]);
 
   async function checkLoyaltyPoints() {
     if (!form.loyalty_phone.trim()) return;
@@ -140,6 +163,11 @@ export default function Checkout() {
         })),
         callback_url: `${shopOrigin()}/order-confirmation`,
       });
+      try {
+        localStorage.removeItem(DRAFT_KEY);
+      } catch {
+        // localStorage unavailable — nothing to clean up
+      }
       window.location.href = result.authorization_url;
     } catch (err) {
       setError(err.message);
@@ -514,7 +542,7 @@ export default function Checkout() {
           )}
           <div style={{ fontSize: 12.5, marginTop: 10 }}>
             {form.timing_choice === "scheduled" && form.requested_date
-              ? `Requested for: ${new Date(`${form.requested_date}T${form.requested_time || "09:00"}`).toLocaleString()}`
+              ? `Requested for: ${formatRequestedAt(`${form.requested_date}T${form.requested_time || "09:00"}`)}`
               : "As soon as possible"}
           </div>
         </div>
