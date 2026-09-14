@@ -83,7 +83,7 @@ function BuySpotForm({ event }) {
     <form className="rsvp-form" onSubmit={handleSubmit}>
       <div className="form-field">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-          <label style={{ fontSize: 13 }}>Choose your breakfast</label>
+          <label style={{ fontSize: 13 }}>{choiceTiers.length > 1 ? "Choose your option" : "Your spot"}</label>
           <span style={{ fontWeight: 700 }}>{fmt(commonPrice)} per spot</span>
         </div>
         {choiceTiers.map((tier) => (
