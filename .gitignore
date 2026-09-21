@@ -9,3 +9,7 @@ node_modules/
 # Source menu photos you drop in for me to crop/extract artwork from —
 # not app assets themselves, so not tracked in git.
 menu-images/
+
+# The Obsidian vault folder itself, for the same case-insensitive reason as
+# .obsidian above — it is personal notes, not part of the app.
+/Strobrie/
