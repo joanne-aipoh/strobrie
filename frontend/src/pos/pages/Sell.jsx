@@ -87,6 +87,8 @@ export default function Sell() {
   const [namingTab, setNamingTab] = useState(false);   // naming a new tab, in-page
   const [tabLabel, setTabLabel] = useState("");
   const [confirmingClose, setConfirmingClose] = useState(false);
+  const [editingPriceIdx, setEditingPriceIdx] = useState(null);  // cart line being repriced
+  const [priceDraft, setPriceDraft] = useState("");
 
   const [chargeStatus, setChargeStatus] = useState("idle");
   const [chargeError, setChargeError] = useState("");
@@ -160,14 +162,25 @@ export default function Sell() {
     setCart((prev) => prev.filter((_, i) => i !== idx));
   }
 
-  function editPrice(idx) {
-    const line = cart[idx];
-    const input = window.prompt(`Adjust price for "${line.name}" (e.g. different cake size):`, line.price);
-    if (input === null) return;
-    const val = parseFloat(input);
+  // Repricing a line (a different cake size, say) is edited in place. It used
+  // window.prompt, which throws in a browser that suppresses dialogs — the
+  // kind a till runs — so tapping "edit" did nothing at all.
+  function startEditPrice(idx) {
+    setEditingPriceIdx(idx);
+    setPriceDraft(String(cart[idx].price));
+  }
+
+  function cancelEditPrice() {
+    setEditingPriceIdx(null);
+    setPriceDraft("");
+  }
+
+  function commitEditPrice(idx) {
+    const val = parseFloat(priceDraft);
     if (!isNaN(val) && val > 0) {
       setCart((prev) => prev.map((c, i) => (i === idx ? { ...c, price: val } : c)));
     }
+    cancelEditPrice();
   }
 
   function addCustomItem() {
@@ -508,9 +521,34 @@ export default function Sell() {
             <div className="cart-line" key={idx}>
               <div className="info">
                 <div className="n">{c.name}</div>
-                <div className="p" onClick={() => editPrice(idx)}>
-                  {fmt(c.price)} each · edit
-                </div>
+                {editingPriceIdx === idx ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                    <input
+                      type="number"
+                      min="0"
+                      step="50"
+                      autoFocus
+                      aria-label={`Price for ${c.name}`}
+                      value={priceDraft}
+                      onChange={(e) => setPriceDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") commitEditPrice(idx);
+                        if (e.key === "Escape") cancelEditPrice();
+                      }}
+                      style={{ width: 90, fontSize: 12.5, padding: "3px 6px" }}
+                    />
+                    <button className="link-btn" onClick={() => commitEditPrice(idx)}>
+                      Set
+                    </button>
+                    <button className="link-btn" onClick={cancelEditPrice}>
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p" onClick={() => startEditPrice(idx)}>
+                    {fmt(c.price)} each · edit
+                  </div>
+                )}
               </div>
               <div className="qty-ctrl">
                 <button onClick={() => changeQty(idx, -1)}>−</button>
