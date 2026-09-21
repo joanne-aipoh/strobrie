@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import WhatsAppButton from "./components/WhatsAppButton.jsx";
+import SiteFooter from "./components/SiteFooter.jsx";
 
 const SHOP_SITE_URL = "https://shop.strobrie.com";
 const isLocalDev = typeof window !== "undefined" && window.location.hostname === "localhost";
@@ -26,16 +27,6 @@ function Header() {
   );
 }
 
-function Footer() {
-  return (
-    <footer className="site-footer">
-      <div className="container">
-        <p>&copy; {new Date().getFullYear()} Strobriē Limited. All rights reserved.</p>
-      </div>
-    </footer>
-  );
-}
-
 export default function App() {
   return (
     <>
@@ -43,7 +34,7 @@ export default function App() {
       <main>
         <Outlet />
       </main>
-      <Footer />
+      <SiteFooter />
       <WhatsAppButton />
     </>
   );

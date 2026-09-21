@@ -3,6 +3,7 @@ import "./shop.css";
 import { CartProvider, useCart } from "./CartContext.jsx";
 import { isShopHost, shopPath } from "./shopBase.js";
 import WhatsAppButton from "../components/WhatsAppButton.jsx";
+import SiteFooter from "../components/SiteFooter.jsx";
 
 const MAIN_SITE_URL = "https://strobrie.com";
 
@@ -52,11 +53,7 @@ export default function ShopLayout() {
       <main>
         <Outlet />
       </main>
-      <footer className="site-footer">
-        <div className="container">
-          <p>&copy; {new Date().getFullYear()} Strobriē By Joanne. All rights reserved.</p>
-        </div>
-      </footer>
+      <SiteFooter />
       <WhatsAppButton />
     </CartProvider>
   );

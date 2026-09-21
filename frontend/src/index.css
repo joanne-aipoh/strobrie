@@ -409,12 +409,36 @@ a {
 .site-footer {
   background: var(--gradient-brand);
   color: #fff;
-  padding: 1.5rem 0;
+  padding: 2rem 0 1.5rem;
   text-align: center;
 }
 
 .site-footer a {
   color: #fff;
+}
+
+.site-footer-contact h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.site-footer-contact p {
+  margin: 0.2rem 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.site-footer-links {
+  margin-top: 0.5rem !important;
+  font-weight: 600;
+}
+
+.site-footer-copyright {
+  margin: 1.25rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 0.8rem;
+  opacity: 0.9;
 }
 
 @media (max-width: 700px) {
