@@ -339,7 +339,7 @@ export default function Events() {
         <div className="container">
           <h2>Events</h2>
           <p>
-            From art nights and pottery sessions to Sunday morning yoga and everything in between, we host a mix
+            From art nights and pottery sessions to workshops and everything in between, we host a mix
             of paid and drop-in events throughout the month — see what's coming up below.
           </p>
         </div>
