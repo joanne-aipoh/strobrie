@@ -23,7 +23,7 @@ export default function Visit() {
                 <a href="tel:+2348029125229">+234 802 912 5229</a>
               </span>
             </p>
-            <p>Email: <a href="mailto:reservations@strobrie.com">reservations@strobrie.com</a></p>
+            <p>Email: <a href="mailto:reservation@strobrie.com">reservation@strobrie.com</a></p>
             <p>
               Instagram:{" "}
               <a href="https://instagram.com/strobrie" target="_blank" rel="noopener noreferrer">
