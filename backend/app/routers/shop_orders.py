@@ -17,12 +17,23 @@ router = APIRouter(prefix="/api/shop", tags=["shop-orders"])
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
-# Riders/staff stop doing deliveries at 5pm Lagos time — enforced here
+# Riders/staff stop doing deliveries at 5pm Lagos time on most days, but the
+# cafe closes earlier on Sundays so delivery shuts at 2pm then. Enforced here
 # (never trust the client) rather than at the server's own local time, which
-# may run in a different timezone. Mirrors DELIVERY_CUTOFF_HOUR in
+# may run in a different timezone. Mirrors the cutoffs in
 # frontend/src/shop/pages/Checkout.jsx.
 LAGOS_TZ = ZoneInfo("Africa/Lagos")
 DELIVERY_CUTOFF_HOUR = 17
+SUNDAY_DELIVERY_CUTOFF_HOUR = 14
+SUNDAY = 6  # Python weekday(): Monday=0 .. Sunday=6
+
+
+def delivery_cutoff_hour(dt: datetime) -> int:
+    return SUNDAY_DELIVERY_CUTOFF_HOUR if dt.weekday() == SUNDAY else DELIVERY_CUTOFF_HOUR
+
+
+def _cutoff_label(hour: int) -> str:
+    return "12pm" if hour == 12 else (f"{hour - 12}pm" if hour > 12 else f"{hour}am")
 
 # How many inscription characters reasonably fit iced onto a cake of a given
 # size — mirrors frontend/src/shop/inscriptionLimit.js. Keep the two in sync.
@@ -132,14 +143,16 @@ def _build_order(payload: shop_schemas.OrderCreate, db: Session) -> shop_models.
 
     if payload.fulfillment_method == "delivery":
         # ASAP (requested_at is None) is checked against right now; a
-        # scheduled delivery is checked against its own requested time —
-        # riders don't run past 5pm on any day.
+        # scheduled delivery is checked against its own requested time. The
+        # cutoff is 2pm on Sundays (early close) and 5pm the rest of the week.
         check_at = requested_at.astimezone(LAGOS_TZ) if requested_at is not None else datetime.now(LAGOS_TZ)
-        if check_at.hour >= DELIVERY_CUTOFF_HOUR:
+        cutoff = delivery_cutoff_hour(check_at)
+        if check_at.hour >= cutoff:
+            label = _cutoff_label(cutoff)
             detail = (
-                "Delivery can only be scheduled before 5pm."
+                f"Delivery can only be scheduled before {label}."
                 if requested_at is not None
-                else "It's past 5pm — delivery orders are closed for today. Please schedule a time before 5pm, or choose pickup."
+                else f"It's past {label} — delivery orders are closed for today. Please schedule an earlier time, or choose pickup."
             )
             raise HTTPException(status_code=400, detail=detail)
 

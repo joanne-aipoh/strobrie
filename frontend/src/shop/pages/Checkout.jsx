@@ -25,14 +25,29 @@ const tomorrowStr = () => {
   return d.toISOString().slice(0, 10);
 };
 
-// Riders/staff stop doing deliveries at 5pm — mirrors
-// backend/app/routers/shop_orders.py's DELIVERY_CUTOFF_HOUR. Pickup has no
-// such cutoff.
+// Riders/staff stop deliveries at 5pm most days, but 2pm on Sundays (the
+// cafe closes early then). Mirrors the cutoffs in
+// backend/app/routers/shop_orders.py. Pickup has no such cutoff.
 const DELIVERY_CUTOFF_HOUR = 17;
-const DELIVERY_CUTOFF_LABEL = "5pm";
+const SUNDAY_DELIVERY_CUTOFF_HOUR = 14;
+const SUNDAY = 0; // JS getDay(): Sunday = 0
+
+function cutoffHourForDate(date) {
+  return date.getDay() === SUNDAY ? SUNDAY_DELIVERY_CUTOFF_HOUR : DELIVERY_CUTOFF_HOUR;
+}
+
+function cutoffLabel(hour) {
+  if (hour === 12) return "12pm";
+  return hour > 12 ? `${hour - 12}pm` : `${hour}am`;
+}
 
 function isAfterDeliveryCutoff(date) {
-  return date.getHours() >= DELIVERY_CUTOFF_HOUR;
+  return date.getHours() >= cutoffHourForDate(date);
+}
+
+// "YYYY-MM-DD" -> a local Date at midnight, for reading the weekday.
+function dateFromStr(str) {
+  return new Date(`${str}T00:00`);
 }
 
 const DRAFT_KEY = "strobrie-checkout-draft";
@@ -97,12 +112,18 @@ export default function Checkout() {
   const total = subtotal - discount + deliveryFee;
 
   const isDelivery = form.fulfillment_method === "delivery";
+  // The cutoff depends on the delivery day: 2pm Sundays, 5pm otherwise.
+  const scheduledCutoffHour =
+    form.timing_choice === "scheduled" && form.requested_date
+      ? cutoffHourForDate(dateFromStr(form.requested_date))
+      : cutoffHourForDate(new Date());
+  const activeCutoffLabel = cutoffLabel(scheduledCutoffHour);
   const asapBlockedByCutoff = isDelivery && form.timing_choice === "asap" && isAfterDeliveryCutoff(new Date());
   const scheduledAfterCutoff =
     isDelivery &&
     form.timing_choice === "scheduled" &&
     form.requested_time &&
-    Number(form.requested_time.split(":")[0]) >= DELIVERY_CUTOFF_HOUR;
+    Number(form.requested_time.split(":")[0]) >= scheduledCutoffHour;
 
   // Whole cakes/cheesecakes are made to order — no ASAP, and "today" isn't
   // far enough ahead either. Mirrors the backend's own check in
@@ -123,7 +144,7 @@ export default function Checkout() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (asapBlockedByCutoff || scheduledAfterCutoff) {
-      setError(`Delivery orders close at ${DELIVERY_CUTOFF_LABEL} — please pick a time before then, or choose pickup.`);
+      setError(`Delivery orders close at ${activeCutoffLabel} — please pick a time before then, or choose pickup.`);
       return;
     }
     if (cakeNeedsMoreNotice) {
@@ -351,7 +372,7 @@ export default function Checkout() {
                   <input
                     type="time"
                     required
-                    max={isDelivery ? "17:00" : undefined}
+                    max={isDelivery ? `${String(scheduledCutoffHour).padStart(2, "0")}:00` : undefined}
                     value={form.requested_time}
                     onChange={(e) => setForm({ ...form, requested_time: e.target.value })}
                     style={{ flex: 1 }}
@@ -360,7 +381,7 @@ export default function Checkout() {
               )}
               {isDelivery && (
                 <p className="form-note" style={{ margin: "6px 0 0" }}>
-                  Delivery orders are accepted until {DELIVERY_CUTOFF_LABEL} daily.
+                  Delivery orders are accepted until 5pm (2pm on Sundays).
                 </p>
               )}
               {hasCakeItem && (
@@ -380,8 +401,8 @@ export default function Checkout() {
               {(asapBlockedByCutoff || scheduledAfterCutoff) && (
                 <p className="form-error" style={{ margin: "6px 0 0" }}>
                   {asapBlockedByCutoff
-                    ? `It's past ${DELIVERY_CUTOFF_LABEL} — please schedule a delivery time before then, or switch to pickup.`
-                    : `Please pick a delivery time before ${DELIVERY_CUTOFF_LABEL}.`}
+                    ? `It's past ${activeCutoffLabel} — please schedule a delivery time before then, or switch to pickup.`
+                    : `Please pick a delivery time before ${activeCutoffLabel}.`}
                 </p>
               )}
               {cakeNeedsMoreNotice && form.requested_date && (
