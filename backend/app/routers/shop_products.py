@@ -2,6 +2,7 @@ import json
 import os
 import uuid
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy import select
@@ -11,6 +12,17 @@ from .. import shop_models, shop_schemas
 from ..database import get_db
 
 router = APIRouter(prefix="/api/shop", tags=["shop-products"])
+
+LAGOS_TZ = ZoneInfo("Africa/Lagos")
+# Categories only shown to customers on certain weekdays (Mon=0 .. Sun=6).
+# Brunch is a Sunday-only menu; hidden from the storefront the rest of the week.
+SUNDAY = 6
+WEEKDAY_ONLY_CATEGORIES = {"Brunch": {SUNDAY}}
+
+
+def _time_hidden_categories() -> list[str]:
+    today = datetime.now(LAGOS_TZ).weekday()
+    return [cat for cat, days in WEEKDAY_ONLY_CATEGORIES.items() if today not in days]
 
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads", "products")
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
@@ -52,7 +64,9 @@ def _get_settings(db: Session) -> shop_models.ShopSettings:
 @router.get("/settings", response_model=shop_schemas.ShopSettingsOut)
 def get_settings(db: Session = Depends(get_db)):
     settings = _get_settings(db)
-    return shop_schemas.ShopSettingsOut(hidden_categories=json.loads(settings.hidden_categories))
+    manual = json.loads(settings.hidden_categories)
+    hidden_now = list(dict.fromkeys([*manual, *_time_hidden_categories()]))
+    return shop_schemas.ShopSettingsOut(hidden_categories=manual, hidden_now=hidden_now)
 
 
 # --- Admin: product management (Flow's Products tab) -------------------

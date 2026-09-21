@@ -244,7 +244,7 @@ export default function Catalog() {
     shopApi
       .getSettings()
       .then(setSettings)
-      .catch(() => setSettings({ hidden_categories: [] })); // fail open — don't hide anything over a settings-fetch hiccup
+      .catch(() => setSettings({ hidden_categories: [], hidden_now: [] })); // fail open — don't hide anything over a settings-fetch hiccup
   }, []);
 
   if (error) return <p className="form-error container" style={{ padding: "3rem 1.5rem" }}>Couldn't load products ({error}).</p>;
@@ -262,8 +262,12 @@ export default function Catalog() {
     return category;
   }
 
+  // hidden_now = manually-hidden categories plus time-gated ones (Brunch only
+  // shows on Sundays). Fall back to hidden_categories if an older API response
+  // doesn't carry the field.
+  const hiddenNow = settings.hidden_now ?? settings.hidden_categories;
   const byCategory = products.reduce((groups, p) => {
-    if (settings.hidden_categories.includes(p.category)) return groups;
+    if (hiddenNow.includes(p.category)) return groups;
     (groups[sectionLabel(p.category)] ||= []).push(p);
     return groups;
   }, {});

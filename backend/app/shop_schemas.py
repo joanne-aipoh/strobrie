@@ -162,7 +162,13 @@ class LoyaltyPointsOut(BaseModel):
 
 
 class ShopSettingsOut(BaseModel):
+    # Categories staff have manually hidden from the shop.
     hidden_categories: list[str]
+    # What the customer shop should hide *right now* — the manual list plus
+    # any time-gated categories (e.g. Brunch only shows on Sundays). Flow's
+    # Products page keeps using hidden_categories so staff always see and
+    # manage everything; the storefront uses this.
+    hidden_now: list[str] = []
 
 
 class ShopSettingsUpdate(BaseModel):
