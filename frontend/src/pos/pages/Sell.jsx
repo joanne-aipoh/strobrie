@@ -1,10 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePosAuth } from "../PosAuthContext.jsx";
 import { posApi, PAYMENT_METHODS } from "../posApi.js";
 import { shopApi } from "../../shop/shopApi.js";
 
 const CATEGORY_ORDER = ["Coffee", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Extras", "Breakfast", "Lunch", "Brunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer"];
 const NAIRA_PER_POINT_REDEEM = 1;
+
+function tabTotal(tab) {
+  return tab.items.reduce((sum, i) => sum + i.price * i.qty, 0);
+}
+
+// "25m" / "2h 10m" — how long a table has been sitting on an unpaid tab.
+function since(iso) {
+  // Server times are UTC; if the string carries no zone, say so explicitly
+  // rather than letting the browser read it as local time.
+  const hasZone = /(Z|[+-]\d{2}:?\d{2})$/.test(iso);
+  const ms = new Date(hasZone ? iso : `${iso}Z`).getTime();
+  const mins = Math.max(0, Math.round((Date.now() - ms) / 60000));
+  if (mins < 60) return `${mins}m`;
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+}
 
 function fmt(n) {
   return "₦" + Math.round(n).toLocaleString();
@@ -65,9 +80,28 @@ export default function Sell() {
   const [newCustName, setNewCustName] = useState("");
   const [custFormError, setCustFormError] = useState("");
 
+  const [openTabs, setOpenTabs] = useState([]);
+  const [activeTab, setActiveTab] = useState(null);   // the tab loaded into the cart, if any
+  const [tabBusy, setTabBusy] = useState(false);
+  const [tabError, setTabError] = useState("");
+
   const [chargeStatus, setChargeStatus] = useState("idle");
   const [chargeError, setChargeError] = useState("");
   const [toast, setToast] = useState("");
+  const toastTimer = useRef(null);
+
+  function showToast(message, ms = 8000) {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(message);
+    toastTimer.current = setTimeout(() => setToast(""), ms);
+  }
+
+  function clearToast() {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast("");
+  }
+
+  useEffect(() => () => toastTimer.current && clearTimeout(toastTimer.current), []);
   const [lastReceipt, setLastReceipt] = useState(null);
 
   function loadMenu() {
@@ -78,8 +112,13 @@ export default function Sell() {
     });
   }
 
+  function loadTabs() {
+    return posApi.listTabs().then(setOpenTabs);
+  }
+
   useEffect(() => {
     loadMenu();
+    loadTabs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -192,18 +231,109 @@ export default function Sell() {
     }
   }
 
+  function cartToLines() {
+    return cart.map((c) => ({
+      menu_item_id: c.menuItemId,
+      name: c.name,
+      category: c.category,
+      qty: c.qty,
+      price: c.price,
+    }));
+  }
+
+  function clearOrder() {
+    setCart([]);
+    setActiveTab(null);
+    setTabError("");
+    detachCustomer();
+  }
+
+  // Put a saved tab back on screen so it can be added to or paid off.
+  function openTab(tab) {
+    setCart(
+      tab.items.map((i) => ({
+        menuItemId: i.menu_item_id,
+        name: i.name,
+        category: i.category,
+        price: i.price,
+        qty: i.qty,
+      })),
+    );
+    setActiveTab(tab);
+    setTabError("");
+    clearToast();
+    setAttachedCustomer(tab.customer ?? null);
+    setCustSearchResult(tab.customer ? "found" : "idle");
+    setCustSearchPhone(tab.customer?.phone ?? "");
+    setRedeemPoints("");
+  }
+
+  async function saveTab() {
+    if (cart.length === 0) return;
+    let label = activeTab?.label;
+    if (!label) {
+      label = window.prompt("Save this order as a tab. Name it — a table number, or the customer:", "");
+      if (label === null) return;
+      label = label.trim();
+      if (!label) {
+        setTabError("Give the tab a name so it can be found again.");
+        return;
+      }
+    }
+    setTabBusy(true);
+    setTabError("");
+    try {
+      const body = { label, items: cartToLines(), customer_id: attachedCustomer?.id ?? null };
+      const saved = activeTab
+        ? await posApi.updateTab(activeTab.id, body)
+        : await posApi.openTab({ staff_id: currentStaff.id, ...body });
+      await loadTabs();
+      loadMenu();
+      clearOrder();
+      setLastReceipt(null);
+      showToast(`Tab saved — ${saved.label}. Charge it when they're ready to pay.`);
+    } catch (err) {
+      setTabError(err.message);
+    } finally {
+      setTabBusy(false);
+    }
+  }
+
+  async function cancelTab() {
+    if (!activeTab) return;
+    if (!window.confirm(`Close "${activeTab.label}" without taking payment? Anything on it goes back into stock.`)) return;
+    setTabBusy(true);
+    setTabError("");
+    try {
+      await posApi.cancelTab(activeTab.id, currentStaff.id);
+      await loadTabs();
+      loadMenu();
+      clearOrder();
+      setLastReceipt(null);
+      showToast("Tab closed without payment.", 6000);
+    } catch (err) {
+      setTabError(err.message);
+    } finally {
+      setTabBusy(false);
+    }
+  }
+
   async function charge() {
     if (cart.length === 0) return;
     setChargeStatus("submitting");
     setChargeError("");
     try {
-      const sale = await posApi.charge({
+      const body = {
         staff_id: currentStaff.id,
         payment_method: payMethod,
-        items: cart.map((c) => ({ menu_item_id: c.menuItemId, name: c.name, category: c.category, qty: c.qty, price: c.price })),
+        items: cartToLines(),
         customer_id: attachedCustomer?.id ?? null,
         redeem_points: cappedRedeem,
-      });
+      };
+      // Settling a tab records the same sale, and closes the tab with it.
+      const sale = activeTab
+        ? await posApi.settleTab(activeTab.id, body)
+        : await posApi.charge(body);
       const receipt = {
         items: cart,
         subtotal: sale.subtotal,
@@ -217,12 +347,11 @@ export default function Sell() {
       };
       setLastReceipt(receipt);
       const custNote = attachedCustomer ? ` — ${attachedCustomer.name} earned ${sale.points_earned} pts` : "";
-      setToast(`Sale recorded — ${fmt(sale.total)} (${sale.payment_method})${custNote}`);
-      setCart([]);
-      detachCustomer();
+      showToast(`Sale recorded — ${fmt(sale.total)} (${sale.payment_method})${custNote}`);
+      clearOrder();
       setChargeStatus("idle");
-      setTimeout(() => setToast(""), 8000);
       loadMenu();
+      if (activeTab) loadTabs();
     } catch (err) {
       setChargeError(err.message);
       setChargeStatus("idle");
@@ -234,6 +363,24 @@ export default function Sell() {
   return (
     <div className="layout">
       <div>
+        {openTabs.length > 0 && (
+          <div className="panel" style={{ padding: 12, marginBottom: 14 }}>
+            <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginBottom: 8 }}>
+              Open tabs ({openTabs.length}) — ordered, not paid for yet. Tap one to add to it or take payment.
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {openTabs.map((t) => (
+                <button
+                  key={t.id}
+                  className={`cat-btn ${activeTab?.id === t.id ? "active" : ""}`}
+                  onClick={() => openTab(t)}
+                >
+                  {t.label} &middot; {fmt(tabTotal(t))} &middot; {since(t.opened_at)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="categories">
           {categories.map((c) => (
             <button key={c} className={`cat-btn ${c === activeCat ? "active" : ""}`} onClick={() => setActiveCat(c)}>
@@ -291,7 +438,29 @@ export default function Sell() {
       </div>
 
       <div className="cart">
-        <h3>Current order</h3>
+        <h3>{activeTab ? `Tab — ${activeTab.label}` : "Current order"}</h3>
+        {activeTab && (
+          <div
+            style={{
+              background: "var(--cream-2)",
+              borderRadius: 8,
+              padding: 10,
+              marginBottom: 12,
+              fontSize: 12.5,
+              color: "var(--ink-soft)",
+            }}
+          >
+            Open {since(activeTab.opened_at)}. Add to it and save, or take payment now.
+            <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
+              <button className="link-btn" onClick={clearOrder}>
+                Leave it open
+              </button>
+              <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={cancelTab} disabled={tabBusy}>
+                Close without paying
+              </button>
+            </div>
+          </div>
+        )}
         {cart.length === 0 ? (
           <div className="cart-empty">No items yet — tap a menu item to add it.</div>
         ) : (
@@ -404,15 +573,29 @@ export default function Sell() {
           ))}
         </div>
         {chargeError && <div className="error-text" style={{ marginBottom: 8 }}>{chargeError}</div>}
+        {tabError && <div className="error-text" style={{ marginBottom: 8 }}>{tabError}</div>}
         <button className="charge-btn" disabled={cart.length === 0 || chargeStatus === "submitting"} onClick={charge}>
           {chargeStatus === "submitting" ? "Charging…" : `Charge ${fmt(finalTotal)}`}
         </button>
+        <button
+          className="log-btn"
+          style={{ width: "100%", marginTop: 8 }}
+          disabled={cart.length === 0 || tabBusy}
+          onClick={saveTab}
+        >
+          {tabBusy ? "Saving…" : activeTab ? "Save changes to tab" : "Save as tab — pay later"}
+        </button>
         {toast && (
           <div className="toast">
-            {toast}{" "}
-            <button className="link-btn" style={{ marginLeft: 6 }} onClick={() => lastReceipt && printReceipt(lastReceipt)}>
-              Print receipt
-            </button>
+            {toast}
+            {lastReceipt && (
+              <>
+                {" "}
+                <button className="link-btn" style={{ marginLeft: 6 }} onClick={() => printReceipt(lastReceipt)}>
+                  Print receipt
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

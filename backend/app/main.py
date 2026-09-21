@@ -17,6 +17,7 @@ from .routers import (
     pos_inventory,
     pos_sales,
     pos_staff,
+    pos_tabs,
     pos_waste,
     shop_orders,
     shop_products,
@@ -45,6 +46,7 @@ app.include_router(contact.router)
 app.include_router(bookings.router)
 app.include_router(pos_staff.router)
 app.include_router(pos_sales.router)
+app.include_router(pos_tabs.router)
 app.include_router(pos_customers.router)
 app.include_router(pos_waste.router)
 app.include_router(pos_inventory.router)

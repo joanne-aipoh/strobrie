@@ -35,6 +35,14 @@ export const posApi = {
   voidSale: (id, staffId) =>
     request(`/api/pos/sales/${id}/void`, { method: "POST", body: JSON.stringify({ staff_id: staffId }) }),
 
+  // tabs (dine-in orders that haven't been paid for yet)
+  listTabs: () => request("/api/pos/tabs"),
+  openTab: (data) => request("/api/pos/tabs", { method: "POST", body: JSON.stringify(data) }),
+  updateTab: (id, data) => request(`/api/pos/tabs/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  settleTab: (id, data) => request(`/api/pos/tabs/${id}/settle`, { method: "POST", body: JSON.stringify(data) }),
+  cancelTab: (id, staffId) =>
+    request(`/api/pos/tabs/${id}/cancel`, { method: "POST", body: JSON.stringify({ staff_id: staffId }) }),
+
   // customers
   listCustomers: (search) => request(`/api/pos/customers${search ? `?search=${encodeURIComponent(search)}` : ""}`),
   lookupCustomer: (phone) => request(`/api/pos/customers/lookup?phone=${encodeURIComponent(phone)}`),

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from .. import pos_models, pos_schemas, shop_models
+from .. import pos_models, pos_schemas, pos_stock
 from ..database import get_db
 
 router = APIRouter(prefix="/api/pos/sales", tags=["pos-sales"])
@@ -25,6 +25,57 @@ def list_sales(db: Session = Depends(get_db)):
     return db.scalars(stmt).all()
 
 
+def build_sale(
+    db: Session,
+    staff: pos_models.Staff,
+    customer: pos_models.LoyaltyCustomer | None,
+    items,
+    payment_method: str,
+    redeem_points: int,
+    deductions: dict,
+) -> pos_models.Sale:
+    """Turn priced lines into a recorded Sale, applying loyalty.
+
+    Stock is *not* touched here — the caller has already moved it (a walk-in
+    sale moves it now, a tab moved it when it was opened), and `deductions` is
+    what was moved, carried onto the sale so a void can put it back.
+    """
+    subtotal = sum(line.price * line.qty for line in items)
+    discount = 0
+    points_redeemed = 0
+    if customer is not None:
+        points_redeemed = max(0, min(redeem_points, customer.points))
+        discount = min(points_redeemed * NAIRA_PER_POINT_REDEEM, subtotal)
+    total = subtotal - discount
+    points_earned = total // NAIRA_PER_POINT_EARNED
+
+    sale = pos_models.Sale(
+        staff_id=staff.id,
+        payment_method=payment_method,
+        subtotal=subtotal,
+        discount=discount,
+        total=total,
+        customer_id=customer.id if customer else None,
+        points_redeemed=points_redeemed,
+        points_earned=points_earned,
+        ingredient_deductions=deductions,
+    )
+    sale.items = [
+        pos_models.SaleItem(
+            name=line.name, category=line.category, qty=line.qty, price=line.price, menu_item_id=line.menu_item_id
+        )
+        for line in items
+    ]
+    db.add(sale)
+
+    if customer is not None:
+        customer.points = customer.points - points_redeemed + points_earned
+        customer.total_spent += total
+        customer.visits += 1
+
+    return sale
+
+
 @router.post("", response_model=pos_schemas.SaleOut, status_code=201)
 def charge(payload: pos_schemas.ChargeRequest, db: Session = Depends(get_db)):
     staff = db.get(pos_models.Staff, payload.staff_id)
@@ -37,77 +88,10 @@ def charge(payload: pos_schemas.ChargeRequest, db: Session = Depends(get_db)):
         if customer is None:
             raise HTTPException(status_code=404, detail="Customer not found")
 
-    menu_item_ids = [line.menu_item_id for line in payload.items if line.menu_item_id is not None]
-    products_by_id: dict[int, shop_models.Product] = {}
-    if menu_item_ids:
-        stmt = select(shop_models.Product).where(shop_models.Product.id.in_(menu_item_ids))
-        products_by_id = {p.id: p for p in db.scalars(stmt)}
-
-    # Fail fast, before any mutation, if a tracked item doesn't have enough stock,
-    # or it's been marked unavailable today (e.g. out of an ingredient it needs).
-    for line in payload.items:
-        product = products_by_id.get(line.menu_item_id)
-        if product and product.unavailable:
-            raise HTTPException(status_code=400, detail=f"{product.name} isn't available today")
-        if product and product.stock_qty is not None and line.qty > product.stock_qty:
-            raise HTTPException(status_code=400, detail=f"Not enough {product.name} in stock ({product.stock_qty} left)")
-
-    subtotal = sum(line.price * line.qty for line in payload.items)
-    discount = 0
-    points_redeemed = 0
-    if customer is not None:
-        points_redeemed = max(0, min(payload.redeem_points, customer.points))
-        discount = min(points_redeemed * NAIRA_PER_POINT_REDEEM, subtotal)
-    total = subtotal - discount
-    points_earned = total // NAIRA_PER_POINT_EARNED
-
-    # Deduct ingredients per recipe, remembering exactly what was deducted so a void can restore it.
-    menu_item_ids = [line.menu_item_id for line in payload.items if line.menu_item_id is not None]
-    recipes_by_item: dict[int, list[pos_models.Recipe]] = {}
-    if menu_item_ids:
-        stmt = select(pos_models.Recipe).where(pos_models.Recipe.menu_item_id.in_(menu_item_ids))
-        for recipe in db.scalars(stmt):
-            recipes_by_item.setdefault(recipe.menu_item_id, []).append(recipe)
-
-    deductions: dict[str, float] = {}
-    for line in payload.items:
-        for recipe in recipes_by_item.get(line.menu_item_id, []):
-            amount = recipe.qty_per_item * line.qty
-            key = str(recipe.ingredient_id)
-            deductions[key] = deductions.get(key, 0) + amount
-            ingredient = db.get(pos_models.InventoryItem, recipe.ingredient_id)
-            if ingredient:
-                ingredient.quantity -= amount
-
-    # Deduct from tracked product stock (an unlimited/made-to-order item has
-    # no stock_qty set and is unaffected — already validated as sufficient above).
-    for line in payload.items:
-        product = products_by_id.get(line.menu_item_id)
-        if product and product.stock_qty is not None:
-            product.stock_qty -= line.qty
-
-    sale = pos_models.Sale(
-        staff_id=staff.id,
-        payment_method=payload.payment_method,
-        subtotal=subtotal,
-        discount=discount,
-        total=total,
-        customer_id=customer.id if customer else None,
-        points_redeemed=points_redeemed,
-        points_earned=points_earned,
-        ingredient_deductions=deductions,
+    deductions = pos_stock.take_stock(db, payload.items)
+    sale = build_sale(
+        db, staff, customer, payload.items, payload.payment_method, payload.redeem_points, deductions
     )
-    sale.items = [
-        pos_models.SaleItem(name=line.name, category=line.category, qty=line.qty, price=line.price, menu_item_id=line.menu_item_id)
-        for line in payload.items
-    ]
-    db.add(sale)
-
-    if customer is not None:
-        customer.points = customer.points - points_redeemed + points_earned
-        customer.total_spent += total
-        customer.visits += 1
-
     db.commit()
     db.refresh(sale)
     return sale
@@ -128,16 +112,7 @@ def void_sale(sale_id: int, payload: pos_schemas.VoidRequest, db: Session = Depe
     sale.voided_by_id = staff.id
     sale.voided_at = datetime.now(timezone.utc)
 
-    for ingredient_id, amount in (sale.ingredient_deductions or {}).items():
-        ingredient = db.get(pos_models.InventoryItem, int(ingredient_id))
-        if ingredient:
-            ingredient.quantity += amount
-
-    for sale_item in sale.items:
-        if sale_item.menu_item_id is not None:
-            product = db.get(shop_models.Product, sale_item.menu_item_id)
-            if product and product.stock_qty is not None:
-                product.stock_qty += sale_item.qty
+    pos_stock.return_stock(db, sale.items, sale.ingredient_deductions)
 
     if sale.customer_id is not None:
         customer = db.get(pos_models.LoyaltyCustomer, sale.customer_id)

@@ -108,6 +108,68 @@ class SaleOut(BaseModel):
     items: list[SaleItemOut]
 
 
+# --- Tabs (unpaid dine-in orders) ---------------------------------------
+
+
+class TabItemOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    menu_item_id: int | None
+    name: str
+    category: str
+    qty: int
+    price: int
+
+
+class TabOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    label: str
+    status: str
+    opened_at: datetime
+    updated_at: datetime | None
+    closed_at: datetime | None
+    opened_by_staff_id: int
+    customer_id: int | None
+    # Nested so reopening a tab at the till puts the loyalty customer straight
+    # back on the order without a second lookup.
+    customer: CustomerOut | None
+    sale_id: int | None
+    items: list[TabItemOut]
+
+
+class TabCreate(BaseModel):
+    staff_id: int
+    label: str = Field(min_length=1, max_length=80)
+    items: list[CartLine] = Field(min_length=1)
+    customer_id: int | None = None
+
+
+class TabUpdate(BaseModel):
+    """Re-saves the whole tab — the items sent replace what was on it."""
+
+    label: str = Field(min_length=1, max_length=80)
+    items: list[CartLine] = Field(min_length=1)
+    customer_id: int | None = None
+
+
+class TabSettle(BaseModel):
+    """Pay off a tab. Items are sent again so a last round added at the table
+    is included in the same payment."""
+
+    staff_id: int
+    payment_method: PaymentMethod
+    items: list[CartLine] = Field(min_length=1)
+    customer_id: int | None = None
+    redeem_points: int = 0
+
+
+class TabCancel(BaseModel):
+    staff_id: int
+
+
 # --- Waste --------------------------------------------------------------
 
 

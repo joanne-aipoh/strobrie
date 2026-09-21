@@ -89,6 +89,50 @@ class SaleItem(Base):
     sale: Mapped["Sale"] = relationship(back_populates="items")
 
 
+class Tab(Base):
+    """An order that's been placed but not paid for yet — the dine-in case,
+    where people run a tab and settle up when they leave.
+
+    A tab already holds its stock: the kitchen has made the food, so the
+    ingredients and any counted stock come off when the tab is saved, not when
+    it's finally paid. That also means a tab can't become unpayable because
+    something sold out while the table was still eating.
+    """
+
+    __tablename__ = "tabs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    label: Mapped[str] = mapped_column(String(80))
+    status: Mapped[str] = mapped_column(String(20), default="open")  # open | paid | cancelled
+    opened_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    opened_by_staff_id: Mapped[int] = mapped_column(ForeignKey("staff.id"))
+    customer_id: Mapped[int | None] = mapped_column(ForeignKey("loyalty_customers.id"), default=None)
+    # What this tab has already taken off the shelf, so re-saving or cancelling
+    # it can put back exactly that much.
+    ingredient_deductions: Mapped[dict] = mapped_column(JSON, default=dict)
+    sale_id: Mapped[int | None] = mapped_column(ForeignKey("sales.id"), default=None)
+
+    opened_by: Mapped["Staff"] = relationship(foreign_keys=[opened_by_staff_id])
+    customer: Mapped["LoyaltyCustomer | None"] = relationship()
+    items: Mapped[list["TabItem"]] = relationship(back_populates="tab", cascade="all, delete-orphan")
+
+
+class TabItem(Base):
+    __tablename__ = "tab_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    tab_id: Mapped[int] = mapped_column(ForeignKey("tabs.id"))
+    menu_item_id: Mapped[int | None] = mapped_column(ForeignKey("products.id"), default=None)
+    name: Mapped[str] = mapped_column(String(150))
+    category: Mapped[str] = mapped_column(String(30))
+    qty: Mapped[int] = mapped_column(Integer)
+    price: Mapped[int] = mapped_column(Integer)
+
+    tab: Mapped["Tab"] = relationship(back_populates="items")
+
+
 class WasteEntry(Base):
     __tablename__ = "waste_entries"
 
