@@ -295,15 +295,16 @@ function RsvpEventCard({ event, onRsvped, featured }) {
 
 export default function Events() {
   const [events, setEvents] = useState(null);
-  const [error, setError] = useState(null);
   const [ticketedEvents, setTicketedEvents] = useState(null);
   const [ticketedError, setTicketedError] = useState(null);
 
   function loadEvents() {
+    // RSVP events only surface in the featured block now, so a failure here
+    // just means nothing to feature — no error banner of its own to show.
     api
       .getEvents()
       .then(setEvents)
-      .catch((err) => setError(err.message));
+      .catch(() => setEvents([]));
   }
 
   useEffect(loadEvents, []);
@@ -331,7 +332,6 @@ export default function Events() {
   ];
 
   const remainingTicketed = soonestDate ? (ticketedEvents ?? []).filter((e) => e.date !== soonestDate) : ticketedEvents ?? [];
-  const remainingRsvp = soonestDate ? (events ?? []).filter((e) => localDateKey(e.start_time) !== soonestDate) : events ?? [];
 
   return (
     <>
@@ -374,20 +374,17 @@ export default function Events() {
 
       <section className={featuredItems.length > 0 ? "section" : "section section-alt"}>
         <div className="container">
-          <h2>Breakfast &amp; Yoga</h2>
-          <p style={{ marginBottom: "1.5rem" }}>
-            Sunday mornings — book your spot and pick your breakfast. Options are limited each week.
-          </p>
+          <h2>Upcoming Events</h2>
 
           {ticketedError && (
             <p className="form-error">Couldn't load sessions right now ({ticketedError}).</p>
           )}
           {!ticketedEvents && !ticketedError && <p>Loading sessions&hellip;</p>}
           {ticketedEvents && ticketedEvents.length === 0 && (
-            <p>No sessions posted yet — check back soon.</p>
+            <p>No events posted yet — check back soon.</p>
           )}
           {ticketedEvents && ticketedEvents.length > 0 && remainingTicketed.length === 0 && (
-            <p className="form-note">See the featured session above — check back for more soon.</p>
+            <p className="form-note">See the featured event above — check back for more soon.</p>
           )}
 
           {remainingTicketed.length > 0 && (
@@ -400,30 +397,6 @@ export default function Events() {
         </div>
       </section>
 
-      <section className="section">
-        <div className="container">
-          <h2>Upcoming Sessions</h2>
-
-          {error && (
-            <p className="form-error">
-              Couldn't load upcoming events right now ({error}).
-            </p>
-          )}
-          {!events && !error && <p>Loading events&hellip;</p>}
-          {events && events.length === 0 && <p>No upcoming sessions posted yet — check back soon.</p>}
-          {events && events.length > 0 && remainingRsvp.length === 0 && (
-            <p className="form-note">See the featured session above — check back for more soon.</p>
-          )}
-
-          {remainingRsvp.length > 0 && (
-            <div className="event-grid">
-              {remainingRsvp.map((event) => (
-                <RsvpEventCard event={event} onRsvped={loadEvents} key={event.id} />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
     </>
   );
 }
