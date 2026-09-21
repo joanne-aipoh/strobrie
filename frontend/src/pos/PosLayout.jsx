@@ -107,6 +107,18 @@ export function PosManagerRoute({ children }) {
 }
 
 export default function PosLayout() {
+  // Nothing else sets a title, so every route inherited index.html's — the
+  // cafe's marketing one. Staff often have the public site open in another
+  // tab, and both read the same. Restored on the way out so navigating back
+  // to the site doesn't leave the till's title behind.
+  useEffect(() => {
+    const previous = document.title;
+    document.title = "Flow — Strobriē";
+    return () => {
+      document.title = previous;
+    };
+  }, []);
+
   return (
     <PosAuthProvider>
       <PosShell />
