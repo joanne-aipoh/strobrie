@@ -295,7 +295,7 @@ export default function Catalog() {
         groupCoffee(items.filter((p) => p.category === "Coffee")),
         groupTea(items.filter((p) => p.category === "Tea")),
         ...groupProducts(items.filter((p) => p.category === "Extras")),
-      ];
+      ].filter(Boolean);  // Coffee or Tea may have nothing in it
     }
     if (section === "Drinks") {
       return DRINKS_CATEGORIES.flatMap((cat) => groupProducts(items.filter((p) => p.category === cat)));

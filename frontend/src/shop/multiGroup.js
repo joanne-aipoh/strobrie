@@ -8,11 +8,16 @@ export function buildTwoLevelCard(name, products, groupOrder, classify) {
     const { group, label } = classify(p);
     (byGroup[group] ||= []).push({ label, product: p });
   }
-  return {
-    type: "grouped2d",
-    name,
-    flavors: groupOrder
-      .filter((g) => byGroup[g]?.length > 0)
-      .map((g) => ({ flavorLabel: g, sizeVariants: byGroup[g] })),
-  };
+  const flavors = groupOrder
+    .filter((g) => byGroup[g]?.length > 0)
+    .map((g) => ({ flavorLabel: g, sizeVariants: byGroup[g] }));
+
+  // No products in this group means there is no card to show. Returning an
+  // empty card instead left the renderer reading flavors[0].sizeVariants of
+  // nothing, which threw and took the whole page down with it — so hiding
+  // Tea from the shop, or selling out of every tea, blanked the storefront.
+  // Callers filter these out.
+  if (flavors.length === 0) return null;
+
+  return { type: "grouped2d", name, flavors };
 }

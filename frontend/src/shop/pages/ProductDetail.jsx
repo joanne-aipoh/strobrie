@@ -63,9 +63,9 @@ export default function ProductDetail() {
     }
     let cards;
     if (current.category === "Coffee") {
-      cards = [groupCoffee(products.filter((p) => p.category === "Coffee"))];
+      cards = [groupCoffee(products.filter((p) => p.category === "Coffee"))].filter(Boolean);
     } else if (current.category === "Tea") {
-      cards = [groupTea(products.filter((p) => p.category === "Tea"))];
+      cards = [groupTea(products.filter((p) => p.category === "Tea"))].filter(Boolean);
     } else {
       cards = groupProducts(products.filter((p) => p.category === current.category));
     }
