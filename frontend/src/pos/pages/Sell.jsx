@@ -84,6 +84,9 @@ export default function Sell() {
   const [activeTab, setActiveTab] = useState(null);   // the tab loaded into the cart, if any
   const [tabBusy, setTabBusy] = useState(false);
   const [tabError, setTabError] = useState("");
+  const [namingTab, setNamingTab] = useState(false);   // naming a new tab, in-page
+  const [tabLabel, setTabLabel] = useState("");
+  const [confirmingClose, setConfirmingClose] = useState(false);
 
   const [chargeStatus, setChargeStatus] = useState("idle");
   const [chargeError, setChargeError] = useState("");
@@ -245,6 +248,9 @@ export default function Sell() {
     setCart([]);
     setActiveTab(null);
     setTabError("");
+    setNamingTab(false);
+    setTabLabel("");
+    setConfirmingClose(false);
     detachCustomer();
   }
 
@@ -268,17 +274,26 @@ export default function Sell() {
     setRedeemPoints("");
   }
 
-  async function saveTab() {
+  // An existing tab saves straight away; a new one needs a name first, asked
+  // for with a field in the page rather than window.prompt — a till browser in
+  // kiosk mode suppresses those dialogs, and the button did nothing at all.
+  function startSaveTab() {
     if (cart.length === 0) return;
-    let label = activeTab?.label;
+    setTabError("");
+    if (activeTab) {
+      saveTab(activeTab.label);
+      return;
+    }
+    setTabLabel("");
+    setNamingTab(true);
+  }
+
+  async function saveTab(rawLabel) {
+    if (cart.length === 0) return;
+    const label = (rawLabel ?? "").trim();
     if (!label) {
-      label = window.prompt("Save this order as a tab. Name it — a table number, or the customer:", "");
-      if (label === null) return;
-      label = label.trim();
-      if (!label) {
-        setTabError("Give the tab a name so it can be found again.");
-        return;
-      }
+      setTabError("Give the tab a name so it can be found again.");
+      return;
     }
     setTabBusy(true);
     setTabError("");
@@ -301,7 +316,6 @@ export default function Sell() {
 
   async function cancelTab() {
     if (!activeTab) return;
-    if (!window.confirm(`Close "${activeTab.label}" without taking payment? Anything on it goes back into stock.`)) return;
     setTabBusy(true);
     setTabError("");
     try {
@@ -451,14 +465,40 @@ export default function Sell() {
             }}
           >
             Open {since(activeTab.opened_at)}. Add to it and save, or take payment now.
-            <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
-              <button className="link-btn" onClick={clearOrder}>
-                Leave it open
-              </button>
-              <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={cancelTab} disabled={tabBusy}>
-                Close without paying
-              </button>
-            </div>
+            {confirmingClose ? (
+              <div style={{ marginTop: 6 }}>
+                <div style={{ marginBottom: 6 }}>
+                  Close it without taking payment? Anything on it goes back into stock.
+                </div>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    className="link-btn"
+                    style={{ color: "var(--rust-dark)" }}
+                    onClick={cancelTab}
+                    disabled={tabBusy}
+                  >
+                    {tabBusy ? "Closing…" : "Yes, close it"}
+                  </button>
+                  <button className="link-btn" onClick={() => setConfirmingClose(false)}>
+                    Keep it open
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
+                <button className="link-btn" onClick={clearOrder}>
+                  Leave it open
+                </button>
+                <button
+                  className="link-btn"
+                  style={{ color: "var(--rust-dark)" }}
+                  onClick={() => setConfirmingClose(true)}
+                  disabled={tabBusy}
+                >
+                  Close without paying
+                </button>
+              </div>
+            )}
           </div>
         )}
         {cart.length === 0 ? (
@@ -577,14 +617,41 @@ export default function Sell() {
         <button className="charge-btn" disabled={cart.length === 0 || chargeStatus === "submitting"} onClick={charge}>
           {chargeStatus === "submitting" ? "Charging…" : `Charge ${fmt(finalTotal)}`}
         </button>
-        <button
-          className="log-btn"
-          style={{ width: "100%", marginTop: 8 }}
-          disabled={cart.length === 0 || tabBusy}
-          onClick={saveTab}
-        >
-          {tabBusy ? "Saving…" : activeTab ? "Save changes to tab" : "Save as tab — pay later"}
-        </button>
+        {namingTab ? (
+          <div style={{ background: "var(--cream-2)", borderRadius: 8, padding: 10, marginTop: 8 }}>
+            <div className="form-field" style={{ marginBottom: 8 }}>
+              <label>Name this tab</label>
+              <input
+                type="text"
+                autoFocus
+                value={tabLabel}
+                placeholder="e.g. Table 4, or the customer's name"
+                onChange={(e) => setTabLabel(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveTab(tabLabel);
+                  if (e.key === "Escape") setNamingTab(false);
+                }}
+              />
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="log-btn" style={{ flex: 1 }} disabled={tabBusy} onClick={() => saveTab(tabLabel)}>
+                {tabBusy ? "Saving…" : "Save tab"}
+              </button>
+              <button className="link-btn" onClick={() => setNamingTab(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            className="log-btn"
+            style={{ width: "100%", marginTop: 8 }}
+            disabled={cart.length === 0 || tabBusy}
+            onClick={startSaveTab}
+          >
+            {tabBusy ? "Saving…" : activeTab ? "Save changes to tab" : "Save as tab — pay later"}
+          </button>
+        )}
         {toast && (
           <div className="toast">
             {toast}
