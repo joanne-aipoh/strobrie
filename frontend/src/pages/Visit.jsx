@@ -75,7 +75,7 @@ export default function Visit() {
             <p>
               Mon&ndash;Thu 8am&ndash;6pm &middot; Fri 8am&ndash;9pm
               <br />
-              Sat 9am&ndash;9pm &middot; Sun 10am&ndash;3pm
+              Sat 9am&ndash;6pm &middot; Sun 10am&ndash;3pm
             </p>
           </div>
           <div>
