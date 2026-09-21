@@ -7,11 +7,31 @@
 
 .product-grid {
   display: grid;
-  /* Fixed card width (not 1fr) — resizing the window changes how many
-     cards fit per row, never how big any one card's photo is. */
-  grid-template-columns: repeat(auto-fill, 240px);
-  justify-content: start;
+  /* Three across on desktop, dropping to two then one as the window
+     narrows, so it reads well on web and mobile alike. Cards flex to fill
+     their column (1fr) instead of a fixed width, so resizing never leaves
+     an awkward gap. */
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
+}
+
+/* min-width:0 lets a long product name wrap instead of stretching the
+   column and breaking the layout on small screens. */
+.product-card {
+  min-width: 0;
+}
+
+/* Two across on tablet and mobile — never drops to a single column. */
+@media (max-width: 900px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 460px) {
+  .product-grid {
+    gap: 0.85rem;
+  }
 }
 
 .product-card {
@@ -127,6 +147,9 @@
   font-weight: 700;
   color: var(--color-text);
   text-decoration: none;
+  /* Long slash-joined names (e.g. "Scrambled/Fried/Poached") have no spaces
+     to break on, so let them wrap anywhere rather than clip the card edge. */
+  overflow-wrap: anywhere;
 }
 
 .product-card-price {
