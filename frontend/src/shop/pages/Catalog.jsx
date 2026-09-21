@@ -13,6 +13,14 @@ function fmt(n) {
   return `₦${n.toLocaleString("en-NG")}`;
 }
 
+// A line of context under a section heading, where the products alone don't
+// tell the whole story.
+const SECTION_NOTES = {
+  Brunch: "Sundays only.",
+  "Whole Cakes":
+    "We also make custom cakes — please contact us directly on Instagram or call us for customized designs.",
+};
+
 function ProductCard({ card }) {
   const { addItem, qtyInCart } = useCart();
   const [variantIdx, setVariantIdx] = useState(0);
@@ -301,10 +309,10 @@ export default function Catalog() {
 
         {orderedSections.map(([category, items]) => (
           <div key={category} style={{ marginBottom: "2.5rem" }}>
-            <h2 style={{ fontSize: "1.4rem", marginBottom: category === "Brunch" ? 2 : "1rem" }}>{category}</h2>
-            {category === "Brunch" && (
+            <h2 style={{ fontSize: "1.4rem", marginBottom: SECTION_NOTES[category] ? 2 : "1rem" }}>{category}</h2>
+            {SECTION_NOTES[category] && (
               <p style={{ fontSize: 13, color: "var(--color-text-soft, #6b6b6b)", marginBottom: "1rem" }}>
-                Sundays only.
+                {SECTION_NOTES[category]}
               </p>
             )}
             <div className="product-grid">

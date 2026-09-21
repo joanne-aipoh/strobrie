@@ -23,11 +23,6 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
-  createContactMessage: (data) =>
-    request("/api/contact", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
   createBookingRequest: (data) =>
     request("/api/bookings", {
       method: "POST",
