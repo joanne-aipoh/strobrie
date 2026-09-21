@@ -57,6 +57,18 @@ class RestockRequest(BaseModel):
     qty: int = Field(gt=0)
 
 
+class ProductPriceUpdate(BaseModel):
+    id: int
+    price: int = Field(ge=0)
+
+
+class BulkPriceUpdate(BaseModel):
+    """A menu-wide price change from Flow's price sheet — all or nothing, so a
+    bad id can't leave half the menu repriced."""
+
+    updates: list[ProductPriceUpdate] = Field(min_length=1)
+
+
 # --- Orders ------------------------------------------------------------
 
 

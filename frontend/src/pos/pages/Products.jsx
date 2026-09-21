@@ -335,6 +335,132 @@ function ProductRow({ product, categories, editingId, setEditingId, selected, on
   );
 }
 
+// A whole-menu price editor: every price on one screen, edit as many as you
+// like, save once. The per-product Edit form is still the place to change a
+// name, stock or photos — this is only for repricing.
+function PriceSheet({ byCategory, onSaved }) {
+  const [drafts, setDrafts] = useState({});
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [savedMsg, setSavedMsg] = useState("");
+
+  const products = [...byCategory.values()].flat();
+
+  // Only prices actually moved off what's stored count as changes.
+  const changed = products.filter((p) => {
+    const draft = drafts[p.id];
+    return draft !== undefined && draft.trim() !== String(p.price);
+  });
+
+  function setDraft(id, value) {
+    setDrafts((prev) => ({ ...prev, [id]: value }));
+    setSavedMsg("");
+  }
+
+  function discard() {
+    setDrafts({});
+    setError("");
+    setSavedMsg("");
+  }
+
+  async function save() {
+    const updates = [];
+    const bad = [];
+    for (const p of changed) {
+      const raw = drafts[p.id].trim();
+      const price = Number(raw);
+      if (raw === "" || !Number.isInteger(price) || price < 0) bad.push(p.name);
+      else updates.push({ id: p.id, price });
+    }
+    if (bad.length) {
+      setError(`Enter a whole number of ₦0 or more for: ${bad.join(", ")}.`);
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      await shopApi.updateProductPrices(updates);
+      await onSaved();
+      setDrafts({});
+      setSavedMsg(`${updates.length} price${updates.length === 1 ? "" : "s"} updated.`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <>
+      <p style={{ fontSize: 12.5, color: "var(--ink-soft)", marginBottom: 12 }}>
+        These are the prices the till charges and the prices customers pay on the shop — they're the same price.
+        Orders already taken keep what they were charged.
+      </p>
+      {[...byCategory.entries()].map(([cat, items]) => (
+        <div key={cat} style={{ marginBottom: 14 }}>
+          <div style={{ padding: "8px 4px", borderBottom: "1px solid var(--line)" }}>
+            <strong>
+              {cat} <span style={{ color: "var(--ink-soft)", fontWeight: 400 }}>({items.length})</span>
+            </strong>
+          </div>
+          {items.map((p) => {
+            const draft = drafts[p.id];
+            const isChanged = draft !== undefined && draft.trim() !== String(p.price);
+            return (
+              <div
+                key={p.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "6px 4px",
+                  borderBottom: "1px solid var(--line)",
+                }}
+              >
+                <span style={{ flex: 1, fontSize: 13 }}>{p.name}</span>
+                {isChanged && (
+                  <span style={{ fontSize: 12, color: "var(--ink-soft)", whiteSpace: "nowrap" }}>
+                    was {fmt(p.price)}
+                  </span>
+                )}
+                <input
+                  type="number"
+                  min="0"
+                  step="50"
+                  aria-label={`Price for ${p.name}`}
+                  value={draft === undefined ? p.price : draft}
+                  onChange={(e) => setDraft(p.id, e.target.value)}
+                  style={{
+                    width: 110,
+                    fontSize: 13,
+                    padding: "5px 8px",
+                    borderColor: isChanged ? "var(--rust)" : undefined,
+                    background: isChanged ? "var(--cream-2)" : undefined,
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      {error && <div className="error-text" style={{ marginTop: 10 }}>{error}</div>}
+
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14, flexWrap: "wrap" }}>
+        <button className="log-btn" onClick={save} disabled={saving || changed.length === 0}>
+          {saving ? "Saving…" : changed.length === 0 ? "No changes yet" : `Save ${changed.length} price change${changed.length === 1 ? "" : "s"}`}
+        </button>
+        {changed.length > 0 && (
+          <button className="link-btn" onClick={discard}>
+            Discard changes
+          </button>
+        )}
+        {savedMsg && <span style={{ color: "var(--sage)", fontSize: 12.5 }}>{savedMsg}</span>}
+      </div>
+    </>
+  );
+}
+
 export default function Products() {
   const [products, setProducts] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
@@ -344,6 +470,7 @@ export default function Products() {
   const [trackedOnly, setTrackedOnly] = useState(false);
   const [openCategories, setOpenCategories] = useState(() => new Set());
   const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [priceMode, setPriceMode] = useState(false);
 
   function load() {
     return shopApi.adminListProducts().then(setProducts);
@@ -423,10 +550,12 @@ export default function Products() {
   return (
     <>
       <div className="panel">
-        <h3>Shop Products</h3>
+        <h3>Products</h3>
         <p style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: -8, marginBottom: 12 }}>
-          These products power shop.strobrie.com — separate from the till menu. Only "Available online" products
-          show up for customers.
+          One list, used in two places: this is the till menu on the Sell screen <em>and</em> the catalogue on
+          shop.strobrie.com. A name, price or stock change here lands on both. "Available online" and
+          "Unavailable Today" only change what customers see on the shop — the till can still ring up anything
+          that's in stock.
         </p>
 
         {settings && (
@@ -449,115 +578,125 @@ export default function Products() {
             <input type="checkbox" checked={trackedOnly} onChange={(e) => setTrackedOnly(e.target.checked)} />
             Tracked stock only
           </label>
+          <button className="log-btn" style={{ whiteSpace: "nowrap" }} onClick={() => setPriceMode((v) => !v)}>
+            {priceMode ? "Done editing prices" : "Edit prices"}
+          </button>
         </div>
         <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: -6, marginBottom: 12 }}>
           {products.length} products total. Anything with "unlimited stock" is made to order and never needs
           counting — check "Tracked stock only" to hide those and see just what's actually being tracked.
         </p>
 
-        {selectedIds.size > 0 && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 10,
-              marginBottom: 12,
-              padding: "8px 12px",
-              background: "var(--cream-2)",
-              borderRadius: 8,
-            }}
-          >
-            <span style={{ fontSize: 13 }}>{selectedIds.size} selected</span>
-            <div style={{ display: "flex", gap: 10 }}>
-              <button className="link-btn" onClick={() => setSelectedIds(new Set())}>
-                Clear
-              </button>
-              <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={deleteSelected}>
-                Delete selected
-              </button>
-            </div>
-          </div>
-        )}
+        {priceMode ? (
+          <PriceSheet byCategory={byCategory} onSaved={load} />
+        ) : (
+          <>
 
-        {filtered.length === 0 && <div className="empty-note">No products match.</div>}
-
-        {[...byCategory.entries()].map(([cat, items]) => {
-          const isOpen = isFiltering || openCategories.has(cat);
-          const allSelected = items.every((p) => selectedIds.has(p.id));
-          const catHidden = settings?.hidden_categories.includes(cat);
-          return (
-            <div key={cat} style={{ marginBottom: 10 }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "8px 4px",
-                  cursor: "pointer",
-                  borderBottom: "1px solid var(--line)",
-                }}
-                onClick={() => toggleCategory(cat)}
-              >
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  onClick={(e) => e.stopPropagation()}
-                  style={{ margin: 0, flexShrink: 0 }}
-                  onChange={() =>
-                    setSelectedIds((prev) => {
-                      const next = new Set(prev);
-                      if (allSelected) items.forEach((p) => next.delete(p.id));
-                      else items.forEach((p) => next.add(p.id));
-                      return next;
-                    })
-                  }
-                />
-                <strong style={{ flex: 1 }}>
-                  {cat} <span style={{ color: "var(--ink-soft)", fontWeight: 400 }}>({items.length})</span>
-                </strong>
-                {catHidden && <span className="checkin-badge out">Hidden from shop</span>}
-                {settings && (
-                  <button
-                    className="link-btn"
-                    style={{ fontSize: 12 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleCategoryVisible(cat);
-                    }}
-                  >
-                    {catHidden ? "Show in shop" : "Hide from shop"}
-                  </button>
-                )}
-                <span style={{ color: "var(--ink-soft)" }}>{isOpen ? "▲" : "▼"}</span>
+          {selectedIds.size > 0 && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+                marginBottom: 12,
+                padding: "8px 12px",
+                background: "var(--cream-2)",
+                borderRadius: 8,
+              }}
+            >
+              <span style={{ fontSize: 13 }}>{selectedIds.size} selected</span>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button className="link-btn" onClick={() => setSelectedIds(new Set())}>
+                  Clear
+                </button>
+                <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={deleteSelected}>
+                  Delete selected
+                </button>
               </div>
-              {isOpen && (
-                <div style={{ marginTop: 8 }}>
-                  {items.map((product) => (
-                    <ProductRow
-                      key={product.id}
-                      product={product}
-                      categories={categories}
-                      editingId={editingId}
-                      setEditingId={setEditingId}
-                      selected={selectedIds.has(product.id)}
-                      onToggleSelect={() => toggleSelect(product.id)}
-                      onChanged={load}
-                    />
-                  ))}
-                </div>
-              )}
             </div>
-          );
-        })}
+          )}
 
-        <button className="link-btn" style={{ marginTop: 6 }} onClick={() => setShowAdd((v) => !v)}>
-          {showAdd ? "Cancel" : "+ Add product"}
-        </button>
-        {showAdd && (
-          <div style={{ marginTop: 14 }}>
-            <ProductForm categories={categories} onSubmit={handleCreate} onCancel={() => setShowAdd(false)} />
-          </div>
+          {filtered.length === 0 && <div className="empty-note">No products match.</div>}
+
+          {[...byCategory.entries()].map(([cat, items]) => {
+            const isOpen = isFiltering || openCategories.has(cat);
+            const allSelected = items.every((p) => selectedIds.has(p.id));
+            const catHidden = settings?.hidden_categories.includes(cat);
+            return (
+              <div key={cat} style={{ marginBottom: 10 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "8px 4px",
+                    cursor: "pointer",
+                    borderBottom: "1px solid var(--line)",
+                  }}
+                  onClick={() => toggleCategory(cat)}
+                >
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ margin: 0, flexShrink: 0 }}
+                    onChange={() =>
+                      setSelectedIds((prev) => {
+                        const next = new Set(prev);
+                        if (allSelected) items.forEach((p) => next.delete(p.id));
+                        else items.forEach((p) => next.add(p.id));
+                        return next;
+                      })
+                    }
+                  />
+                  <strong style={{ flex: 1 }}>
+                    {cat} <span style={{ color: "var(--ink-soft)", fontWeight: 400 }}>({items.length})</span>
+                  </strong>
+                  {catHidden && <span className="checkin-badge out">Hidden from shop</span>}
+                  {settings && (
+                    <button
+                      className="link-btn"
+                      style={{ fontSize: 12 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCategoryVisible(cat);
+                      }}
+                    >
+                      {catHidden ? "Show in shop" : "Hide from shop"}
+                    </button>
+                  )}
+                  <span style={{ color: "var(--ink-soft)" }}>{isOpen ? "▲" : "▼"}</span>
+                </div>
+                {isOpen && (
+                  <div style={{ marginTop: 8 }}>
+                    {items.map((product) => (
+                      <ProductRow
+                        key={product.id}
+                        product={product}
+                        categories={categories}
+                        editingId={editingId}
+                        setEditingId={setEditingId}
+                        selected={selectedIds.has(product.id)}
+                        onToggleSelect={() => toggleSelect(product.id)}
+                        onChanged={load}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          <button className="link-btn" style={{ marginTop: 6 }} onClick={() => setShowAdd((v) => !v)}>
+            {showAdd ? "Cancel" : "+ Add product"}
+          </button>
+          {showAdd && (
+            <div style={{ marginTop: 14 }}>
+              <ProductForm categories={categories} onSubmit={handleCreate} onCancel={() => setShowAdd(false)} />
+            </div>
+          )}
+          </>
         )}
       </div>
     </>

@@ -101,6 +101,33 @@ def update_product(product_id: int, payload: shop_schemas.ProductUpdate, db: Ses
     return product
 
 
+# Deliberately not "/admin/products/prices": that would sit under the
+# "/admin/products/{product_id}" PUT above and depend on route-declaration order
+# to avoid being parsed as an id.
+@router.put("/admin/product-prices", response_model=list[shop_schemas.ProductOut])
+def update_product_prices(payload: shop_schemas.BulkPriceUpdate, db: Session = Depends(get_db)):
+    """Reprice several products at once (Flow's price sheet). Touches price only —
+    stock, availability and photos are left exactly as they were."""
+    wanted = {u.id: u.price for u in payload.updates}
+    stmt = (
+        select(shop_models.Product)
+        .options(selectinload(shop_models.Product.photos))
+        .where(shop_models.Product.id.in_(wanted))
+    )
+    products = db.scalars(stmt).all()
+
+    missing = sorted(set(wanted) - {p.id for p in products})
+    if missing:
+        raise HTTPException(status_code=404, detail=f"Product(s) not found: {missing}")
+
+    for product in products:
+        product.price = wanted[product.id]
+    db.commit()
+    for product in products:
+        db.refresh(product)
+    return products
+
+
 @router.post("/admin/products/{product_id}/restock", response_model=shop_schemas.ProductOut)
 def restock_product(product_id: int, payload: shop_schemas.RestockRequest, db: Session = Depends(get_db)):
     """Log a batch made — adds to stock_qty, treating a currently-unlimited
