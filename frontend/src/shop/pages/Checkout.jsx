@@ -328,7 +328,9 @@ export default function Checkout() {
                   disabled={hasCakeItem}
                   style={{
                     flex: 1,
-                    alignSelf: "stretch",
+                    padding: "0.45rem 0.5rem",
+                    fontSize: 12.5,
+                    whiteSpace: "nowrap",
                     background: form.timing_choice === "asap" ? "var(--color-hot-pink-dark)" : "var(--color-bg)",
                     color: form.timing_choice === "asap" ? "#fff" : "var(--color-text)",
                     border: "1px solid rgba(0,0,0,0.15)",
@@ -342,7 +344,9 @@ export default function Checkout() {
                   className="button"
                   style={{
                     flex: 1,
-                    alignSelf: "stretch",
+                    padding: "0.45rem 0.5rem",
+                    fontSize: 12.5,
+                    whiteSpace: "nowrap",
                     background: form.timing_choice === "scheduled" ? "var(--color-hot-pink-dark)" : "var(--color-bg)",
                     color: form.timing_choice === "scheduled" ? "#fff" : "var(--color-text)",
                     border: "1px solid rgba(0,0,0,0.15)",
