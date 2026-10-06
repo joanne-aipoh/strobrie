@@ -336,6 +336,13 @@ export default function Catalog() {
         mergeOne("Mocktails", items.filter((p) => p.category === "Mocktails")),
       ].filter(Boolean);
     }
+    if (section === "Whole Cakes") {
+      // Keep the "Whole Cakes" heading, but title the cake card just "Cakes"
+      // (it sits beside the "Cheesecake" card).
+      return groupProducts(items).map((card) =>
+        card.name === "Whole Cake" ? { ...card, name: "Cakes" } : card
+      );
+    }
     if (section === "Lunch") {
       const isSandwich = (p) => /sandwich|grilled cheese|torzo/i.test(p.name);
       const isPasta = (p) => /pasta|penne/i.test(p.name);
