@@ -115,7 +115,11 @@ function ProductCard({ card }) {
           <img
             src={photoUrl(photos[0].url)}
             alt={name}
-            style={DRINK_CATEGORIES.has(product.category) ? { objectPosition: "center 72%" } : undefined}
+            style={
+              DRINK_CATEGORIES.has(product.category)
+                ? { objectPosition: /matcha/i.test(product.name) ? "center 85%" : "center 72%" }
+                : undefined
+            }
           />
         ) : (
           <div className="product-card-placeholder">No photo yet</div>
