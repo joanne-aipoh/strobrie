@@ -2,7 +2,7 @@ import json
 import os
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -159,17 +159,18 @@ def _build_order(payload: shop_schemas.OrderCreate, db: Session) -> shop_models.
     product_ids = [line.product_id for line in payload.items]
     products = {p.id: p for p in db.query(shop_models.Product).filter(shop_models.Product.id.in_(product_ids))}
 
-    # Whole cakes/cheesecakes are made to order — need at least a day's
-    # notice, so no ASAP and no same-day scheduling for them. Checked
-    # against Lagos' calendar date, not the server's own timezone.
+    # Whole cakes/cheesecakes are made to order — need at least 48 hours'
+    # notice, so the earliest valid date is two days out. Checked against
+    # Lagos' calendar date, not the server's own timezone.
     if any(p.category in CAKE_CATEGORIES for p in products.values()):
         today_lagos = datetime.now(LAGOS_TZ).date()
+        earliest = today_lagos + timedelta(days=2)
         requested_date_lagos = requested_at.astimezone(LAGOS_TZ).date() if requested_at is not None else today_lagos
-        if requested_date_lagos <= today_lagos:
+        if requested_date_lagos < earliest:
             raise HTTPException(
                 status_code=400,
-                detail="Whole cakes and cheesecakes need at least a day's notice — please choose a date "
-                "from tomorrow onward, or call/WhatsApp us for a same-day order.",
+                detail="Whole cakes and cheesecakes need at least 48 hours' notice — please choose a date "
+                "two days from now or later, or call/WhatsApp us for a sooner order.",
             )
 
     # A cake can appear as several lines (different inscriptions/design

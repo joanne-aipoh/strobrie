@@ -25,23 +25,28 @@ const SECTION_NOTES = {
     "We also make custom cakes — please contact us directly on Instagram or call us for customized designs.",
 };
 
-// Default a grouped card to the first variant/flavour that actually has a
-// photo, so a card shows a real photo as soon as any one of its items does.
+// Default a grouped card to the variant whose photo is best to show first —
+// a real photo (not the .png illustration placeholder) wins, so e.g. the
+// Matcha card opens on Mango Matcha's real photo even though it isn't first.
+// Falls back to any photo, then to the first item.
+const hasRealPhoto = (p) => p.photos.some((ph) => !/\.png$/i.test(ph.url));
+const hasAnyPhoto = (p) => p.photos.length > 0;
 function firstPhotoVariant(card) {
-  if (card.type === "grouped") {
-    const i = card.variants.findIndex((v) => v.product.photos.length > 0);
-    return { variant: Math.max(0, i), flavor: 0, size: 0 };
-  }
-  if (card.type === "grouped2d") {
-    for (let fi = 0; fi < card.flavors.length; fi++) {
-      for (let si = 0; si < card.flavors[fi].sizeVariants.length; si++) {
-        if (card.flavors[fi].sizeVariants[si].product.photos.length > 0) {
-          return { variant: 0, flavor: fi, size: si };
+  const pick = (test) => {
+    if (card.type === "grouped") {
+      const i = card.variants.findIndex((v) => test(v.product));
+      return i >= 0 ? { variant: i, flavor: 0, size: 0 } : null;
+    }
+    if (card.type === "grouped2d") {
+      for (let fi = 0; fi < card.flavors.length; fi++) {
+        for (let si = 0; si < card.flavors[fi].sizeVariants.length; si++) {
+          if (test(card.flavors[fi].sizeVariants[si].product)) return { variant: 0, flavor: fi, size: si };
         }
       }
     }
-  }
-  return { variant: 0, flavor: 0, size: 0 };
+    return null;
+  };
+  return pick(hasRealPhoto) || pick(hasAnyPhoto) || { variant: 0, flavor: 0, size: 0 };
 }
 
 const DRINK_CATEGORIES = new Set(["Coffee", "Tea", "Juices", "Lemonades", "Milkshakes", "Smoothies", "Mocktails"]);

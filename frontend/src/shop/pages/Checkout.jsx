@@ -19,9 +19,10 @@ function formatFlavorBreakdown(breakdown) {
 }
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
-const tomorrowStr = () => {
+// Whole cakes need 48 hours' notice — earliest valid date is two days out.
+const cakeEarliestStr = () => {
   const d = new Date();
-  d.setDate(d.getDate() + 1);
+  d.setDate(d.getDate() + 2);
   return d.toISOString().slice(0, 10);
 };
 
@@ -133,7 +134,8 @@ export default function Checkout() {
   // far enough ahead either. Mirrors the backend's own check in
   // shop_orders.py, which is the authoritative one.
   const cakeNeedsMoreNotice =
-    hasCakeItem && (form.timing_choice === "asap" || (form.timing_choice === "scheduled" && form.requested_date <= todayStr()));
+    hasCakeItem &&
+    (form.timing_choice === "asap" || (form.timing_choice === "scheduled" && form.requested_date < cakeEarliestStr()));
 
   useEffect(() => {
     if (hasCakeItem && form.timing_choice === "asap") {
@@ -156,7 +158,7 @@ export default function Checkout() {
     }
     if (cakeNeedsMoreNotice) {
       setError(
-        "Whole cakes and cheesecakes need at least a day's notice — please choose a date from tomorrow onward, or call/WhatsApp us for a same-day order."
+        "Whole cakes and cheesecakes need at least 48 hours' notice — please choose a date two days from now or later, or call/WhatsApp us for a sooner order."
       );
       return;
     }
@@ -361,7 +363,7 @@ export default function Checkout() {
                   <input
                     type="date"
                     required
-                    min={hasCakeItem ? tomorrowStr() : todayStr()}
+                    min={hasCakeItem ? cakeEarliestStr() : todayStr()}
                     value={form.requested_date}
                     onChange={(e) => setForm({ ...form, requested_date: e.target.value })}
                     style={{ flex: 1 }}
@@ -383,10 +385,10 @@ export default function Checkout() {
               )}
               {hasCakeItem && (
                 <p className="form-note" style={{ margin: "6px 0 0" }}>
-                  Whole cakes &amp; cheesecakes need at least a day's notice — pick a date from tomorrow
-                  onward. Need it today?{" "}
+                  Whole cakes &amp; cheesecakes need at least 48 hours' notice — pick a date two days from now
+                  or later. Need it sooner?{" "}
                   <a
-                    href={whatsappLink("Hi Strobriē! I'd like to order a cake for today — is that possible?")}
+                    href={whatsappLink("Hi Strobriē! I'd like to order a cake sooner than 48 hours — is that possible?")}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -404,7 +406,7 @@ export default function Checkout() {
               )}
               {cakeNeedsMoreNotice && form.requested_date && (
                 <p className="form-error" style={{ margin: "6px 0 0" }}>
-                  Please pick a date from tomorrow onward for a whole cake or cheesecake.
+                  Please pick a date two days from now or later for a whole cake or cheesecake.
                 </p>
               )}
             </div>
