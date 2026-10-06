@@ -270,6 +270,22 @@ a {
   white-space: nowrap;
 }
 
+.menu-images {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.menu-images img {
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(43, 29, 34, 0.12);
+}
+
 .menu-cta {
   margin-top: 2rem;
   text-align: center;
