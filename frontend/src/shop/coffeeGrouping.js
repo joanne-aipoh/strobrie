@@ -30,6 +30,23 @@ export function groupCoffee(products) {
   return buildTwoLevelCard("Coffee", products, COFFEE_GROUP_ORDER, classifyCoffee);
 }
 
+// Coffee split into one card per group — Hot Coffee, Iced Coffee, Matcha —
+// each a single dropdown of its drinks, all still under the Coffee & Tea
+// heading.
+const COFFEE_CARD_LABELS = { "Hot Coffee": "Hot Coffee", "Cold Coffee": "Iced Coffee", Matcha: "Matcha" };
+export function groupCoffeeSeparate(products) {
+  const byGroup = Object.fromEntries(COFFEE_GROUP_ORDER.map((g) => [g, []]));
+  for (const p of products) {
+    const { group, label } = classifyCoffee(p);
+    (byGroup[group] ||= []).push({ label, product: p });
+  }
+  return COFFEE_GROUP_ORDER.filter((g) => byGroup[g]?.length > 0).map((g) => ({
+    type: "grouped",
+    name: COFFEE_CARD_LABELS[g] || g,
+    variants: byGroup[g],
+  }));
+}
+
 export function groupTea(products) {
   return buildTwoLevelCard("Tea", products, TEA_GROUP_ORDER, classifyTea);
 }

@@ -4,7 +4,7 @@ import { photoUrl, shopApi } from "../shopApi.js";
 import { useCart } from "../CartContext.jsx";
 import { shopPath } from "../shopBase.js";
 import { groupProducts, cardPhotos } from "../productGrouping.js";
-import { groupCoffee } from "../coffeeGrouping.js";
+import { groupCoffeeSeparate } from "../coffeeGrouping.js";
 import { CAKE_CATEGORIES } from "../cakeCategories.js";
 import { inscriptionLimitForLabel } from "../inscriptionLimit.js";
 import BoxBuilder from "../BoxBuilder.jsx";
@@ -277,8 +277,9 @@ export default function Catalog() {
   const DRINKS_CATEGORIES = ["Juices", "Milkshakes", "Lemonades", "Smoothies"];
   const HOT_TEA_NAMES = new Set(["Tea Bag Selection", "Honey Ginger Lemon Tea"]);
   function sectionFor(p) {
-    if (p.category === "Cheesecakes") return "Whole Cheesecakes";
-    if (p.category === "Cakes") return "Whole Cakes";
+    // Cakes and Cheesecakes sit under one "Whole Cakes" heading, each as its
+    // own card.
+    if (CAKE_CATEGORIES.includes(p.category)) return "Whole Cakes";
     // Coffee, add-on Extras and the hot teas share one "Coffee & Tea" heading;
     // the cold teas split off into their own "Iced Tea" section.
     if (p.category === "Coffee" || p.category === "Extras") return "Coffee & Tea";
@@ -303,7 +304,7 @@ export default function Catalog() {
   // listed here falls to the end, in whatever order it was encountered.
   const SECTION_ORDER = [
     "Breakfast", "Brunch", "Lunch",
-    "Bakery", "Whole Cakes", "Whole Cheesecakes",
+    "Bakery", "Whole Cakes",
     "Coffee & Tea", "Iced Tea", "Drinks", "Cocktails",
   ];
   const orderedSections = Object.entries(byCategory).sort(([a], [b]) => {
@@ -324,7 +325,7 @@ export default function Catalog() {
   function cardsForSection(section, items) {
     if (section === "Coffee & Tea") {
       return [
-        groupCoffee(items.filter((p) => p.category === "Coffee")),
+        ...groupCoffeeSeparate(items.filter((p) => p.category === "Coffee")),
         ...groupProducts(items.filter((p) => p.category === "Tea")),
         ...groupProducts(items.filter((p) => p.category === "Extras")),
       ].filter(Boolean);
