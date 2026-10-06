@@ -13,6 +13,10 @@ function fmt(n) {
   return `₦${n.toLocaleString("en-NG")}`;
 }
 
+// Flavoured lattes that aren't really coffee — shown in their own "Non Coffee"
+// card, each with a hot/iced choice.
+const NON_COFFEE_NAMES = new Set(["Chai Latte", "Chocolate Latte", "Oreo Latte"]);
+
 // A line of context under a section heading, where the products alone don't
 // tell the whole story.
 const SECTION_NOTES = {
@@ -47,13 +51,16 @@ function ProductCard({ card }) {
   const remainingStock = product.stock_qty == null ? null : Math.max(0, product.stock_qty - qtyInCart(product.id));
   const outOfStock = product.unavailable || (remainingStock !== null && remainingStock <= 0);
 
-  // Eggs Breakfast carries a cooking-style choice (recorded as an add-on so it
-  // reaches the kitchen on the order). Default it so an order always has one.
+  // Eggs Breakfast carries a cooking-style choice; the non-coffee lattes carry
+  // a hot/iced choice. Both ride along as an add-on on the order, defaulted so
+  // an order always has one.
   const isEggs = product.name === "Eggs Breakfast";
+  const isNonCoffeeLatte = NON_COFFEE_NAMES.has(product.name);
   useEffect(() => {
     if (isEggs && addons === "") setAddons("Scrambled");
+    if (isNonCoffeeLatte && addons === "") setAddons("Hot");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEggs]);
+  }, [isEggs, isNonCoffeeLatte]);
 
   const sizeLabel = card.type === "grouped2d" ? card.flavors[flavorIdx].sizeVariants[sizeIdx].label : null;
   const inscriptionLimit = CAKE_CATEGORIES.includes(product.category) ? inscriptionLimitForLabel(sizeLabel) : 200;
@@ -188,6 +195,18 @@ function ProductCard({ card }) {
             </select>
           </div>
         )}
+        {isNonCoffeeLatte && (
+          <div style={{ marginTop: 6 }}>
+            <div style={{ fontSize: 11, color: "var(--color-text-soft, #6b6b6b)", marginBottom: 4 }}>
+              Hot or iced?
+            </div>
+            <select className="product-card-variant" value={addons} onChange={(e) => setAddons(e.target.value)}>
+              {["Hot", "Iced"].map((o) => (
+                <option key={o} value={o}>{o}</option>
+              ))}
+            </select>
+          </div>
+        )}
         {product.category === "Tea" && (
           <div style={{ marginTop: 6 }}>
             <div style={{ fontSize: 11, color: "var(--color-text-soft, #6b6b6b)", marginBottom: 4 }}>
@@ -280,10 +299,9 @@ export default function Catalog() {
     // Cakes and Cheesecakes sit under one "Whole Cakes" heading, each as its
     // own card.
     if (CAKE_CATEGORIES.includes(p.category)) return "Whole Cakes";
-    // Coffee, add-on Extras and the hot teas share one "Coffee & Tea" heading;
-    // the cold teas split off into their own "Iced Tea" section.
-    if (p.category === "Coffee" || p.category === "Extras") return "Coffee & Tea";
-    if (p.category === "Tea") return HOT_TEA_NAMES.has(p.name) ? "Coffee & Tea" : "Iced Tea";
+    // Coffee, add-on Extras and all teas (hot and iced) share one "Coffee &
+    // Tea" heading.
+    if (p.category === "Coffee" || p.category === "Extras" || p.category === "Tea") return "Coffee & Tea";
     if (DRINKS_CATEGORIES.includes(p.category) || p.category === "Mocktails") return "Drinks";
     return p.category;
   }
@@ -305,7 +323,7 @@ export default function Catalog() {
   const SECTION_ORDER = [
     "Breakfast", "Brunch", "Lunch",
     "Bakery", "Whole Cakes",
-    "Coffee & Tea", "Iced Tea", "Drinks", "Cocktails",
+    "Coffee & Tea", "Drinks", "Cocktails",
   ];
   const orderedSections = Object.entries(byCategory).sort(([a], [b]) => {
     const ia = SECTION_ORDER.indexOf(a);
@@ -324,11 +342,15 @@ export default function Catalog() {
   // own card(s) — or, for the collapsible groups below, one merged card.
   function cardsForSection(section, items) {
     if (section === "Coffee & Tea") {
+      const coffee = items.filter((p) => p.category === "Coffee");
+      const teas = items.filter((p) => p.category === "Tea");
       return [
-        ...groupCoffeeSeparate(items.filter((p) => p.category === "Coffee")),
-        // Hot teas (Tea Bag Selection, Honey Ginger Lemon Tea) each keep their
-        // own card.
-        ...groupProducts(items.filter((p) => p.category === "Tea")),
+        ...groupCoffeeSeparate(coffee.filter((p) => !NON_COFFEE_NAMES.has(p.name))),
+        // The flavoured lattes (Chai/Chocolate/Oreo) sit in their own card.
+        mergeOne("Non Coffee", coffee.filter((p) => NON_COFFEE_NAMES.has(p.name))),
+        // Hot teas each keep their own card; all iced teas collapse into one.
+        ...groupProducts(teas.filter((p) => HOT_TEA_NAMES.has(p.name))),
+        mergeOne("Iced Tea", teas.filter((p) => !HOT_TEA_NAMES.has(p.name)), (p) => p.name.replace(/^Iced Tea – /, "")),
         ...groupProducts(items.filter((p) => p.category === "Extras")),
       ].filter(Boolean);
     }
