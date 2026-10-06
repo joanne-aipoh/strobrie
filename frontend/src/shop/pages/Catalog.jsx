@@ -326,9 +326,9 @@ export default function Catalog() {
     if (section === "Coffee & Tea") {
       return [
         ...groupCoffeeSeparate(items.filter((p) => p.category === "Coffee")),
-        // The hot teas (Tea Bag Selection + Honey Ginger Lemon Tea) share one
-        // "Tea Bag Selection" card with a dropdown.
-        mergeOne("Tea Bag Selection", items.filter((p) => p.category === "Tea")),
+        // Hot teas (Tea Bag Selection, Honey Ginger Lemon Tea) each keep their
+        // own card.
+        ...groupProducts(items.filter((p) => p.category === "Tea")),
         ...groupProducts(items.filter((p) => p.category === "Extras")),
       ].filter(Boolean);
     }
