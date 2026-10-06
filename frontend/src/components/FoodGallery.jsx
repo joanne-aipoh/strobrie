@@ -31,7 +31,7 @@ const GALLERY_ITEMS = [
   { file: "254a264fc69143988600b2a7ca5565be.jpeg", label: "Suya yakitori", productId: 113 },
   { file: "24ea3e7a59cb4c84badcfca309a56c80.jpeg", label: "Very berry French toast", productId: 82 },
   { file: "d721d24788cf4442a3e7c5917fade0c4.JPG", label: "Ragu pasta", productId: 116 },
-  { file: "c984bf75bf964796841a51975c0920b8.JPG", label: "Mango matcha", productId: 28 },
+  { file: "c984bf75bf964796841a51975c0920b8.JPG", label: "Mango matcha", productId: 28, objectPosition: "center 68%" },
   { file: "001029609c604962b7ed1e619049aff6.JPG", label: "Creamy chicken penne", productId: 117 },
   { file: "073ca0226fcf45429e2f6b84cd817c66.JPG", label: "Cinnamon rolls", productId: 170 },
   { file: "5487461e6b574c689e0fcc945716b291.jpeg", label: "Iced Americano", productId: 10 },
@@ -46,7 +46,12 @@ export default function FoodGallery() {
     <div className="food-gallery">
       {GALLERY_ITEMS.map((item) => (
         <a className="food-gallery-item" key={item.file} href={productHref(item.productId)}>
-          <img src={`${API_BASE}/uploads/products/${item.file}`} alt={item.label} loading="lazy" />
+          <img
+            src={`${API_BASE}/uploads/products/${item.file}`}
+            alt={item.label}
+            loading="lazy"
+            style={item.objectPosition ? { objectPosition: item.objectPosition } : undefined}
+          />
         </a>
       ))}
     </div>
