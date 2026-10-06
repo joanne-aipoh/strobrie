@@ -339,10 +339,11 @@ export default function Catalog() {
       ].filter(Boolean);
     }
     if (section === "Whole Cakes") {
-      // Keep the "Whole Cakes" heading, but title the cake card just "Cakes"
-      // (it sits beside the "Cheesecake" card).
+      // Keep the "Whole Cakes" heading; title the two cards "Cakes" and
+      // "Cheesecakes".
+      const RENAME = { "Whole Cake": "Cakes", Cheesecake: "Cheesecakes" };
       return groupProducts(items).map((card) =>
-        card.name === "Whole Cake" ? { ...card, name: "Cakes" } : card
+        RENAME[card.name] ? { ...card, name: RENAME[card.name] } : card
       );
     }
     if (section === "Lunch") {
