@@ -360,16 +360,6 @@ export default function Catalog() {
         mergeOne("Mocktails", items.filter((p) => p.category === "Mocktails")),
       ].filter(Boolean);
     }
-    if (section === "Bakery") {
-      // Merge the Chocolate and Oreo brownies (both come in Single + Box) into
-      // one "Brownies" card; Red Velvet (Single only) stays its own card.
-      const isChocOreoBrownie = (p) => /^Brownie – (Chocolate|Oreo)\b/.test(p.name);
-      const brownieCards = groupProducts(items.filter(isChocOreoBrownie)).map((c) =>
-        c.name === "Brownie" ? { ...c, name: "Brownies" } : c
-      );
-      const rest = groupProducts(items.filter((p) => !isChocOreoBrownie(p)));
-      return [...brownieCards, ...rest].sort((a, b) => (a.sortId ?? 1e9) - (b.sortId ?? 1e9));
-    }
     if (section === "Whole Cakes") {
       // Keep the "Whole Cakes" heading; title the two cards "Cakes" and
       // "Cheesecakes".
