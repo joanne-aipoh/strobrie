@@ -107,9 +107,7 @@ function ProductCard({ card }) {
         <Link to={shopPath(`/product/${product.id}`)} className="product-card-name">
           {name}
         </Link>
-        <Link to={shopPath(`/product/${product.id}`)} className="product-card-view-link">
-          View full details &amp; photos &rarr;
-        </Link>
+        {product.description && <p className="product-card-desc">{product.description}</p>}
         {card.type === "grouped" && (
           <select
             className="product-card-variant"
