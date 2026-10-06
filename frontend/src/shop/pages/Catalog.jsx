@@ -4,7 +4,7 @@ import { photoUrl, shopApi } from "../shopApi.js";
 import { useCart } from "../CartContext.jsx";
 import { shopPath } from "../shopBase.js";
 import { groupProducts, cardPhotos } from "../productGrouping.js";
-import { groupCoffee, groupTea } from "../coffeeGrouping.js";
+import { groupCoffee } from "../coffeeGrouping.js";
 import { CAKE_CATEGORIES } from "../cakeCategories.js";
 import { inscriptionLimitForLabel } from "../inscriptionLimit.js";
 import BoxBuilder from "../BoxBuilder.jsx";
@@ -46,6 +46,14 @@ function ProductCard({ card }) {
   const photos = cardPhotos(card, product);
   const remainingStock = product.stock_qty == null ? null : Math.max(0, product.stock_qty - qtyInCart(product.id));
   const outOfStock = product.unavailable || (remainingStock !== null && remainingStock <= 0);
+
+  // Eggs Breakfast carries a cooking-style choice (recorded as an add-on so it
+  // reaches the kitchen on the order). Default it so an order always has one.
+  const isEggs = product.name === "Eggs Breakfast";
+  useEffect(() => {
+    if (isEggs && addons === "") setAddons("Scrambled");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEggs]);
 
   const sizeLabel = card.type === "grouped2d" ? card.flavors[flavorIdx].sizeVariants[sizeIdx].label : null;
   const inscriptionLimit = CAKE_CATEGORIES.includes(product.category) ? inscriptionLimitForLabel(sizeLabel) : 200;
@@ -168,6 +176,18 @@ function ProductCard({ card }) {
             </div>
           </div>
         )}
+        {isEggs && (
+          <div style={{ marginTop: 6 }}>
+            <div style={{ fontSize: 11, color: "var(--color-text-soft, #6b6b6b)", marginBottom: 4 }}>
+              How would you like your eggs?
+            </div>
+            <select className="product-card-variant" value={addons} onChange={(e) => setAddons(e.target.value)}>
+              {["Scrambled", "Fried", "Poached", "Sunny Side Up"].map((o) => (
+                <option key={o} value={o}>{o}</option>
+              ))}
+            </select>
+          </div>
+        )}
         {product.category === "Tea" && (
           <div style={{ marginTop: 6 }}>
             <div style={{ fontSize: 11, color: "var(--color-text-soft, #6b6b6b)", marginBottom: 4 }}>
@@ -250,16 +270,18 @@ export default function Catalog() {
   if (error) return <p className="form-error container" style={{ padding: "3rem 1.5rem" }}>Couldn't load products ({error}).</p>;
   if (!products || !settings) return <p className="container" style={{ padding: "3rem 1.5rem" }}>Loading products&hellip;</p>;
 
-  // Some categories share one grid section without merging into one card —
-  // each keeps its own card/dropdown, they just sit under one heading.
-  // Cakes/Cheesecakes → "Whole Cakes", Coffee/Tea/Extras (add-ons) →
-  // "Coffee & Tea", Juice/Milkshake/Lemonade/Smoothie → "Drinks".
+  // Several backend categories share one grid section. Cakes/Cheesecakes →
+  // "Whole Cakes"; Coffee + add-on Extras → "Coffee"; Tea splits by item into
+  // "Hot Tea" and "Iced Tea"; the cold drink categories plus Mocktails →
+  // "Drinks".
   const DRINKS_CATEGORIES = ["Juices", "Milkshakes", "Lemonades", "Smoothies"];
-  function sectionLabel(category) {
-    if (CAKE_CATEGORIES.includes(category)) return "Whole Cakes";
-    if (category === "Coffee" || category === "Tea" || category === "Extras") return "Coffee & Tea";
-    if (DRINKS_CATEGORIES.includes(category)) return "Drinks";
-    return category;
+  const HOT_TEA_NAMES = new Set(["Tea Bag Selection", "Honey Ginger Lemon Tea"]);
+  function sectionFor(p) {
+    if (CAKE_CATEGORIES.includes(p.category)) return "Whole Cakes";
+    if (p.category === "Coffee" || p.category === "Extras") return "Coffee";
+    if (p.category === "Tea") return HOT_TEA_NAMES.has(p.name) ? "Hot Tea" : "Iced Tea";
+    if (DRINKS_CATEGORIES.includes(p.category) || p.category === "Mocktails") return "Drinks";
+    return p.category;
   }
 
   // hidden_now = manually-hidden categories plus time-gated ones (Brunch only
@@ -268,7 +290,7 @@ export default function Catalog() {
   const hiddenNow = settings.hidden_now ?? settings.hidden_categories;
   const byCategory = products.reduce((groups, p) => {
     if (hiddenNow.includes(p.category)) return groups;
-    (groups[sectionLabel(p.category)] ||= []).push(p);
+    (groups[sectionFor(p)] ||= []).push(p);
     return groups;
   }, {});
 
@@ -279,7 +301,7 @@ export default function Catalog() {
   const SECTION_ORDER = [
     "Breakfast", "Brunch", "Lunch",
     "Bakery", "Whole Cakes",
-    "Coffee & Tea", "Drinks", "Cocktails", "Mocktails", "Schweppes",
+    "Coffee", "Hot Tea", "Iced Tea", "Drinks", "Cocktails",
   ];
   const orderedSections = Object.entries(byCategory).sort(([a], [b]) => {
     const ia = SECTION_ORDER.indexOf(a);
@@ -287,18 +309,39 @@ export default function Catalog() {
     return (ia === -1 ? SECTION_ORDER.length : ia) - (ib === -1 ? SECTION_ORDER.length : ib);
   });
 
-  // A shared section can bundle several original categories, but each still
-  // becomes its own card(s) — never merged into one shared dropdown.
+  // One card with a single dropdown, from a flat list of products — used to
+  // collapse a long list (mocktails, sandwiches, pastas) into one tidy item.
+  function mergeOne(name, items, labelFn = (p) => p.name) {
+    if (!items.length) return null;
+    return { type: "grouped", name, variants: items.map((p) => ({ label: labelFn(p), product: p })) };
+  }
+
+  // A shared section can bundle several original categories, each becoming its
+  // own card(s) — or, for the collapsible groups below, one merged card.
   function cardsForSection(section, items) {
-    if (section === "Coffee & Tea") {
+    if (section === "Coffee") {
       return [
         groupCoffee(items.filter((p) => p.category === "Coffee")),
-        groupTea(items.filter((p) => p.category === "Tea")),
         ...groupProducts(items.filter((p) => p.category === "Extras")),
-      ].filter(Boolean);  // Coffee or Tea may have nothing in it
+      ].filter(Boolean);
     }
     if (section === "Drinks") {
-      return DRINKS_CATEGORIES.flatMap((cat) => groupProducts(items.filter((p) => p.category === cat)));
+      return [
+        ...DRINKS_CATEGORIES.flatMap((cat) => groupProducts(items.filter((p) => p.category === cat))),
+        mergeOne("Mocktails", items.filter((p) => p.category === "Mocktails")),
+      ].filter(Boolean);
+    }
+    if (section === "Lunch") {
+      const isSandwich = (p) => /sandwich|grilled cheese|torzo/i.test(p.name);
+      const isPasta = (p) => /pasta|penne/i.test(p.name);
+      const sandwiches = items.filter(isSandwich);
+      const pastas = items.filter(isPasta);
+      const rest = items.filter((p) => !isSandwich(p) && !isPasta(p));
+      return [
+        mergeOne("Sandwiches", sandwiches, (p) => p.name.replace(/^Sandwich – /, "")),
+        mergeOne("Pasta", pastas),
+        ...groupProducts(rest),
+      ].filter(Boolean);
     }
     return groupProducts(items);
   }
