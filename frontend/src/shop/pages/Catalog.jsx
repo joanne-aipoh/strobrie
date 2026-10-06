@@ -344,13 +344,17 @@ export default function Catalog() {
     if (section === "Coffee & Tea") {
       const coffee = items.filter((p) => p.category === "Coffee");
       const teas = items.filter((p) => p.category === "Tea");
+      const coffeeCards = groupCoffeeSeparate(coffee.filter((p) => !NON_COFFEE_NAMES.has(p.name)));
+      const byName = (n) => coffeeCards.find((c) => c.name === n);
+      // Order: Hot Coffee, Iced Coffee, Iced Tea, hot teas, Matcha, Non Coffee,
+      // then add-ons.
       return [
-        ...groupCoffeeSeparate(coffee.filter((p) => !NON_COFFEE_NAMES.has(p.name))),
-        // The flavoured lattes (Chai/Chocolate/Oreo) sit in their own card.
-        mergeOne("Non Coffee", coffee.filter((p) => NON_COFFEE_NAMES.has(p.name))),
-        // Hot teas each keep their own card; all iced teas collapse into one.
-        ...groupProducts(teas.filter((p) => HOT_TEA_NAMES.has(p.name))),
+        byName("Hot Coffee"),
+        byName("Iced Coffee"),
         mergeOne("Iced Tea", teas.filter((p) => !HOT_TEA_NAMES.has(p.name)), (p) => p.name.replace(/^Iced Tea – /, "")),
+        ...groupProducts(teas.filter((p) => HOT_TEA_NAMES.has(p.name))),
+        byName("Matcha"),
+        mergeOne("Non Coffee", coffee.filter((p) => NON_COFFEE_NAMES.has(p.name))),
         ...groupProducts(items.filter((p) => p.category === "Extras")),
       ].filter(Boolean);
     }
