@@ -343,8 +343,34 @@ function PriceSheet({ byCategory, onSaved }) {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
+  const [adjustMode, setAdjustMode] = useState("pct");
+  const [adjustVal, setAdjustVal] = useState("");
+  const [roundTo, setRoundTo] = useState(50);
 
   const products = [...byCategory.values()].flat();
+
+  // Reprice every product shown at once — by a percentage (e.g. 10 = +10%,
+  // -5 = -5%) or a flat ₦ amount. Fills the drafts below so each change is
+  // previewed ("was ₦X") and nothing is committed until Save.
+  function applyAdjust() {
+    const v = Number(adjustVal);
+    if (adjustVal.trim() === "" || Number.isNaN(v)) {
+      setError("Enter a number to adjust all prices by.");
+      return;
+    }
+    setError("");
+    setSavedMsg("");
+    setDrafts((prev) => {
+      const next = { ...prev };
+      for (const p of products) {
+        let np = adjustMode === "pct" ? p.price * (1 + v / 100) : p.price + v;
+        if (np < 0) np = 0;
+        np = roundTo > 0 ? Math.round(np / roundTo) * roundTo : Math.round(np);
+        next[p.id] = String(np);
+      }
+      return next;
+    });
+  }
 
   // Only prices actually moved off what's stored count as changes.
   const changed = products.filter((p) => {
@@ -396,6 +422,48 @@ function PriceSheet({ byCategory, onSaved }) {
         These are the prices the till charges and the prices customers pay on the shop — they're the same price.
         Orders already taken keep what they were charged.
       </p>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          flexWrap: "wrap",
+          padding: "10px 12px",
+          background: "var(--cream-2)",
+          borderRadius: 10,
+          marginBottom: 14,
+        }}
+      >
+        <strong style={{ fontSize: 13 }}>Change all at once</strong>
+        <select value={adjustMode} onChange={(e) => setAdjustMode(e.target.value)} style={{ fontSize: 13, padding: "5px 6px" }}>
+          <option value="pct">by %</option>
+          <option value="flat">by ₦</option>
+        </select>
+        <input
+          type="number"
+          value={adjustVal}
+          onChange={(e) => setAdjustVal(e.target.value)}
+          placeholder={adjustMode === "pct" ? "e.g. 10 = +10%" : "e.g. 500"}
+          style={{ width: 130, fontSize: 13, padding: "5px 8px" }}
+        />
+        <label style={{ fontSize: 12, color: "var(--ink-soft)", display: "flex", alignItems: "center", gap: 4 }}>
+          round to
+          <select value={roundTo} onChange={(e) => setRoundTo(Number(e.target.value))} style={{ fontSize: 13, padding: "5px 6px" }}>
+            <option value={50}>₦50</option>
+            <option value={100}>₦100</option>
+            <option value={0}>exact</option>
+          </select>
+        </label>
+        <button className="link-btn" onClick={applyAdjust}>
+          Apply to {products.length} shown
+        </button>
+      </div>
+      <p style={{ fontSize: 12, color: "var(--ink-soft)", marginBottom: 12 }}>
+        Applies to the {products.length} product{products.length === 1 ? "" : "s"} shown — use search or the stock filter
+        above to target a subset (e.g. just cakes). Use a negative number to reduce. Review the changes below, then Save.
+      </p>
+
       {[...byCategory.entries()].map(([cat, items]) => (
         <div key={cat} style={{ marginBottom: 14 }}>
           <div style={{ padding: "8px 4px", borderBottom: "1px solid var(--line)" }}>
