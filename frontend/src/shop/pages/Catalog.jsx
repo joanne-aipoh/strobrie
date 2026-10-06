@@ -25,11 +25,33 @@ const SECTION_NOTES = {
     "We also make custom cakes — please contact us directly on Instagram or call us for customized designs.",
 };
 
+// Default a grouped card to the first variant/flavour that actually has a
+// photo, so a card shows a real photo as soon as any one of its items does.
+function firstPhotoVariant(card) {
+  if (card.type === "grouped") {
+    const i = card.variants.findIndex((v) => v.product.photos.length > 0);
+    return { variant: Math.max(0, i), flavor: 0, size: 0 };
+  }
+  if (card.type === "grouped2d") {
+    for (let fi = 0; fi < card.flavors.length; fi++) {
+      for (let si = 0; si < card.flavors[fi].sizeVariants.length; si++) {
+        if (card.flavors[fi].sizeVariants[si].product.photos.length > 0) {
+          return { variant: 0, flavor: fi, size: si };
+        }
+      }
+    }
+  }
+  return { variant: 0, flavor: 0, size: 0 };
+}
+
+const DRINK_CATEGORIES = new Set(["Coffee", "Tea", "Juices", "Lemonades", "Milkshakes", "Smoothies", "Mocktails"]);
+
 function ProductCard({ card }) {
   const { addItem, qtyInCart } = useCart();
-  const [variantIdx, setVariantIdx] = useState(0);
-  const [flavorIdx, setFlavorIdx] = useState(0);
-  const [sizeIdx, setSizeIdx] = useState(0);
+  const initial = firstPhotoVariant(card);
+  const [variantIdx, setVariantIdx] = useState(initial.variant);
+  const [flavorIdx, setFlavorIdx] = useState(initial.flavor);
+  const [sizeIdx, setSizeIdx] = useState(initial.size);
   const [inscription, setInscription] = useState("");
   const [color, setColor] = useState("");
   const [addons, setAddons] = useState("");
@@ -85,7 +107,11 @@ function ProductCard({ card }) {
     <div className="product-card">
       <Link to={shopPath(`/product/${product.id}`)} className="product-card-image">
         {photos[0] ? (
-          <img src={photoUrl(photos[0].url)} alt={name} />
+          <img
+            src={photoUrl(photos[0].url)}
+            alt={name}
+            style={DRINK_CATEGORIES.has(product.category) ? { objectPosition: "center 72%" } : undefined}
+          />
         ) : (
           <div className="product-card-placeholder">No photo yet</div>
         )}
