@@ -55,9 +55,8 @@ const DEFAULT_FORM = {
   customer_name: "",
   customer_email: "",
   customer_phone: "",
-  fulfillment_method: "pickup",
+  fulfillment_method: "",
   delivery_address: "",
-  delivery_method: "bike",
   delivery_area: "",
   gift_note: "",
   customer_notes: "",
@@ -105,10 +104,15 @@ export default function Checkout() {
     }
   }
 
+  // Whole cakes go by car, everything smaller by bike — chosen automatically,
+  // not by the customer.
+  const hasCakeItem = items.some((i) => CAKE_CATEGORIES.includes(i.category));
+  const deliveryMethod = hasCakeItem ? "car" : "bike";
+
   const redeemPoints = loyalty.status === "found" ? Math.max(0, Math.min(Number(form.redeem_points) || 0, loyalty.points)) : 0;
   const discount = Math.min(redeemPoints * loyalty.nairaPerPoint, subtotal);
   const deliveryFee =
-    form.fulfillment_method === "delivery" ? deliveryFeeFor(form.delivery_method, form.delivery_area) : 0;
+    form.fulfillment_method === "delivery" ? deliveryFeeFor(deliveryMethod, form.delivery_area) : 0;
   const total = subtotal - discount + deliveryFee;
 
   const isDelivery = form.fulfillment_method === "delivery";
@@ -128,7 +132,6 @@ export default function Checkout() {
   // Whole cakes/cheesecakes are made to order — no ASAP, and "today" isn't
   // far enough ahead either. Mirrors the backend's own check in
   // shop_orders.py, which is the authoritative one.
-  const hasCakeItem = items.some((i) => CAKE_CATEGORIES.includes(i.category));
   const cakeNeedsMoreNotice =
     hasCakeItem && (form.timing_choice === "asap" || (form.timing_choice === "scheduled" && form.requested_date <= todayStr()));
 
@@ -143,6 +146,10 @@ export default function Checkout() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!form.fulfillment_method) {
+      setError("Please choose pickup or delivery.");
+      return;
+    }
     if (asapBlockedByCutoff || scheduledAfterCutoff) {
       setError(`Delivery orders close at ${activeCutoffLabel} — please pick a time before then, or choose pickup.`);
       return;
@@ -168,7 +175,7 @@ export default function Checkout() {
         fulfillment_method: form.fulfillment_method,
         delivery_address: form.fulfillment_method === "delivery" ? form.delivery_address : null,
         delivery_area: form.fulfillment_method === "delivery" ? form.delivery_area : null,
-        delivery_method: form.fulfillment_method === "delivery" ? form.delivery_method : null,
+        delivery_method: form.fulfillment_method === "delivery" ? deliveryMethod : null,
         gift_note: form.fulfillment_method === "delivery" ? form.gift_note : null,
         customer_notes: form.customer_notes.trim() || null,
         requested_at,
@@ -218,7 +225,7 @@ export default function Checkout() {
     if (form.fulfillment_method === "delivery" && form.delivery_address) {
       lines.push(`Delivery address: ${form.delivery_address}${form.delivery_area ? ` (${form.delivery_area})` : ""}`);
       if (deliveryFee > 0) {
-        lines.push(`${form.delivery_method === "car" ? "Car" : "Bike"} delivery fee: ${fmt(deliveryFee)}`);
+        lines.push(`${deliveryMethod === "car" ? "Car" : "Bike"} delivery fee: ${fmt(deliveryFee)}`);
       }
     }
     lines.push(`When: ${form.timing_choice === "asap" ? "As soon as possible" : `${form.requested_date || "—"} ${form.requested_time || ""}`.trim()}`);
@@ -255,32 +262,18 @@ export default function Checkout() {
             />
             <select
               className="fulfillment-select"
+              required
               value={form.fulfillment_method}
               onChange={(e) => setForm({ ...form, fulfillment_method: e.target.value })}
             >
+              <option value="" disabled>
+                Pickup or delivery?
+              </option>
               <option value="pickup">Pickup at the cafe</option>
               <option value="delivery">Delivery</option>
             </select>
             {form.fulfillment_method === "delivery" && (
               <>
-                <div>
-                  <label style={{ display: "block", fontSize: 13, color: "var(--color-text-soft, #6b6b6b)", marginBottom: 6 }}>
-                    Bike or car delivery?
-                  </label>
-                  <div style={{ display: "flex", gap: "0.75rem" }}>
-                    {["bike", "car"].map((method) => (
-                      <button
-                        key={method}
-                        type="button"
-                        className={form.delivery_method === method ? "button button-primary" : "button button-ghost"}
-                        style={{ flex: 1, padding: "0.6rem 1rem" }}
-                        onClick={() => setForm({ ...form, delivery_method: method, delivery_area: "" })}
-                      >
-                        {method === "bike" ? "Bike" : "Car"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
                 <textarea
                   placeholder="Delivery address"
                   required
@@ -312,7 +305,7 @@ export default function Checkout() {
                     <option value="" disabled>
                       Select your area
                     </option>
-                    {areaOptionsFor(form.delivery_method).map(({ name, fee }) => (
+                    {areaOptionsFor(deliveryMethod).map(({ name, fee }) => (
                       <option key={name} value={name}>
                         {name} — {fmt(fee)}
                       </option>
@@ -482,7 +475,7 @@ export default function Checkout() {
             <button
               type="submit"
               className="button button-primary"
-              disabled={status === "submitting" || asapBlockedByCutoff || scheduledAfterCutoff || cakeNeedsMoreNotice}
+              disabled={status === "submitting" || !form.fulfillment_method || asapBlockedByCutoff || scheduledAfterCutoff || cakeNeedsMoreNotice}
               style={{ alignSelf: "flex-end", width: "100%", boxSizing: "border-box" }}
             >
               {status === "submitting" ? "Redirecting to payment…" : `Pay ${fmt(total)} with Paystack`}
@@ -543,7 +536,7 @@ export default function Checkout() {
           )}
           {deliveryFee > 0 && (
             <div className="cart-summary">
-              <span>{form.delivery_method === "car" ? "Car" : "Bike"} delivery ({form.delivery_area})</span>
+              <span>{deliveryMethod === "car" ? "Car" : "Bike"} delivery ({form.delivery_area})</span>
               <span>{fmt(deliveryFee)}</span>
             </div>
           )}
