@@ -31,14 +31,14 @@ const GALLERY_ITEMS = [
   { file: "254a264fc69143988600b2a7ca5565be.jpeg", label: "Suya yakitori", productId: 113 },
   { file: "24ea3e7a59cb4c84badcfca309a56c80.jpeg", label: "Very berry French toast", productId: 82 },
   { file: "d721d24788cf4442a3e7c5917fade0c4.JPG", label: "Ragu pasta", productId: 116 },
-  { file: "c984bf75bf964796841a51975c0920b8.JPG", label: "Mango matcha", productId: 28, objectPosition: "center 68%" },
+  { file: "c984bf75bf964796841a51975c0920b8.JPG", label: "Mango matcha", productId: 28, objectPosition: "center 85%" },
   { file: "001029609c604962b7ed1e619049aff6.JPG", label: "Creamy chicken penne", productId: 117 },
   { file: "073ca0226fcf45429e2f6b84cd817c66.JPG", label: "Cinnamon rolls", productId: 170 },
   { file: "5487461e6b574c689e0fcc945716b291.jpeg", label: "Iced Americano", productId: 10 },
-  { file: "3dac67fec7f24e4e9f618aeaaebf3077.JPG", label: "Fresh lemonade", productId: 60 },
-  { file: "6b606af322054fa79e8342e93509af90.JPG", label: "Tropical smoothie", productId: 49 },
+  { file: "3dac67fec7f24e4e9f618aeaaebf3077.JPG", label: "Fresh lemonade", productId: 60, objectPosition: "center 85%" },
+  { file: "6b606af322054fa79e8342e93509af90.JPG", label: "Tropical smoothie", productId: 49, objectPosition: "center 85%" },
   { file: "06e51a0d10774ff38f2add9ed42fc044.jpeg", label: "Butter waffles", productId: 288 },
-  { file: "e63216c405054c8cbd26adf400f01b47.jpeg", label: "Iced cafe mocha", productId: 13 },
+  { file: "e63216c405054c8cbd26adf400f01b47.jpeg", label: "Iced cafe mocha", productId: 13, objectPosition: "center 85%" },
 ];
 
 export default function FoodGallery() {
