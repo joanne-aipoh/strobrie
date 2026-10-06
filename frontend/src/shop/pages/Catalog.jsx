@@ -277,9 +277,12 @@ export default function Catalog() {
   const DRINKS_CATEGORIES = ["Juices", "Milkshakes", "Lemonades", "Smoothies"];
   const HOT_TEA_NAMES = new Set(["Tea Bag Selection", "Honey Ginger Lemon Tea"]);
   function sectionFor(p) {
-    if (CAKE_CATEGORIES.includes(p.category)) return "Whole Cakes";
-    if (p.category === "Coffee" || p.category === "Extras") return "Coffee";
-    if (p.category === "Tea") return HOT_TEA_NAMES.has(p.name) ? "Hot Tea" : "Iced Tea";
+    if (p.category === "Cheesecakes") return "Whole Cheesecakes";
+    if (p.category === "Cakes") return "Whole Cakes";
+    // Coffee, add-on Extras and the hot teas share one "Coffee & Tea" heading;
+    // the cold teas split off into their own "Iced Tea" section.
+    if (p.category === "Coffee" || p.category === "Extras") return "Coffee & Tea";
+    if (p.category === "Tea") return HOT_TEA_NAMES.has(p.name) ? "Coffee & Tea" : "Iced Tea";
     if (DRINKS_CATEGORIES.includes(p.category) || p.category === "Mocktails") return "Drinks";
     return p.category;
   }
@@ -300,8 +303,8 @@ export default function Catalog() {
   // listed here falls to the end, in whatever order it was encountered.
   const SECTION_ORDER = [
     "Breakfast", "Brunch", "Lunch",
-    "Bakery", "Whole Cakes",
-    "Coffee", "Hot Tea", "Iced Tea", "Drinks", "Cocktails",
+    "Bakery", "Whole Cakes", "Whole Cheesecakes",
+    "Coffee & Tea", "Iced Tea", "Drinks", "Cocktails",
   ];
   const orderedSections = Object.entries(byCategory).sort(([a], [b]) => {
     const ia = SECTION_ORDER.indexOf(a);
@@ -319,9 +322,10 @@ export default function Catalog() {
   // A shared section can bundle several original categories, each becoming its
   // own card(s) — or, for the collapsible groups below, one merged card.
   function cardsForSection(section, items) {
-    if (section === "Coffee") {
+    if (section === "Coffee & Tea") {
       return [
         groupCoffee(items.filter((p) => p.category === "Coffee")),
+        ...groupProducts(items.filter((p) => p.category === "Tea")),
         ...groupProducts(items.filter((p) => p.category === "Extras")),
       ].filter(Boolean);
     }
