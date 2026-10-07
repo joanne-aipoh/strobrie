@@ -25,6 +25,7 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 LAGOS_TZ = ZoneInfo("Africa/Lagos")
 DELIVERY_CUTOFF_HOUR = 17
 SUNDAY_DELIVERY_CUTOFF_HOUR = 14
+DELIVERY_START_HOUR = 11  # deliveries run 11am until the cutoff
 SUNDAY = 6  # Python weekday(): Monday=0 .. Sunday=6
 
 
@@ -147,10 +148,15 @@ def _build_order(payload: shop_schemas.OrderCreate, db: Session) -> shop_models.
         # cutoff is 2pm on Sundays (early close) and 5pm the rest of the week.
         check_at = requested_at.astimezone(LAGOS_TZ) if requested_at is not None else datetime.now(LAGOS_TZ)
         cutoff = delivery_cutoff_hour(check_at)
+        if check_at.hour < DELIVERY_START_HOUR:
+            raise HTTPException(
+                status_code=400,
+                detail="Delivery starts at 11am — please pick a time from 11am onward, or choose pickup.",
+            )
         if check_at.hour >= cutoff:
             label = _cutoff_label(cutoff)
             detail = (
-                f"Delivery can only be scheduled before {label}."
+                f"Delivery can only be scheduled between 11am and {label}."
                 if requested_at is not None
                 else f"It's past {label} — delivery orders are closed for today. Please schedule an earlier time, or choose pickup."
             )

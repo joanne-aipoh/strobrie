@@ -31,6 +31,7 @@ const cakeEarliestStr = () => {
 // backend/app/routers/shop_orders.py. Pickup has no such cutoff.
 const DELIVERY_CUTOFF_HOUR = 17;
 const SUNDAY_DELIVERY_CUTOFF_HOUR = 14;
+const DELIVERY_START_HOUR = 11; // deliveries run 11am until the cutoff
 const SUNDAY = 0; // JS getDay(): Sunday = 0
 
 function cutoffHourForDate(date) {
@@ -123,12 +124,20 @@ export default function Checkout() {
       ? cutoffHourForDate(dateFromStr(form.requested_date))
       : cutoffHourForDate(new Date());
   const activeCutoffLabel = cutoffLabel(scheduledCutoffHour);
-  const asapBlockedByCutoff = isDelivery && form.timing_choice === "asap" && isAfterDeliveryCutoff(new Date());
+  const asapBlockedByCutoff =
+    isDelivery &&
+    form.timing_choice === "asap" &&
+    (isAfterDeliveryCutoff(new Date()) || new Date().getHours() < DELIVERY_START_HOUR);
   const scheduledAfterCutoff =
     isDelivery &&
     form.timing_choice === "scheduled" &&
     form.requested_time &&
     Number(form.requested_time.split(":")[0]) >= scheduledCutoffHour;
+  const scheduledBeforeStart =
+    isDelivery &&
+    form.timing_choice === "scheduled" &&
+    form.requested_time &&
+    Number(form.requested_time.split(":")[0]) < DELIVERY_START_HOUR;
 
   // Whole cakes/cheesecakes are made to order — no ASAP, and "today" isn't
   // far enough ahead either. Mirrors the backend's own check in
@@ -152,8 +161,12 @@ export default function Checkout() {
       setError("Please choose pickup or delivery.");
       return;
     }
+    if (scheduledBeforeStart || (asapBlockedByCutoff && new Date().getHours() < DELIVERY_START_HOUR)) {
+      setError("Delivery runs from 11am. Please pick a time between 11am and the cutoff, or choose pickup.");
+      return;
+    }
     if (asapBlockedByCutoff || scheduledAfterCutoff) {
-      setError(`Delivery orders close at ${activeCutoffLabel} — please pick a time before then, or choose pickup.`);
+      setError(`Delivery runs 11am–${activeCutoffLabel} — please pick a time in that window, or choose pickup.`);
       return;
     }
     if (cakeNeedsMoreNotice) {
@@ -230,7 +243,15 @@ export default function Checkout() {
         lines.push(`${deliveryMethod === "car" ? "Car" : "Bike"} delivery fee: ${fmt(deliveryFee)}`);
       }
     }
-    lines.push(`When: ${form.timing_choice === "asap" ? "As soon as possible" : `${form.requested_date || "—"} ${form.requested_time || ""}`.trim()}`);
+    lines.push(
+      `When: ${
+        form.timing_choice === "asap"
+          ? "As soon as possible"
+          : form.requested_date
+          ? formatRequestedAt(`${form.requested_date}T${form.requested_time || "09:00"}`)
+          : "—"
+      }`
+    );
     if (form.customer_notes.trim()) lines.push(`Notes: ${form.customer_notes.trim()}`);
     return lines.join("\n");
   }
@@ -371,6 +392,7 @@ export default function Checkout() {
                   <input
                     type="time"
                     required
+                    min={isDelivery ? "11:00" : undefined}
                     max={isDelivery ? `${String(scheduledCutoffHour).padStart(2, "0")}:00` : undefined}
                     value={form.requested_time}
                     onChange={(e) => setForm({ ...form, requested_time: e.target.value })}
@@ -380,7 +402,7 @@ export default function Checkout() {
               )}
               {isDelivery && (
                 <p className="form-note" style={{ margin: "6px 0 0" }}>
-                  Delivery orders are accepted until 5pm (2pm on Sundays).
+                  Delivery runs 11am–5pm (11am–2pm on Sundays).
                 </p>
               )}
               {hasCakeItem && (
@@ -397,11 +419,13 @@ export default function Checkout() {
                   .
                 </p>
               )}
-              {(asapBlockedByCutoff || scheduledAfterCutoff) && (
+              {(asapBlockedByCutoff || scheduledAfterCutoff || scheduledBeforeStart) && (
                 <p className="form-error" style={{ margin: "6px 0 0" }}>
-                  {asapBlockedByCutoff
-                    ? `It's past ${activeCutoffLabel} — please schedule a delivery time before then, or switch to pickup.`
-                    : `Please pick a delivery time before ${activeCutoffLabel}.`}
+                  {scheduledBeforeStart || (asapBlockedByCutoff && new Date().getHours() < DELIVERY_START_HOUR)
+                    ? "Delivery starts at 11am — please pick a time from 11am, or switch to pickup."
+                    : asapBlockedByCutoff
+                    ? `It's past ${activeCutoffLabel} — please schedule a delivery time earlier, or switch to pickup.`
+                    : `Delivery runs 11am–${activeCutoffLabel} — please pick a time in that window.`}
                 </p>
               )}
               {cakeNeedsMoreNotice && form.requested_date && (
@@ -481,7 +505,7 @@ export default function Checkout() {
             <button
               type="submit"
               className="button button-primary"
-              disabled={status === "submitting" || !form.fulfillment_method || asapBlockedByCutoff || scheduledAfterCutoff || cakeNeedsMoreNotice}
+              disabled={status === "submitting" || !form.fulfillment_method || asapBlockedByCutoff || scheduledAfterCutoff || scheduledBeforeStart || cakeNeedsMoreNotice}
               style={{ alignSelf: "flex-end", width: "100%", boxSizing: "border-box" }}
             >
               {status === "submitting" ? "Redirecting to payment…" : `Pay ${fmt(total)} with Paystack`}

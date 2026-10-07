@@ -16,6 +16,8 @@ function fmt(n) {
 // Flavoured lattes that aren't really coffee — shown in their own "Non Coffee"
 // card, each with a hot/iced choice.
 const NON_COFFEE_NAMES = new Set(["Chai Latte", "Chocolate Latte", "Oreo Latte"]);
+// The teas served hot (the rest of the Tea category is iced).
+const HOT_TEA_NAMES = new Set(["Tea Bag Selection", "Honey Ginger Lemon Tea"]);
 
 // A line of context under a section heading, where the products alone don't
 // tell the whole story.
@@ -60,6 +62,9 @@ function ProductCard({ card }) {
   const [inscription, setInscription] = useState("");
   const [color, setColor] = useState("");
   const [addons, setAddons] = useState("");
+  const [qty, setQty] = useState(1);
+  const [ebMeat, setEbMeat] = useState("Turkey Ham");
+  const [ebSide, setEbSide] = useState("Pancakes");
   const [added, setAdded] = useState(false);
   const [isBoxItem, setIsBoxItem] = useState(false);
 
@@ -82,7 +87,9 @@ function ProductCard({ card }) {
   // a hot/iced choice. Both ride along as an add-on on the order, defaulted so
   // an order always has one.
   const isEggs = product.name === "Eggs Breakfast";
+  const isEnglishBreakfast = product.name === "English Breakfast";
   const isNonCoffeeLatte = NON_COFFEE_NAMES.has(product.name);
+  const isHotTea = product.category === "Tea" && HOT_TEA_NAMES.has(product.name);
   useEffect(() => {
     if (isEggs && addons === "") setAddons("Scrambled");
     if (isNonCoffeeLatte && addons === "") setAddons("Hot");
@@ -235,7 +242,23 @@ function ProductCard({ card }) {
             </select>
           </div>
         )}
-        {product.category === "Tea" && (
+        {isEnglishBreakfast && (
+          <div style={{ marginTop: 6 }}>
+            <div style={{ fontSize: 11, color: "var(--color-text-soft, #6b6b6b)", marginBottom: 4 }}>Choose your meat</div>
+            <select className="product-card-variant" value={ebMeat} onChange={(e) => setEbMeat(e.target.value)}>
+              {["Turkey Ham", "Bacon"].map((o) => (
+                <option key={o} value={o}>{o}</option>
+              ))}
+            </select>
+            <div style={{ fontSize: 11, color: "var(--color-text-soft, #6b6b6b)", margin: "6px 0 4px" }}>Choose your side</div>
+            <select className="product-card-variant" value={ebSide} onChange={(e) => setEbSide(e.target.value)}>
+              {["Pancakes", "Ciabatta Toast", "French Toast"].map((o) => (
+                <option key={o} value={o}>{o}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        {isHotTea && (
           <div style={{ marginTop: 6 }}>
             <div style={{ fontSize: 11, color: "var(--color-text-soft, #6b6b6b)", marginBottom: 4 }}>
               Sweetener (optional, no extra cost)
@@ -275,23 +298,46 @@ function ProductCard({ card }) {
           (outOfStock ? (
             <span className="form-note">{product.unavailable ? "Not available today" : "Out of stock"}</span>
           ) : (
-            <button
-              className="button button-primary"
-              style={{ width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.9rem", borderRadius: 10, whiteSpace: "nowrap" }}
-              onClick={() => {
-                // Reuses the order item's design_notes column — repurposed
-                // here to hold the customer's requested cake color.
-                const isWholeCake = product.name.startsWith("Whole Cake");
-                addItem(product, 1, { inscription, designNotes: isWholeCake ? color : undefined, addons });
-                setInscription("");
-                setColor("");
-                setAddons("");
-                setAdded(true);
-                setTimeout(() => setAdded(false), 2000);
-              }}
-            >
-              {added ? "Added" : "Add to cart"}
-            </button>
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "8px 0 6px" }}>
+                <button
+                  type="button"
+                  aria-label="Decrease quantity"
+                  onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid rgba(0,0,0,0.15)", background: "var(--color-bg)", fontSize: 18, cursor: "pointer" }}
+                >
+                  −
+                </button>
+                <span style={{ minWidth: 20, textAlign: "center", fontWeight: 700 }}>{qty}</span>
+                <button
+                  type="button"
+                  aria-label="Increase quantity"
+                  onClick={() => setQty((q) => q + 1)}
+                  style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid rgba(0,0,0,0.15)", background: "var(--color-bg)", fontSize: 18, cursor: "pointer" }}
+                >
+                  +
+                </button>
+              </div>
+              <button
+                className="button button-primary"
+                style={{ width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.9rem", borderRadius: 10, whiteSpace: "nowrap" }}
+                onClick={() => {
+                  // Reuses the order item's design_notes column — repurposed
+                  // here to hold the customer's requested cake color.
+                  const isWholeCake = product.name.startsWith("Whole Cake");
+                  const finalAddons = isEnglishBreakfast ? `${ebMeat}, ${ebSide}` : addons;
+                  addItem(product, qty, { inscription, designNotes: isWholeCake ? color : undefined, addons: finalAddons });
+                  setInscription("");
+                  setColor("");
+                  setAddons("");
+                  setQty(1);
+                  setAdded(true);
+                  setTimeout(() => setAdded(false), 2000);
+                }}
+              >
+                {added ? "Added" : "Add to cart"}
+              </button>
+            </>
           ))}
       </div>
     </div>
@@ -322,7 +368,6 @@ export default function Catalog() {
   // "Hot Tea" and "Iced Tea"; the cold drink categories plus Mocktails →
   // "Drinks".
   const DRINKS_CATEGORIES = ["Juices", "Milkshakes", "Lemonades", "Smoothies"];
-  const HOT_TEA_NAMES = new Set(["Tea Bag Selection", "Honey Ginger Lemon Tea"]);
   function sectionFor(p) {
     // Cakes and Cheesecakes sit under one "Whole Cakes" heading, each as its
     // own card.

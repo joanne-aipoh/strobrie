@@ -162,9 +162,13 @@ export function productsInCard(card) {
 // separate shot per flavour/size) — fall back to any sibling variant's
 // photo instead of showing a blank placeholder when the picked one has none.
 export function cardPhotos(card, selectedProduct) {
+  const isReal = (ph) => !/\.png$/i.test(ph.url);
+  const all = productsInCard(card);
+  // Prefer a real photo (not the .png illustration) so a photo always shows:
+  // the selected variant's, then any sibling's, then any photo at all.
+  if (selectedProduct.photos.some(isReal)) return selectedProduct.photos;
+  for (const p of all) if (p.photos.some(isReal)) return p.photos;
   if (selectedProduct.photos.length > 0) return selectedProduct.photos;
-  for (const p of productsInCard(card)) {
-    if (p.photos.length > 0) return p.photos;
-  }
+  for (const p of all) if (p.photos.length > 0) return p.photos;
   return [];
 }
