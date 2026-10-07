@@ -38,6 +38,22 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="section" style={{ paddingTop: 0, paddingBottom: "1.5rem" }}>
+        <div className="container">
+          <img
+            src="/cafe-table-spread.jpg"
+            alt="A table spread of brunch, pasta, cakes, and fresh drinks at Strobriē"
+            loading="lazy"
+            style={{
+              width: "100%",
+              height: "auto",
+              display: "block",
+              borderRadius: "14px",
+            }}
+          />
+        </div>
+      </section>
+
       <section id="about" className="section" style={{ paddingTop: "1.5rem" }}>
         <div className="container about-grid">
           <div>
