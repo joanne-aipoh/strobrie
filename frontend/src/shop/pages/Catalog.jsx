@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { photoUrl, shopApi } from "../shopApi.js";
 import { useCart } from "../CartContext.jsx";
 import { shopPath } from "../shopBase.js";
-import { groupProducts, cardPhotos } from "../productGrouping.js";
+import { groupProducts, cardPhotos, isSizeLabel } from "../productGrouping.js";
 import { groupCoffeeSeparate } from "../coffeeGrouping.js";
 import { CAKE_CATEGORIES } from "../cakeCategories.js";
 import { inscriptionLimitForLabel } from "../inscriptionLimit.js";
@@ -51,10 +51,44 @@ function firstPhotoVariant(card) {
   return pick(hasRealPhoto) || pick(hasAnyPhoto) || { variant: 0, flavor: 0, size: 0 };
 }
 
+// Put the option that actually has a photo first in the dropdown, so the
+// card opens on it and its photo shows right away on the shop page. Only
+// flavour-style lists get reordered — size dropdowns (4"→14", Half/Full,
+// boxes) stay in their natural ascending order.
+function photoFirst(entries, productOf, isSize) {
+  if (entries.some((e) => isSize(e))) return entries;
+  let i = entries.findIndex((e) => hasRealPhoto(productOf(e)));
+  if (i < 0) i = entries.findIndex((e) => hasAnyPhoto(productOf(e)));
+  if (i <= 0) return entries;
+  return [entries[i], ...entries.filter((_, j) => j !== i)];
+}
+
+function orderCardForPhoto(card) {
+  if (card.type === "grouped") {
+    const variants = photoFirst(
+      card.variants,
+      (v) => v.product,
+      (v) => isSizeLabel(v.label),
+    );
+    return variants === card.variants ? card : { ...card, variants };
+  }
+  if (card.type === "grouped2d") {
+    // Flavour labels are never sizes, so the flavour dropdown always reorders.
+    const flavors = photoFirst(
+      card.flavors,
+      (f) => f.sizeVariants.find((sv) => hasAnyPhoto(sv.product))?.product || f.sizeVariants[0].product,
+      () => false,
+    );
+    return flavors === card.flavors ? card : { ...card, flavors };
+  }
+  return card;
+}
+
 const DRINK_CATEGORIES = new Set(["Coffee", "Tea", "Juices", "Lemonades", "Milkshakes", "Smoothies", "Mocktails"]);
 
-function ProductCard({ card }) {
+function ProductCard({ card: rawCard }) {
   const { addItem, qtyInCart } = useCart();
+  const card = orderCardForPhoto(rawCard);
   const initial = firstPhotoVariant(card);
   const [variantIdx, setVariantIdx] = useState(initial.variant);
   const [flavorIdx, setFlavorIdx] = useState(initial.flavor);
