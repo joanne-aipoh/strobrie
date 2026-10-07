@@ -124,7 +124,11 @@ function ProductCard({ card }) {
             src={photoUrl(photos[0].url)}
             alt={name}
             style={
-              DRINK_CATEGORIES.has(product.category)
+              /cinnamon/i.test(product.name)
+                ? // The cinnamon roll shot has text across the top — drop the
+                  // crop down so the roll shows and the text is cut off.
+                  { objectPosition: "center 60%" }
+                : DRINK_CATEGORIES.has(product.category)
                 ? { objectPosition: /matcha/i.test(product.name) ? "center 85%" : "center 72%" }
                 : undefined
             }
