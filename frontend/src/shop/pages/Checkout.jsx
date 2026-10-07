@@ -5,7 +5,7 @@ import { shopApi } from "../shopApi.js";
 import { shopOrigin, shopPath } from "../shopBase.js";
 import { areaOptionsFor, deliveryFeeFor } from "../deliveryAreas.js";
 import { whatsappLink } from "../../whatsapp.js";
-import { CAKE_CATEGORIES } from "../cakeCategories.js";
+import { CAKE_CATEGORIES, needs48hNotice } from "../cakeCategories.js";
 import { formatRequestedAt } from "../formatRequestedAt.js";
 
 function fmt(n) {
@@ -110,6 +110,8 @@ export default function Checkout() {
   // not by the customer.
   const hasCakeItem = items.some((i) => CAKE_CATEGORIES.includes(i.category));
   const deliveryMethod = hasCakeItem ? "car" : "bike";
+  // Cakes, cheesecakes AND cupcakes are made to order and need 48 hours' notice.
+  const needsLeadTime = items.some(needs48hNotice);
 
   const redeemPoints = loyalty.status === "found" ? Math.max(0, Math.min(Number(form.redeem_points) || 0, loyalty.points)) : 0;
   const discount = Math.min(redeemPoints * loyalty.nairaPerPoint, subtotal);
@@ -143,15 +145,15 @@ export default function Checkout() {
   // far enough ahead either. Mirrors the backend's own check in
   // shop_orders.py, which is the authoritative one.
   const cakeNeedsMoreNotice =
-    hasCakeItem &&
+    needsLeadTime &&
     (form.timing_choice === "asap" || (form.timing_choice === "scheduled" && form.requested_date < cakeEarliestStr()));
 
   useEffect(() => {
-    if (hasCakeItem && form.timing_choice === "asap") {
+    if (needsLeadTime && form.timing_choice === "asap") {
       setForm((f) => ({ ...f, timing_choice: "scheduled" }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasCakeItem]);
+  }, [needsLeadTime]);
 
   if (items.length === 0) return <Navigate to={shopPath("/cart")} replace />;
 
@@ -171,7 +173,7 @@ export default function Checkout() {
     }
     if (cakeNeedsMoreNotice) {
       setError(
-        "Whole cakes and cheesecakes need at least 48 hours' notice — please choose a date two days from now or later, or call/WhatsApp us for a sooner order."
+        "Cakes, cheesecakes and cupcakes need at least 48 hours' notice — please choose a date two days from now or later, or call/WhatsApp us for a sooner order."
       );
       return;
     }
@@ -348,7 +350,7 @@ export default function Checkout() {
                 <button
                   type="button"
                   className="button"
-                  disabled={hasCakeItem}
+                  disabled={needsLeadTime}
                   style={{
                     flex: 1,
                     padding: "0.45rem 0.5rem",
@@ -384,7 +386,7 @@ export default function Checkout() {
                   <input
                     type="date"
                     required
-                    min={hasCakeItem ? cakeEarliestStr() : todayStr()}
+                    min={needsLeadTime ? cakeEarliestStr() : todayStr()}
                     value={form.requested_date}
                     onChange={(e) => setForm({ ...form, requested_date: e.target.value })}
                     style={{ flex: 1 }}
@@ -405,9 +407,9 @@ export default function Checkout() {
                   Delivery runs 11am–5pm (11am–2pm on Sundays).
                 </p>
               )}
-              {hasCakeItem && (
+              {needsLeadTime && (
                 <p className="form-note" style={{ margin: "6px 0 0" }}>
-                  Whole cakes &amp; cheesecakes need at least 48 hours' notice — pick a date two days from now
+                  Cakes, cheesecakes &amp; cupcakes need at least 48 hours' notice — pick a date two days from now
                   or later. Need it sooner?{" "}
                   <a
                     href={whatsappLink("Hi Strobriē! I'd like to order a cake sooner than 48 hours — is that possible?")}
@@ -430,7 +432,7 @@ export default function Checkout() {
               )}
               {cakeNeedsMoreNotice && form.requested_date && (
                 <p className="form-error" style={{ margin: "6px 0 0" }}>
-                  Please pick a date two days from now or later for a whole cake or cheesecake.
+                  Please pick a date two days from now or later for cakes, cheesecakes or cupcakes.
                 </p>
               )}
             </div>

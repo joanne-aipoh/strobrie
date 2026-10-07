@@ -49,6 +49,15 @@ SIZE_IN_NAME_RE = re.compile(r'\((\d+)"')
 CAKE_CATEGORIES = {"Cakes", "Cheesecakes"}
 
 
+def _needs_48h_notice(product):
+    """Made-to-order items needing 48 hours' notice: whole cakes and
+    cheesecakes, plus cupcakes (baked fresh per order, sold by the box).
+    Mirrors needs48hNotice in frontend/src/shop/cakeCategories.js."""
+    if product.category in CAKE_CATEGORIES:
+        return True
+    return (product.name or "").lower().startswith("cupcake")
+
+
 def inscription_limit_for_product(product: "shop_models.Product") -> int:
     if product.category not in CAKE_CATEGORIES:
         return 200
@@ -165,17 +174,17 @@ def _build_order(payload: shop_schemas.OrderCreate, db: Session) -> shop_models.
     product_ids = [line.product_id for line in payload.items]
     products = {p.id: p for p in db.query(shop_models.Product).filter(shop_models.Product.id.in_(product_ids))}
 
-    # Whole cakes/cheesecakes are made to order — need at least 48 hours'
+    # Cakes/cheesecakes/cupcakes are made to order — need at least 48 hours'
     # notice, so the earliest valid date is two days out. Checked against
     # Lagos' calendar date, not the server's own timezone.
-    if any(p.category in CAKE_CATEGORIES for p in products.values()):
+    if any(_needs_48h_notice(p) for p in products.values()):
         today_lagos = datetime.now(LAGOS_TZ).date()
         earliest = today_lagos + timedelta(days=2)
         requested_date_lagos = requested_at.astimezone(LAGOS_TZ).date() if requested_at is not None else today_lagos
         if requested_date_lagos < earliest:
             raise HTTPException(
                 status_code=400,
-                detail="Whole cakes and cheesecakes need at least 48 hours' notice — please choose a date "
+                detail="Cakes, cheesecakes and cupcakes need at least 48 hours' notice — please choose a date "
                 "two days from now or later, or call/WhatsApp us for a sooner order.",
             )
 
