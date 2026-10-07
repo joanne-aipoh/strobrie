@@ -63,6 +63,7 @@ function ProductCard({ card }) {
   const [color, setColor] = useState("");
   const [addons, setAddons] = useState("");
   const [qty, setQty] = useState(1);
+  const [ebEggs, setEbEggs] = useState("Scrambled");
   const [ebMeat, setEbMeat] = useState("Turkey Ham");
   const [ebSide, setEbSide] = useState("Pancakes");
   const [added, setAdded] = useState(false);
@@ -244,7 +245,13 @@ function ProductCard({ card }) {
         )}
         {isEnglishBreakfast && (
           <div style={{ marginTop: 6 }}>
-            <div style={{ fontSize: 11, color: "var(--color-text-soft, #6b6b6b)", marginBottom: 4 }}>Choose your meat</div>
+            <div style={{ fontSize: 11, color: "var(--color-text-soft, #6b6b6b)", marginBottom: 4 }}>How would you like your eggs?</div>
+            <select className="product-card-variant" value={ebEggs} onChange={(e) => setEbEggs(e.target.value)}>
+              {["Scrambled", "Fried", "Poached", "Sunny Side Up"].map((o) => (
+                <option key={o} value={o}>{o}</option>
+              ))}
+            </select>
+            <div style={{ fontSize: 11, color: "var(--color-text-soft, #6b6b6b)", margin: "6px 0 4px" }}>Choose your meat</div>
             <select className="product-card-variant" value={ebMeat} onChange={(e) => setEbMeat(e.target.value)}>
               {["Turkey Ham", "Bacon"].map((o) => (
                 <option key={o} value={o}>{o}</option>
@@ -325,7 +332,7 @@ function ProductCard({ card }) {
                   // Reuses the order item's design_notes column — repurposed
                   // here to hold the customer's requested cake color.
                   const isWholeCake = product.name.startsWith("Whole Cake");
-                  const finalAddons = isEnglishBreakfast ? `${ebMeat}, ${ebSide}` : addons;
+                  const finalAddons = isEnglishBreakfast ? `${ebEggs}, ${ebMeat}, ${ebSide}` : addons;
                   addItem(product, qty, { inscription, designNotes: isWholeCake ? color : undefined, addons: finalAddons });
                   setInscription("");
                   setColor("");
