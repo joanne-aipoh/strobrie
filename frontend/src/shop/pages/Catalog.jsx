@@ -127,7 +127,7 @@ function ProductCard({ card }) {
               /cinnamon/i.test(product.name)
                 ? // The cinnamon roll shot has text across the top — drop the
                   // crop down so the roll shows and the text is cut off.
-                  { objectPosition: "center 60%" }
+                  { objectPosition: "center 70%" }
                 : DRINK_CATEGORIES.has(product.category)
                 ? { objectPosition: /matcha/i.test(product.name) ? "center 85%" : "center 72%" }
                 : undefined
