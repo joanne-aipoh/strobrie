@@ -34,12 +34,6 @@ export default function Home() {
 
       <section className="section" style={{ paddingTop: 0, paddingBottom: "1.5rem" }}>
         <div className="container">
-          <FoodGallery />
-        </div>
-      </section>
-
-      <section className="section" style={{ paddingTop: 0, paddingBottom: "1.5rem" }}>
-        <div className="container">
           <img
             src="/cafe-table-spread.jpg"
             alt="A table spread of brunch, pasta, cakes, and fresh drinks at Strobriē"
@@ -51,6 +45,12 @@ export default function Home() {
               borderRadius: "14px",
             }}
           />
+        </div>
+      </section>
+
+      <section className="section" style={{ paddingTop: 0, paddingBottom: "1.5rem" }}>
+        <div className="container">
+          <FoodGallery />
         </div>
       </section>
 
