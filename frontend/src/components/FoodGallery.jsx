@@ -51,6 +51,13 @@ export default function FoodGallery() {
             alt={item.label}
             loading="lazy"
             style={item.objectPosition ? { objectPosition: item.objectPosition } : undefined}
+            // If a photo file is ever missing on the server, hide its whole
+            // tile instead of showing a broken-image icon — the grid just
+            // closes up around it rather than erroring on the page.
+            onError={(e) => {
+              const tile = e.currentTarget.closest(".food-gallery-item");
+              if (tile) tile.style.display = "none";
+            }}
           />
         </a>
       ))}
