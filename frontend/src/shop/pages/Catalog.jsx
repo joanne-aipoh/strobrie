@@ -355,6 +355,9 @@ export default function Catalog() {
   const [products, setProducts] = useState(null);
   const [error, setError] = useState(null);
   const [settings, setSettings] = useState(null);
+  // Which sections are expanded. Starts null (not yet known); once the
+  // sections load we open just the first so the page isn't a wall of items.
+  const [openSections, setOpenSections] = useState(null);
 
   useEffect(() => {
     shopApi
@@ -410,6 +413,18 @@ export default function Catalog() {
     const ib = SECTION_ORDER.indexOf(b);
     return (ia === -1 ? SECTION_ORDER.length : ia) - (ib === -1 ? SECTION_ORDER.length : ib);
   });
+
+  // Before any interaction (openSections === null) only the first section is
+  // shown open; the toggle below seeds the set from that same default.
+  const isOpen = (category) =>
+    openSections ? openSections.has(category) : orderedSections[0]?.[0] === category;
+  const toggleSection = (category) =>
+    setOpenSections((prev) => {
+      const next = new Set(prev ?? (orderedSections[0] ? [orderedSections[0][0]] : []));
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
 
   // One card with a single dropdown, from a flat list of products — used to
   // collapse a long list (mocktails, sandwiches, pastas) into one tidy item.
@@ -475,21 +490,65 @@ export default function Catalog() {
 
         {products.length === 0 && <p className="empty-note">Nothing's in the shop yet — check back soon.</p>}
 
-        {orderedSections.map(([category, items]) => (
-          <div key={category} style={{ marginBottom: "2.5rem" }}>
-            <h2 style={{ fontSize: "1.4rem", marginBottom: SECTION_NOTES[category] ? 2 : "1rem" }}>{category}</h2>
-            {SECTION_NOTES[category] && (
-              <p style={{ fontSize: 13, color: "var(--color-text-soft, #6b6b6b)", marginBottom: "1rem" }}>
-                {SECTION_NOTES[category]}
-              </p>
-            )}
-            <div className="product-grid">
-              {cardsForSection(category, items).map((card) => (
-                <ProductCard card={card} key={card.type === "single" ? card.product.id : card.name} />
-              ))}
+        {orderedSections.map(([category, items]) => {
+          const open = isOpen(category);
+          const cards = cardsForSection(category, items);
+          return (
+            <div key={category} style={{ marginBottom: open ? "2.5rem" : "0.75rem" }}>
+              <button
+                type="button"
+                onClick={() => toggleSection(category)}
+                aria-expanded={open}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "0.75rem",
+                  background: "none",
+                  border: "none",
+                  borderBottom: "1px solid var(--color-border, #e6e2da)",
+                  padding: "0.5rem 0",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  color: "inherit",
+                }}
+              >
+                <span style={{ display: "flex", alignItems: "baseline", gap: "0.6rem" }}>
+                  <span style={{ fontSize: "1.4rem", fontWeight: 600 }}>{category}</span>
+                  <span style={{ fontSize: 13, color: "var(--color-text-soft, #6b6b6b)" }}>
+                    {cards.length} {cards.length === 1 ? "item" : "items"}
+                  </span>
+                </span>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    fontSize: 14,
+                    color: "var(--color-text-soft, #6b6b6b)",
+                    transform: open ? "rotate(180deg)" : "none",
+                    transition: "transform 0.15s ease",
+                  }}
+                >
+                  ▾
+                </span>
+              </button>
+              {open && (
+                <>
+                  {SECTION_NOTES[category] && (
+                    <p style={{ fontSize: 13, color: "var(--color-text-soft, #6b6b6b)", margin: "0.75rem 0 1rem" }}>
+                      {SECTION_NOTES[category]}
+                    </p>
+                  )}
+                  <div className="product-grid" style={{ marginTop: "1rem" }}>
+                    {cards.map((card) => (
+                      <ProductCard card={card} key={card.type === "single" ? card.product.id : card.name} />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
