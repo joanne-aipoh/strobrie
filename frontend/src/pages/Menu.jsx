@@ -1,7 +1,11 @@
 const MENUS = [
   { src: "/menu-breakfast.jpg", alt: "Strobriē all-day breakfast menu" },
-  { src: "/menu-coffee.jpg", alt: "Strobriē coffee menu" },
+  { src: "/menu-lunch.jpg", alt: "Strobriē lunch menu" },
   { src: "/menu-bakery.jpg", alt: "Strobriē bakery menu" },
+  { src: "/menu-whole-cakes.jpg", alt: "Strobriē whole cakes menu" },
+  { src: "/menu-drinks.jpg", alt: "Strobriē drinks menu" },
+  { src: "/menu-coffee.jpg", alt: "Strobriē coffee menu" },
+  { src: "/menu-bar.jpg", alt: "Strobriē bar menu" },
 ];
 
 export default function Menu() {
