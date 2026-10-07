@@ -24,13 +24,6 @@ function extractSizeVariant(name) {
   return { base, variant };
 }
 
-// True for labels that are sizes/quantities ("4"", "Box of 4", "Half Stack")
-// rather than flavours ("Butter", "Carrot"). Size dropdowns must stay in
-// ascending order, so we never reorder those to surface a photo.
-export function isSizeLabel(label) {
-  return label != null && SIZE_QTY_RE.test(label);
-}
-
 function variantSortKey(label) {
   const inch = label.match(/^(\d+(?:\.\d+)?)"$/);
   if (inch) return parseFloat(inch[1]);
