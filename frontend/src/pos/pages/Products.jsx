@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { photoUrl, shopApi } from "../../shop/shopApi.js";
+import { groupProducts, productsInCard } from "../../shop/productGrouping.js";
 
 function fmt(n) {
   return `₦${n.toLocaleString("en-NG")}`;
@@ -331,6 +332,98 @@ function ProductRow({ product, categories, editingId, setEditingId, selected, on
           <ProductPhotos product={product} onChanged={onChanged} />
         </div>
       </div>
+    </div>
+  );
+}
+
+// A family of products (e.g. all Whole Cake sizes/flavours) shown as one
+// collapsible row with a single shared photo, so the list isn't hundreds of
+// rows. Expand to edit each item's price/stock/availability individually.
+function GroupRow({ name, products, categories, editingId, setEditingId, selectedIds, toggleSelect, onChanged }) {
+  const [open, setOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef(null);
+  const photo = products.map((p) => p.photos[0]).find(Boolean);
+  const anyActive = products.some((p) => p.is_active);
+  const anyUnavail = products.some((p) => p.unavailable);
+
+  // One photo for the whole group: upload the chosen file to every product in
+  // the group (replacing each one's existing photo) so they all share it.
+  async function uploadGroupPhoto(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      for (const p of products) {
+        const existing = p.photos.map((ph) => ph.id);
+        await shopApi.uploadPhoto(p.id, file);
+        await Promise.all(existing.map((id) => shopApi.deletePhoto(id)));
+      }
+      await onChanged();
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  return (
+    <div className="panel" style={{ background: "var(--cream-2)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {photo ? (
+          <img
+            src={photoUrl(photo.url)}
+            alt=""
+            style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 8, border: "1px solid var(--line)", flexShrink: 0 }}
+          />
+        ) : (
+          <div
+            style={{
+              width: 56, height: 56, borderRadius: 8, border: "1px dashed var(--line)", flexShrink: 0,
+              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "var(--ink-soft)", textAlign: "center",
+            }}
+          >
+            No photo
+          </div>
+        )}
+        <div style={{ flex: 1, cursor: "pointer" }} onClick={() => setOpen((v) => !v)}>
+          <strong>{name}</strong> <span style={{ color: "var(--ink-soft)", fontWeight: 400 }}>({products.length})</span>
+          <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+            {anyActive ? "Available online" : "Hidden"}
+            {anyUnavail ? " · some unavailable today" : ""}
+          </div>
+        </div>
+        <button
+          className="link-btn"
+          style={{ fontSize: 12, whiteSpace: "nowrap" }}
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+        >
+          {uploading ? "Uploading…" : photo ? "Change photo" : "Add photo"}
+        </button>
+        <input ref={fileRef} type="file" accept="image/*" onChange={uploadGroupPhoto} style={{ display: "none" }} />
+        <span style={{ color: "var(--ink-soft)", cursor: "pointer" }} onClick={() => setOpen((v) => !v)}>
+          {open ? "▲" : "▼"}
+        </span>
+      </div>
+      <div style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 4 }}>
+        One photo for the whole group — applied to all {products.length} items. Expand to edit each item.
+      </div>
+      {open && (
+        <div style={{ marginTop: 8 }}>
+          {products.map((p) => (
+            <ProductRow
+              key={p.id}
+              product={p}
+              categories={categories}
+              editingId={editingId}
+              setEditingId={setEditingId}
+              selected={selectedIds.has(p.id)}
+              onToggleSelect={() => toggleSelect(p.id)}
+              onChanged={onChanged}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -738,18 +831,36 @@ export default function Products() {
                 </div>
                 {isOpen && (
                   <div style={{ marginTop: 8 }}>
-                    {items.map((product) => (
-                      <ProductRow
-                        key={product.id}
-                        product={product}
-                        categories={categories}
-                        editingId={editingId}
-                        setEditingId={setEditingId}
-                        selected={selectedIds.has(product.id)}
-                        onToggleSelect={() => toggleSelect(product.id)}
-                        onChanged={load}
-                      />
-                    ))}
+                    {groupProducts(items).map((card) => {
+                      if (card.type === "single") {
+                        const product = card.product;
+                        return (
+                          <ProductRow
+                            key={product.id}
+                            product={product}
+                            categories={categories}
+                            editingId={editingId}
+                            setEditingId={setEditingId}
+                            selected={selectedIds.has(product.id)}
+                            onToggleSelect={() => toggleSelect(product.id)}
+                            onChanged={load}
+                          />
+                        );
+                      }
+                      return (
+                        <GroupRow
+                          key={card.name}
+                          name={card.name}
+                          products={productsInCard(card)}
+                          categories={categories}
+                          editingId={editingId}
+                          setEditingId={setEditingId}
+                          selectedIds={selectedIds}
+                          toggleSelect={toggleSelect}
+                          onChanged={load}
+                        />
+                      );
+                    })}
                   </div>
                 )}
               </div>
