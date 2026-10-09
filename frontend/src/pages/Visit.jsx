@@ -1,29 +1,71 @@
+// Strobriē has no street frontage — it's set back inside HFIA Garden — so the
+// job of this page is to help someone actually find the door: an exact map
+// pin, one-tap directions, and a WhatsApp button for "I'm outside, where?".
+const MAPS_PIN = "https://www.google.com/maps?cid=9023339216612327777";
+const MAP_EMBED =
+  "https://maps.google.com/maps?q=9.0329,7.4839(Strobri%C4%93%20By%20Joanne)&z=16&output=embed";
+const WHATSAPP =
+  "https://wa.me/2348090701995?text=" +
+  encodeURIComponent("Hi Strobriē! Please help me with directions to the cafe — I'm on my way.");
+
 export default function Visit() {
   return (
     <>
       <section className="section">
-        <div className="container visit-grid visit-grid-3">
-          <div>
-            <h2>Visit Us</h2>
-            <p>HFIA Garden, Off Tafawa Balewa Road, Garki, Abuja, Federal Capital Territory, Nigeria</p>
-            {/* No street frontage, so the exact map pin matters more than the
-                address — cid is the cafe's own Google Business listing. */}
-            <p>
-              <a
-                href="https://www.google.com/maps?cid=9023339216612327777"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ fontWeight: 700 }}
-              >
-                Get directions &rarr;
-              </a>
-            </p>
-            <p>
-              Mon&ndash;Thu 8am&ndash;6pm &middot; Fri 8am&ndash;9pm
-              <br />
-              Sat 9am&ndash;6pm &middot; Sun 10am&ndash;3pm
-            </p>
+        <div className="container">
+          <h2 style={{ fontSize: "1.75rem", marginBottom: "0.25rem" }}>Find Us</h2>
+          <p style={{ marginTop: 0 }}>
+            HFIA Garden, Off Tafawa Balewa Road, Garki, Abuja. We&rsquo;re tucked inside the
+            garden &mdash; follow the pin, not the street.
+          </p>
+
+          <div
+            style={{
+              borderRadius: 16,
+              overflow: "hidden",
+              border: "1px solid rgba(0,0,0,0.1)",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.06)",
+              margin: "1.25rem 0",
+            }}
+          >
+            <iframe
+              title="Map to Strobriē By Joanne, HFIA Garden, Garki"
+              src={MAP_EMBED}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              style={{ width: "100%", height: 360, border: 0, display: "block" }}
+            />
           </div>
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginBottom: "1rem" }}>
+            <a
+              className="button button-primary"
+              href={MAPS_PIN}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Get directions &rarr;
+            </a>
+            <a
+              className="button button-ghost"
+              href={WHATSAPP}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Message us on WhatsApp
+            </a>
+          </div>
+
+          <p>
+            Mon&ndash;Thu 8am&ndash;6pm &middot; Fri 8am&ndash;9pm
+            <br />
+            Sat 9am&ndash;6pm &middot; Sun 10am&ndash;3pm
+          </p>
+        </div>
+      </section>
+
+      <section className="section section-alt">
+        <div className="container visit-grid">
           <div>
             <h2>Get in Touch</h2>
             {/* Numbers stack in their own column so the second one lines up
@@ -45,7 +87,7 @@ export default function Visit() {
           </div>
           <div>
             <h2>Enjoyed your visit?</h2>
-            <div style={{ textAlign: "center", paddingRight: "3rem" }}>
+            <div style={{ textAlign: "center" }}>
               <a
                 href="https://g.page/r/CWGBB7Y1Vzl9EAE/review"
                 target="_blank"
