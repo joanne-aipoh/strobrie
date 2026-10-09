@@ -371,3 +371,4 @@ class PublicTicketOut(BaseModel):
     event_time: str | None
     event_description: str | None
     tier_name: str
+    tier_price: int

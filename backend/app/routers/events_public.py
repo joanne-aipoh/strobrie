@@ -2,11 +2,11 @@ import os
 import uuid
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from .. import email_utils, paystack, pos_models, pos_schemas
+from .. import email_utils, meta_capi, paystack, pos_models, pos_schemas
 from ..database import get_db
 
 router = APIRouter(prefix="/api/ticketed-events", tags=["events-public"])
@@ -128,7 +128,9 @@ def buy_ticket(event_id: int, payload: pos_schemas.EventBuyRequest, db: Session 
 
 
 @router.get("/tickets/verify/{reference}", response_model=pos_schemas.PublicTicketOut)
-def verify_ticket_payment(reference: str, db: Session = Depends(get_db)):
+def verify_ticket_payment(
+    reference: str, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+):
     ticket = db.query(pos_models.Ticket).filter(pos_models.Ticket.payment_reference == reference).first()
     if ticket is None:
         raise HTTPException(status_code=404, detail="Ticket not found")
@@ -144,6 +146,23 @@ def verify_ticket_payment(reference: str, db: Session = Depends(get_db)):
             db.commit()
             db.refresh(ticket)
             email_utils.send_ticket_confirmation_email(ticket)
+            background_tasks.add_task(
+                meta_capi.send_event,
+                "Purchase",
+                reference,
+                meta_capi.request_context(request),
+                email=ticket.buyer_email,
+                phone=ticket.buyer_contact,
+                name=ticket.buyer_name,
+                custom_data={
+                    "currency": "NGN",
+                    "value": ticket.tier.price,
+                    "content_type": "product",
+                    "content_category": "event_ticket",
+                    "content_ids": [f"event-{ticket.pos_event_id}"],
+                    "content_name": ticket.event.name,
+                },
+            )
 
     return pos_schemas.PublicTicketOut(
         id=ticket.id,
@@ -158,4 +177,5 @@ def verify_ticket_payment(reference: str, db: Session = Depends(get_db)):
         event_time=ticket.event.time,
         event_description=ticket.event.description,
         tier_name=ticket.tier.name,
+        tier_price=ticket.tier.price,
     )

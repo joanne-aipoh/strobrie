@@ -8,6 +8,7 @@ import { groupCoffee, groupTea } from "../coffeeGrouping.js";
 import { CAKE_CATEGORIES } from "../cakeCategories.js";
 import { inscriptionLimitForLabel } from "../inscriptionLimit.js";
 import BoxBuilder from "../BoxBuilder.jsx";
+import { track } from "../../metaPixel.js";
 
 function fmt(n) {
   return `₦${n.toLocaleString("en-NG")}`;
@@ -79,6 +80,14 @@ export default function ProductDetail() {
       return;
     }
     setCard(found);
+    track("ViewContent", {
+      content_ids: [String(current.id)],
+      content_name: current.name,
+      content_category: current.category,
+      content_type: "product",
+      value: current.price,
+      currency: "NGN",
+    });
     setActivePhoto(0);
     setInscription("");
     setColor("");

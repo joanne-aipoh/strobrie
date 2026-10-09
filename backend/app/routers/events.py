@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .. import models, schemas
+from .. import meta_capi, models, schemas
 from ..database import get_db
 
 router = APIRouter(prefix="/api/events", tags=["events"])
@@ -39,7 +39,13 @@ def list_events(db: Session = Depends(get_db)):
 
 
 @router.post("/{event_id}/rsvps", response_model=schemas.RsvpOut, status_code=201)
-def create_rsvp(event_id: int, payload: schemas.RsvpCreate, db: Session = Depends(get_db)):
+def create_rsvp(
+    event_id: int,
+    payload: schemas.RsvpCreate,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     event = db.get(models.Event, event_id)
     if event is None:
         raise HTTPException(status_code=404, detail="Event not found")
@@ -53,4 +59,14 @@ def create_rsvp(event_id: int, payload: schemas.RsvpCreate, db: Session = Depend
     db.add(rsvp)
     db.commit()
     db.refresh(rsvp)
+    context = meta_capi.request_context(request)
+    background_tasks.add_task(
+        meta_capi.send_event,
+        "CompleteRegistration",
+        context["event_id"],
+        context,
+        email=payload.email,
+        name=payload.name,
+        custom_data={"content_name": event.title, "content_category": "event_rsvp"},
+    )
     return rsvp

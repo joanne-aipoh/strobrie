@@ -7,6 +7,7 @@ import { areaOptionsFor, deliveryFeeFor } from "../deliveryAreas.js";
 import { whatsappLink } from "../../whatsapp.js";
 import { CAKE_CATEGORIES, needs48hNotice } from "../cakeCategories.js";
 import { formatRequestedAt } from "../formatRequestedAt.js";
+import { track } from "../../metaPixel.js";
 
 function fmt(n) {
   return `₦${n.toLocaleString("en-NG")}`;
@@ -86,6 +87,19 @@ export default function Checkout() {
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
   const [loyalty, setLoyalty] = useState({ status: "idle", points: 0, nairaPerPoint: 1, error: "" });
+
+  useEffect(() => {
+    if (!items.length) return;
+    track("InitiateCheckout", {
+      content_ids: items.map((i) => String(i.productId)),
+      content_type: "product",
+      num_items: items.reduce((n, i) => n + i.qty, 0),
+      value: subtotal,
+      currency: "NGN",
+    });
+    // Once per visit to checkout, not on every cart edit made from here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     try {

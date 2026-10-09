@@ -5,6 +5,7 @@ import { useCart } from "../CartContext.jsx";
 import { shopPath } from "../shopBase.js";
 import { whatsappLink } from "../../whatsapp.js";
 import { formatRequestedAt } from "../formatRequestedAt.js";
+import { trackOnce } from "../../metaPixel.js";
 
 function fmt(n) {
   return `₦${n.toLocaleString("en-NG")}`;
@@ -29,7 +30,16 @@ export default function OrderConfirmation() {
       .verifyOrder(reference)
       .then((o) => {
         setOrder(o);
-        if (o.payment_status === "paid") clear();
+        if (o.payment_status === "paid") {
+          clear();
+          trackOnce(reference, "Purchase", {
+            content_ids: o.items.filter((i) => i.product_id != null).map((i) => String(i.product_id)),
+            content_type: "product",
+            num_items: o.items.reduce((n, i) => n + i.qty, 0),
+            value: o.total,
+            currency: "NGN",
+          }, reference);
+        }
       })
       .catch((err) => setError(err.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps

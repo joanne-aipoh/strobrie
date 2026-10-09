@@ -18,14 +18,18 @@ async function request(path, options = {}) {
 export const api = {
   getMenu: () => request("/api/shop/products"),
   getEvents: () => request("/api/events"),
-  createRsvp: (eventId, data) =>
+  // metaEventId: shared with the browser pixel event so Meta dedupes it
+  // against the server-side (Conversions API) copy — see metaPixel.js.
+  createRsvp: (eventId, data, metaEventId) =>
     request(`/api/events/${eventId}/rsvps`, {
       method: "POST",
+      headers: { "Content-Type": "application/json", "X-Meta-Event-Id": metaEventId },
       body: JSON.stringify(data),
     }),
-  createBookingRequest: (data) =>
+  createBookingRequest: (data, metaEventId) =>
     request("/api/bookings", {
       method: "POST",
+      headers: { "Content-Type": "application/json", "X-Meta-Event-Id": metaEventId },
       body: JSON.stringify(data),
     }),
 

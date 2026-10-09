@@ -13,3 +13,7 @@ menu-images/
 # The Obsidian vault folder itself, for the same case-insensitive reason as
 # .obsidian above — it is personal notes, not part of the app.
 /Strobrie/
+
+# Raw photos/videos dropped in for ad creative — source material, not app
+# assets, and far too large to keep in git or ship to the server.
+/Raw content STB/

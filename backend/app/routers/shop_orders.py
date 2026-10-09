@@ -5,11 +5,11 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from .. import delivery_fees, email_utils, paystack, pos_models, shop_models, shop_schemas
+from .. import delivery_fees, email_utils, meta_capi, paystack, pos_models, shop_models, shop_schemas
 from ..database import get_db
 from .pos_sales import NAIRA_PER_POINT_EARNED, NAIRA_PER_POINT_REDEEM
 
@@ -365,7 +365,9 @@ def checkout(payload: shop_schemas.OrderCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/orders/verify/{reference}", response_model=shop_schemas.OrderOut)
-def verify_payment(reference: str, db: Session = Depends(get_db)):
+def verify_payment(
+    reference: str, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+):
     order = db.query(shop_models.Order).filter(shop_models.Order.payment_reference == reference).first()
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -412,6 +414,29 @@ def verify_payment(reference: str, db: Session = Depends(get_db)):
 
         if just_paid:
             email_utils.send_order_confirmation_email(order)
+            # Same event_id as the browser pixel's Purchase on the
+            # confirmation page (the Paystack reference), so Meta dedupes.
+            background_tasks.add_task(
+                meta_capi.send_event,
+                "Purchase",
+                reference,
+                meta_capi.request_context(request),
+                email=order.customer_email,
+                phone=order.customer_phone,
+                name=order.customer_name,
+                custom_data={
+                    "currency": "NGN",
+                    "value": order.total,
+                    "content_type": "product",
+                    "content_ids": [str(i.product_id) for i in order.items if i.product_id is not None],
+                    "contents": [
+                        {"id": str(i.product_id), "quantity": i.qty} for i in order.items if i.product_id is not None
+                    ],
+                    "num_items": sum(i.qty for i in order.items),
+                    "order_id": str(order.id),
+                    "delivery_category": "home_delivery" if order.fulfillment_method == "delivery" else "in_store",
+                },
+            )
 
     return order
 

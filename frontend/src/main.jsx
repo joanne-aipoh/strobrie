@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import "./index.css";
 import App from "./App.jsx";
 import Home from "./pages/Home.jsx";
@@ -27,10 +28,24 @@ import Checkout from "./shop/pages/Checkout.jsx";
 import OrderConfirmation from "./shop/pages/OrderConfirmation.jsx";
 import { isShopHost } from "./shop/shopBase.js";
 import { isFlowHost, posPath } from "./pos/posBase.js";
+import { pageView, startPixel } from "./metaPixel.js";
+
+startPixel();
+
+// A single-page app never reloads between pages, so the pixel's PageView has
+// to be sent on every route change rather than once from index.html.
+function PixelPageViews() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    pageView();
+  }, [pathname]);
+  return null;
+}
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
+      <PixelPageViews />
       <Routes>
         {!isShopHost && !isFlowHost && (
           <Route path="/" element={<App />}>

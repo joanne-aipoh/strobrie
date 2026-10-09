@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../api.js";
+import { newEventId, track } from "../metaPixel.js";
 
 const SPACES = [
   {
@@ -49,7 +50,9 @@ function BookingForm() {
     setStatus("submitting");
     setError(null);
     try {
-      await api.createBookingRequest(form);
+      const metaEventId = newEventId();
+      await api.createBookingRequest(form, metaEventId);
+      track("Lead", { content_category: "space_rental", content_name: form.space }, metaEventId);
       setStatus("success");
     } catch (err) {
       setError(err.message);

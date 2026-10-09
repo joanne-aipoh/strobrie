@@ -6,6 +6,18 @@ export default function Visit() {
           <div>
             <h2>Visit Us</h2>
             <p>HFIA Garden, Off Tafawa Balewa Road, Garki, Abuja, Federal Capital Territory, Nigeria</p>
+            {/* No street frontage, so the exact map pin matters more than the
+                address — cid is the cafe's own Google Business listing. */}
+            <p>
+              <a
+                href="https://www.google.com/maps?cid=9023339216612327777"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontWeight: 700 }}
+              >
+                Get directions &rarr;
+              </a>
+            </p>
             <p>
               Mon&ndash;Thu 8am&ndash;6pm &middot; Fri 8am&ndash;9pm
               <br />

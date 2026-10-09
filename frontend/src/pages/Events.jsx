@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
+import { newEventId, track } from "../metaPixel.js";
 
 function formatEventDate(iso) {
   return new Date(iso).toLocaleString("en-NG", {
@@ -63,6 +64,12 @@ function BuySpotForm({ event }) {
     setStatus("submitting");
     setError(null);
     try {
+      track("InitiateCheckout", {
+        content_ids: [`event-${event.id}`],
+        content_category: "event_ticket",
+        value: selectedTier?.price,
+        currency: "NGN",
+      });
       const result = await api.buyTicket(event.id, {
         tier_id: tierId,
         ...form,
@@ -228,7 +235,9 @@ function RsvpForm({ event, onRsvped }) {
     setStatus("submitting");
     setError(null);
     try {
-      await api.createRsvp(event.id, form);
+      const metaEventId = newEventId();
+      await api.createRsvp(event.id, form, metaEventId);
+      track("CompleteRegistration", { content_name: event.title, content_category: "event_rsvp" }, metaEventId);
       setStatus("success");
       onRsvped();
     } catch (err) {

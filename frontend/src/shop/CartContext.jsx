@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { track } from "../metaPixel.js";
 
 const STORAGE_KEY = "strobrie-shop-cart";
 const CartContext = createContext(null);
@@ -32,6 +33,14 @@ export function CartProvider({ children }) {
     const cleanInscription = inscription?.trim() || null;
     const cleanDesignNotes = designNotes?.trim() || null;
     const cleanAddons = addons?.trim() || null;
+    track("AddToCart", {
+      content_ids: [String(product.id)],
+      content_name: product.name,
+      content_category: product.category,
+      content_type: "product",
+      value: product.price * qty,
+      currency: "NGN",
+    });
     setItems((prev) => {
       if (!cleanInscription && !cleanDesignNotes && !flavorBreakdown && !cleanAddons) {
         const existing = prev.find(

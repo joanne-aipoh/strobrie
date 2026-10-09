@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
 import { whatsappLink } from "../whatsapp.js";
+import { trackOnce } from "../metaPixel.js";
 
 export default function EventTicketConfirmation() {
   const [searchParams] = useSearchParams();
@@ -13,7 +14,19 @@ export default function EventTicketConfirmation() {
     if (!reference) return;
     api
       .verifyTicket(reference)
-      .then(setTicket)
+      .then((t) => {
+        setTicket(t);
+        if (t.paid) {
+          trackOnce(reference, "Purchase", {
+            content_ids: [`event-${t.pos_event_id}`],
+            content_name: t.event_name,
+            content_category: "event_ticket",
+            content_type: "product",
+            value: t.tier_price,
+            currency: "NGN",
+          }, reference);
+        }
+      })
       .catch((err) => setError(err.message));
   }, [reference]);
 
