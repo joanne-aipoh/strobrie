@@ -11,6 +11,8 @@ export default function Home() {
             Come in. Take a seat.
             <br />
             Order the usual.
+            <br />
+            hello world
           </h1>
           <p className="tagline">
             A cozy, plant-filled corner in Abuja for great coffee, fresh bakes,
