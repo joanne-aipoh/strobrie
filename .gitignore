@@ -17,3 +17,6 @@ menu-images/
 # Raw photos/videos dropped in for ad creative — source material, not app
 # assets, and far too large to keep in git or ship to the server.
 /Raw content STB/
+
+# Claude Ads audit runs (local only)
+.claude-ads/
