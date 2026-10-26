@@ -1,3 +1,5 @@
+import { SHOW_SHOP_LINKS } from "../shopVisibility.js";
+
 // A dense Instagram-style photo grid of real menu items — same look as the
 // account's own grid feed. Pulls straight from the shop's product photo
 // uploads (backend/uploads/products) so it's always real food, no stock art.
@@ -41,11 +43,18 @@ const GALLERY_ITEMS = [
   { file: "e63216c405054c8cbd26adf400f01b47.jpeg", label: "Iced cafe mocha", productId: 13, objectPosition: "center 85%" },
 ];
 
+const Tile = SHOW_SHOP_LINKS ? "a" : "div";
+
 export default function FoodGallery() {
   return (
     <div className="food-gallery">
       {GALLERY_ITEMS.map((item) => (
-        <a className="food-gallery-item" key={item.file} href={productHref(item.productId)}>
+        // Plain tiles (no link) while the shop is hidden — see shopVisibility.js.
+        <Tile
+          className="food-gallery-item"
+          key={item.file}
+          href={SHOW_SHOP_LINKS ? productHref(item.productId) : undefined}
+        >
           <img
             src={`${API_BASE}/uploads/products/${item.file}`}
             alt={item.label}
@@ -59,7 +68,7 @@ export default function FoodGallery() {
               if (tile) tile.style.display = "none";
             }}
           />
-        </a>
+        </Tile>
       ))}
     </div>
   );

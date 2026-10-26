@@ -1,3 +1,5 @@
+import { SHOW_SHOP_LINKS } from "../shopVisibility.js";
+
 const MENUS = [
   { src: "/menu-breakfast.jpg", alt: "Strobriē all-day breakfast menu" },
   { src: "/menu-lunch.jpg", alt: "Strobriē lunch menu" },
@@ -19,8 +21,13 @@ export default function Menu() {
           ))}
         </div>
         <p className="menu-cta">
-          Order online from our{" "}
-          <a href="https://shop.strobrie.com">Shop</a>, or see more on{" "}
+          {SHOW_SHOP_LINKS ? (
+            <>
+              Order online from our <a href="https://shop.strobrie.com">Shop</a>, or see more on{" "}
+            </>
+          ) : (
+            "See more on "
+          )}
           <a href="https://instagram.com/strobrie" target="_blank" rel="noopener noreferrer">
             Instagram
           </a>

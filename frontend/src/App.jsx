@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import WhatsAppButton from "./components/WhatsAppButton.jsx";
 import SiteFooter from "./components/SiteFooter.jsx";
+import { SHOW_SHOP_LINKS } from "./shopVisibility.js";
 
 const SHOP_SITE_URL = "https://shop.strobrie.com";
 const isLocalDev = typeof window !== "undefined" && window.location.hostname === "localhost";
@@ -19,7 +20,8 @@ function Header() {
           <NavLink to="/menu">Menu</NavLink>
           <NavLink to="/events">Events</NavLink>
           <NavLink to="/space">Space</NavLink>
-          {isLocalDev ? <NavLink to="/shop">Shop</NavLink> : <a href={SHOP_SITE_URL}>Shop</a>}
+          {SHOW_SHOP_LINKS &&
+            (isLocalDev ? <NavLink to="/shop">Shop</NavLink> : <a href={SHOP_SITE_URL}>Shop</a>)}
           <NavLink to="/visit">Contact Us</NavLink>
         </nav>
       </div>
