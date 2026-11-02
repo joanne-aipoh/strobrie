@@ -33,6 +33,33 @@ function localDateKey(iso) {
   return `${y}-${m}-${day}`;
 }
 
+// Derive a session's time window ("10:00AM - 4:00PM") from its hour-slot tiers,
+// so a multi-slot event's header shows the whole window while the dropdown lets
+// people pick a specific hour. Returns null (fall back to the event's own time)
+// for events whose tiers aren't named as clock times.
+function parseClockLabel(label) {
+  const m = /(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(label || "");
+  if (!m) return null;
+  let hours = Number(m[1]) % 12;
+  if (/pm/i.test(m[3])) hours += 12;
+  return hours * 60 + Number(m[2]);
+}
+
+function formatMinutes(mins) {
+  const ampm = mins >= 720 ? "PM" : "AM";
+  let h = Math.floor(mins / 60) % 12;
+  if (h === 0) h = 12;
+  return `${h}:${String(mins % 60).padStart(2, "0")}${ampm}`;
+}
+
+function slotWindow(tiers) {
+  const times = (tiers || []).map((t) => parseClockLabel(t.name)).filter((v) => v != null);
+  if (times.length < 2) return null;
+  const start = Math.min(...times);
+  const end = Math.max(...times) + 60; // each slot runs an hour
+  return `${formatMinutes(start)} - ${formatMinutes(end)}`;
+}
+
 function BuySpotForm({ event }) {
   // Tiers that share the same price are treated as flavor/variant choices of
   // one product (e.g. "pick your breakfast") — shown as a single price with
@@ -51,7 +78,9 @@ function BuySpotForm({ event }) {
   const choiceTiers = commonPrice !== null ? priceGroups[commonPrice] : [];
   const altTierGroups = groupedPrices.slice(1);
 
-  const [tierId, setTierId] = useState(choiceTiers[0]?.id ?? event.tiers[0]?.id ?? null);
+  const [tierId, setTierId] = useState(
+    choiceTiers.length > 1 ? null : (choiceTiers[0]?.id ?? event.tiers[0]?.id ?? null)
+  );
   const [form, setForm] = useState({ buyer_name: "", buyer_email: "", buyer_contact: "" });
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
@@ -91,35 +120,61 @@ function BuySpotForm({ event }) {
     <form className="rsvp-form" onSubmit={handleSubmit}>
       <div className="form-field">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-          <label style={{ fontSize: 13 }}>{choiceTiers.length > 1 ? "Choose your option" : "Your spot"}</label>
+          <label style={{ fontSize: 13 }}>{choiceTiers.length > 1 ? "Choose your time" : "Your spot"}</label>
           <span style={{ fontWeight: 700 }}>{fmt(commonPrice)} per spot</span>
         </div>
-        {choiceTiers.map((tier) => (
-          <label
-            key={tier.id}
+        {choiceTiers.length > 1 ? (
+          <select
+            value={tierId ?? ""}
+            onChange={(e) => setTierId(Number(e.target.value))}
+            required
             style={{
-              display: "flex",
-              alignItems: "center",
-              padding: "0.6rem 0.9rem",
+              width: "100%",
+              padding: "0.65rem 0.9rem",
               border: "1px solid rgba(0,0,0,0.15)",
               borderRadius: 10,
-              marginBottom: 6,
-              cursor: tier.remaining === 0 ? "not-allowed" : "pointer",
-              opacity: tier.remaining === 0 ? 0.5 : 1,
+              background: "#fff",
+              fontSize: "1rem",
             }}
           >
-            <input
-              type="radio"
-              name={`tier-${event.id}`}
-              checked={tierId === tier.id}
-              disabled={tier.remaining === 0}
-              onChange={() => setTierId(tier.id)}
-              style={{ marginRight: 8 }}
-            />
-            {tier.name}
-            {tier.remaining === 0 ? " (sold out)" : ""}
-          </label>
-        ))}
+            <option value="" disabled>
+              Select a time&hellip;
+            </option>
+            {choiceTiers.map((tier) => (
+              <option key={tier.id} value={tier.id} disabled={tier.remaining === 0}>
+                {tier.name}
+                {tier.remaining === 0 ? " (sold out)" : ""}
+              </option>
+            ))}
+          </select>
+        ) : (
+          choiceTiers.map((tier) => (
+            <label
+              key={tier.id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                padding: "0.6rem 0.9rem",
+                border: "1px solid rgba(0,0,0,0.15)",
+                borderRadius: 10,
+                marginBottom: 6,
+                cursor: tier.remaining === 0 ? "not-allowed" : "pointer",
+                opacity: tier.remaining === 0 ? 0.5 : 1,
+              }}
+            >
+              <input
+                type="radio"
+                name={`tier-${event.id}`}
+                checked={tierId === tier.id}
+                disabled={tier.remaining === 0}
+                onChange={() => setTierId(tier.id)}
+                style={{ marginRight: 8 }}
+              />
+              {tier.name}
+              {tier.remaining === 0 ? " (sold out)" : ""}
+            </label>
+          ))
+        )}
       </div>
 
       {altTierGroups.map((price) => (
@@ -214,7 +269,7 @@ function TicketedEventCard({ event, featured }) {
         )}
       </div>
       <p className="event-date" style={featured ? { fontSize: "0.95rem" } : undefined}>
-        {formatTicketedDate(event.date, event.time)}
+        {formatTicketedDate(event.date, slotWindow(event.tiers) || event.time)}
       </p>
       {event.description && <p>{event.description}</p>}
       <BuySpotForm event={event} />
