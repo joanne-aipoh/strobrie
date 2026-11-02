@@ -81,12 +81,18 @@ function BuySpotForm({ event }) {
   const [tierId, setTierId] = useState(
     choiceTiers.length > 1 ? null : (choiceTiers[0]?.id ?? event.tiers[0]?.id ?? null)
   );
+  const [qty, setQty] = useState(1);
   const [form, setForm] = useState({ buyer_name: "", buyer_email: "", buyer_contact: "" });
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
 
   const isFull = event.spots_remaining === 0;
   const selectedTier = event.tiers.find((t) => t.id === tierId);
+  // How many spots this booking can buy — bounded by what's left (per the
+  // selected option, else the whole session) and a sane cap of 10 per order.
+  const maxQty = Math.max(1, Math.min(selectedTier?.remaining ?? event.spots_remaining ?? 10, 10));
+  const spots = Math.min(qty, maxQty);
+  const total = selectedTier ? selectedTier.price * spots : 0;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -97,11 +103,12 @@ function BuySpotForm({ event }) {
       track("InitiateCheckout", {
         content_ids: [`event-${event.id}`],
         content_category: "event_ticket",
-        value: selectedTier?.price,
+        value: total,
         currency: "NGN",
       });
       const result = await api.buyTicket(event.id, {
         tier_id: tierId,
+        quantity: spots,
         ...form,
         callback_url: `${window.location.origin}/events/confirmation`,
       });
@@ -177,6 +184,28 @@ function BuySpotForm({ event }) {
         )}
       </div>
 
+      <div className="form-field">
+        <label style={{ fontSize: 13, display: "block", marginBottom: 6 }}>Number of spots</label>
+        <select
+          value={spots}
+          onChange={(e) => setQty(Number(e.target.value))}
+          style={{
+            width: "100%",
+            padding: "0.65rem 0.9rem",
+            border: "1px solid rgba(0,0,0,0.15)",
+            borderRadius: 10,
+            background: "#fff",
+            fontSize: "1rem",
+          }}
+        >
+          {Array.from({ length: maxQty }, (_, i) => i + 1).map((n) => (
+            <option key={n} value={n}>
+              {n} {n === 1 ? "spot" : "spots"}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {altTierGroups.map((price) => (
         <div className="form-field" key={price}>
           <label style={{ display: "block", fontSize: 13, marginBottom: 6 }}>Or, a different option</label>
@@ -235,7 +264,13 @@ function BuySpotForm({ event }) {
       />
       {error && <p className="form-error">{error}</p>}
       <button type="submit" className="button button-primary" disabled={status === "submitting" || !selectedTier}>
-        {status === "submitting" ? "Redirecting to payment…" : selectedTier ? `Book Spot — ${fmt(selectedTier.price)}` : "Book Spot"}
+        {status === "submitting"
+          ? "Redirecting to payment…"
+          : selectedTier
+          ? spots > 1
+            ? `Book ${spots} spots — ${fmt(total)}`
+            : `Book Spot — ${fmt(selectedTier.price)}`
+          : "Book Spot"}
       </button>
     </form>
   );

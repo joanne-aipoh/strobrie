@@ -85,29 +85,36 @@ def buy_ticket(event_id: int, payload: pos_schemas.EventBuyRequest, db: Session 
     if not tier.online_purchasable:
         raise HTTPException(status_code=400, detail="That option isn't available online — please book it in person")
 
-    if event.capacity is not None and _tickets_sold_for_event(db, event_id) >= event.capacity:
-        raise HTTPException(status_code=400, detail="This session is fully booked")
-    if tier.qty > 0 and _tickets_sold_for_tier(db, tier.id) >= tier.qty:
-        raise HTTPException(status_code=400, detail="That option is sold out — pick another")
+    quantity = payload.quantity
+    # Each spot is one ticket row; a multi-spot booking is N rows that share one
+    # Paystack reference, so they're paid for and confirmed together.
+    if event.capacity is not None and _tickets_sold_for_event(db, event_id) + quantity > event.capacity:
+        raise HTTPException(status_code=400, detail="Not enough spots left for this session")
+    if tier.qty > 0 and _tickets_sold_for_tier(db, tier.id) + quantity > tier.qty:
+        raise HTTPException(status_code=400, detail="Not enough spots left for that option")
 
-    ticket = pos_models.Ticket(
-        pos_event_id=event_id,
-        tier_id=tier.id,
-        buyer_name=payload.buyer_name,
-        buyer_email=payload.buyer_email,
-        buyer_contact=payload.buyer_contact,
-        channel="online",
-        paid=False,
-    )
-    db.add(ticket)
-    db.flush()  # assigns ticket.id without committing yet
+    reference = f"strobrie-event-{uuid.uuid4().hex[:16]}"
+    tickets = [
+        pos_models.Ticket(
+            pos_event_id=event_id,
+            tier_id=tier.id,
+            buyer_name=payload.buyer_name,
+            buyer_email=payload.buyer_email,
+            buyer_contact=payload.buyer_contact,
+            channel="online",
+            paid=False,
+            payment_reference=reference,
+        )
+        for _ in range(quantity)
+    ]
+    db.add_all(tickets)
+    db.flush()  # assigns ticket ids without committing yet
 
-    reference = f"strobrie-event-{ticket.id}-{uuid.uuid4().hex[:8]}"
     callback_url = payload.callback_url or f"{FRONTEND_URL}/events/confirmation"
     try:
         data = paystack.initialize_transaction(
             email=payload.buyer_email,
-            amount_naira=tier.price,
+            amount_naira=tier.price * quantity,
             reference=reference,
             callback_url=callback_url,
         )
@@ -118,12 +125,10 @@ def buy_ticket(event_id: int, payload: pos_schemas.EventBuyRequest, db: Session 
         db.rollback()
         raise HTTPException(status_code=502, detail=str(e))
 
-    ticket.payment_reference = reference
     db.commit()
-    db.refresh(ticket)
 
     return pos_schemas.EventCheckoutResponse(
-        ticket_id=ticket.id, authorization_url=data["authorization_url"], reference=reference
+        ticket_id=tickets[0].id, authorization_url=data["authorization_url"], reference=reference
     )
 
 
@@ -131,9 +136,12 @@ def buy_ticket(event_id: int, payload: pos_schemas.EventBuyRequest, db: Session 
 def verify_ticket_payment(
     reference: str, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
 ):
-    ticket = db.query(pos_models.Ticket).filter(pos_models.Ticket.payment_reference == reference).first()
-    if ticket is None:
+    tickets = db.query(pos_models.Ticket).filter(pos_models.Ticket.payment_reference == reference).all()
+    if not tickets:
         raise HTTPException(status_code=404, detail="Ticket not found")
+
+    quantity = len(tickets)
+    ticket = tickets[0]  # all share buyer, event, tier and reference
 
     if not ticket.paid:
         try:
@@ -142,10 +150,11 @@ def verify_ticket_payment(
             raise HTTPException(status_code=502, detail=str(e))
 
         if data.get("status") == "success":
-            ticket.paid = True
+            for t in tickets:
+                t.paid = True
             db.commit()
             db.refresh(ticket)
-            email_utils.send_ticket_confirmation_email(ticket)
+            email_utils.send_ticket_confirmation_email(ticket, quantity=quantity)
             background_tasks.add_task(
                 meta_capi.send_event,
                 "Purchase",
@@ -156,7 +165,7 @@ def verify_ticket_payment(
                 name=ticket.buyer_name,
                 custom_data={
                     "currency": "NGN",
-                    "value": ticket.tier.price,
+                    "value": ticket.tier.price * quantity,
                     "content_type": "product",
                     "content_category": "event_ticket",
                     "content_ids": [f"event-{ticket.pos_event_id}"],
@@ -178,4 +187,5 @@ def verify_ticket_payment(
         event_description=ticket.event.description,
         tier_name=ticket.tier.name,
         tier_price=ticket.tier.price,
+        quantity=quantity,
     )

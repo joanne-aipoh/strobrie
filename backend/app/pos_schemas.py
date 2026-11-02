@@ -344,6 +344,7 @@ class PublicEventOut(BaseModel):
 
 class EventBuyRequest(BaseModel):
     tier_id: int
+    quantity: int = Field(default=1, ge=1, le=20)
     buyer_name: str = Field(min_length=1, max_length=120)
     buyer_email: str = Field(min_length=3, max_length=255)
     buyer_contact: str = Field(min_length=1, max_length=120)
@@ -372,3 +373,4 @@ class PublicTicketOut(BaseModel):
     event_description: str | None
     tier_name: str
     tier_price: int
+    quantity: int = 1

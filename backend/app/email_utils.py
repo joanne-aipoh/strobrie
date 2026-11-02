@@ -168,20 +168,31 @@ def _send(to_email: str, subject: str, html: str, error_context: str) -> bool:
         return False
 
 
-def _build_ticket_email_html(ticket: pos_models.Ticket) -> str:
+def _build_ticket_email_html(ticket: pos_models.Ticket, quantity: int = 1) -> str:
     event = ticket.event
     tier = ticket.tier
     date_line = event.date.strftime("%A, %d %B %Y") + (f" — {event.time}" if event.time else "")
+    spots_word = "spot" if quantity == 1 else "spots"
+    booked_line = (
+        f"Payment confirmed — your spot for {event.name} is booked."
+        if quantity == 1
+        else f"Payment confirmed — your {quantity} spots for {event.name} are booked."
+    )
+    tier_line = (
+        f"{tier.name} — {_fmt_naira(tier.price)}"
+        if quantity == 1
+        else f"{tier.name} &times; {quantity} {spots_word} — {_fmt_naira(tier.price * quantity)}"
+    )
     return f"""
     <div style="font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto;color:#1a1a1a;">
       <h1 style="font-size:1.4rem;color:#1a1a1a;margin-bottom:4px;">You're in, {ticket.buyer_name}!</h1>
       <p style="color:#2f7d4f;font-weight:600;margin-top:0;">
-        Payment confirmed — your spot for {event.name} is booked.
+        {booked_line}
       </p>
       <div style="background:#fdf2ed;border-radius:16px;padding:20px;margin-top:16px;">
         <h2 style="font-size:1.1rem;color:#c2477a;margin-top:0;">{event.name}</h2>
         <p style="margin:0;font-size:14px;">{date_line}</p>
-        <p style="margin:8px 0 0;font-size:14px;">{tier.name} — {_fmt_naira(tier.price)}</p>
+        <p style="margin:8px 0 0;font-size:14px;">{tier_line}</p>
         {f'<p style="margin:10px 0 0;font-size:13px;color:#555;">{event.description}</p>' if event.description else ""}
       </div>
       <p style="margin-top:16px;font-size:13px;font-weight:600;">
@@ -198,12 +209,12 @@ def _build_ticket_email_html(ticket: pos_models.Ticket) -> str:
     """
 
 
-def send_ticket_confirmation_email(ticket: pos_models.Ticket) -> bool:
+def send_ticket_confirmation_email(ticket: pos_models.Ticket, quantity: int = 1) -> bool:
     if not ticket.buyer_email:
         return False
     return _send(
         to_email=ticket.buyer_email,
         subject=f"You're in — {ticket.event.name}",
-        html=_build_ticket_email_html(ticket),
+        html=_build_ticket_email_html(ticket, quantity),
         error_context=f"ticket confirmation email for ticket #{ticket.id}",
     )
