@@ -5,4 +5,4 @@
 // Flip this to true the moment the live Paystack key is set, and every ready
 // ticketed event appears at once. (Free RSVP events are unaffected — they never
 // touch Paystack and always show.)
-export const SHOW_TICKETED_EVENTS = false;
+export const SHOW_TICKETED_EVENTS = true;
