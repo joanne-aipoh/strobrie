@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import { newEventId, track } from "../metaPixel.js";
+import { SHOW_TICKETED_EVENTS } from "../eventsVisibility.js";
 
 function formatEventDate(iso) {
   return new Date(iso).toLocaleString("en-NG", {
@@ -318,6 +319,13 @@ export default function Events() {
 
   useEffect(loadEvents, []);
   useEffect(() => {
+    // Paid ticketed events stay hidden until online payment is live — see
+    // eventsVisibility.js. Treat them as "none" so the page renders exactly as
+    // it would with no sessions posted, rather than showing unbuyable cards.
+    if (!SHOW_TICKETED_EVENTS) {
+      setTicketedEvents([]);
+      return;
+    }
     api
       .getTicketedEvents()
       .then(setTicketedEvents)
