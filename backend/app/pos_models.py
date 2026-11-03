@@ -160,6 +160,10 @@ class PosEvent(Base):
     capacity: Mapped[int | None] = mapped_column(Integer, default=None)
     description: Mapped[str | None] = mapped_column(Text, default=None)
     cost_budget: Mapped[int] = mapped_column(Integer, default=0)
+    # Draft events are managed in Flow but hidden from the public website until
+    # staff publish them. Defaults to published so pre-existing events (and any
+    # created before this column existed) stay visible.
+    published: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     created_by_staff_id: Mapped[int] = mapped_column(ForeignKey("staff.id"))
 
     tiers: Mapped[list["TicketTier"]] = relationship(back_populates="event", cascade="all, delete-orphan")

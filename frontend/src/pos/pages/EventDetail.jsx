@@ -89,6 +89,15 @@ export default function EventDetail() {
     }
   }
 
+  async function togglePublish() {
+    try {
+      await posApi.updateEvent(eventId, { published: !event.published });
+      await load();
+    } catch (err) {
+      setEditError(err.message);
+    }
+  }
+
   function startEdit() {
     setEditFields({
       name: event.name,
@@ -231,15 +240,23 @@ export default function EventDetail() {
           </>
         ) : (
           <>
-            <h3>
+            <h3 style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
               {event.name}
+              <span className={`checkin-badge ${event.published ? "in" : "out"}`}>
+                {event.published ? "Live on website" : "Draft"}
+              </span>
               {isManager && (
-                <button className="link-btn" style={{ marginLeft: 10, fontSize: 12 }} onClick={startEdit}>
+                <button className="link-btn" style={{ fontSize: 12 }} onClick={togglePublish}>
+                  {event.published ? "Unpublish" : "Publish"}
+                </button>
+              )}
+              {isManager && (
+                <button className="link-btn" style={{ fontSize: 12 }} onClick={startEdit}>
                   Edit
                 </button>
               )}
               {isManager && tickets.length === 0 && (
-                <button className="remove-btn" style={{ marginLeft: 10, fontSize: 12 }} onClick={deleteEvent}>
+                <button className="remove-btn" style={{ fontSize: 12 }} onClick={deleteEvent}>
                   Delete event
                 </button>
               )}

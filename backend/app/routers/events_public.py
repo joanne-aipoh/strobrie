@@ -60,6 +60,7 @@ def list_upcoming_events(db: Session = Depends(get_db)):
         select(pos_models.PosEvent)
         .options(selectinload(pos_models.PosEvent.tiers))
         .where(pos_models.PosEvent.date >= date.today())
+        .where(pos_models.PosEvent.published.is_(True))
         .order_by(pos_models.PosEvent.date)
     )
     events = db.scalars(stmt).all()
@@ -69,7 +70,7 @@ def list_upcoming_events(db: Session = Depends(get_db)):
 @router.get("/{event_id}", response_model=pos_schemas.PublicEventOut)
 def get_upcoming_event(event_id: int, db: Session = Depends(get_db)):
     event = db.get(pos_models.PosEvent, event_id)
-    if event is None:
+    if event is None or not event.published:
         raise HTTPException(status_code=404, detail="Event not found")
     return _to_public_event(db, event)
 
@@ -77,7 +78,7 @@ def get_upcoming_event(event_id: int, db: Session = Depends(get_db)):
 @router.post("/{event_id}/buy", response_model=pos_schemas.EventCheckoutResponse, status_code=201)
 def buy_ticket(event_id: int, payload: pos_schemas.EventBuyRequest, db: Session = Depends(get_db)):
     event = db.get(pos_models.PosEvent, event_id)
-    if event is None:
+    if event is None or not event.published:
         raise HTTPException(status_code=404, detail="Event not found")
     tier = db.get(pos_models.TicketTier, payload.tier_id)
     if tier is None or tier.pos_event_id != event_id:

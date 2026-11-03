@@ -261,6 +261,9 @@ class PosEventCreate(BaseModel):
     capacity: int | None = None
     description: str | None = None
     cost_budget: int = 0
+    # New events start as drafts (hidden from the website) unless the creator
+    # opts to publish straight away.
+    published: bool = False
     tiers: list[TierCreate] = Field(min_length=1)
 
 
@@ -272,6 +275,7 @@ class PosEventOut(BaseModel):
     capacity: int | None
     description: str | None
     cost_budget: int
+    published: bool
     tiers: list[TierOut]
     tickets_sold: int
 
@@ -284,6 +288,7 @@ class PosEventUpdate(BaseModel):
     capacity: int | None = None
     description: str | None = None
     cost_budget: int | None = None
+    published: bool | None = None
 
 
 class TierUpdate(BaseModel):

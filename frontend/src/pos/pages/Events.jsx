@@ -20,6 +20,7 @@ export default function Events() {
   const [capacity, setCapacity] = useState("");
   const [description, setDescription] = useState("");
   const [costBudget, setCostBudget] = useState("");
+  const [published, setPublished] = useState(false);
   const [tiers, setTiers] = useState([{ name: "General", price: "", qty: "", online_purchasable: true }]);
   const [error, setError] = useState("");
 
@@ -67,6 +68,7 @@ export default function Events() {
         capacity: capacity ? parseInt(capacity) : null,
         description: description.trim() || null,
         cost_budget: parseFloat(costBudget) || 0,
+        published,
         tiers: cleanTiers,
       });
       setEvents((prev) => [...prev, event]);
@@ -76,6 +78,7 @@ export default function Events() {
       setCapacity("");
       setDescription("");
       setCostBudget("");
+      setPublished(false);
       setTiers([{ name: "General", price: "", qty: "", online_purchasable: true }]);
       setShowCreate(false);
       setError("");
@@ -97,7 +100,12 @@ export default function Events() {
         ) : (
           sorted.map((ev) => (
             <div className="event-card" key={ev.id} onClick={() => navigate(posPath(`/events/${ev.id}`))}>
-              <h4>{ev.name}</h4>
+              <h4 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {ev.name}
+                <span className={`checkin-badge ${ev.published ? "in" : "out"}`}>
+                  {ev.published ? "Live" : "Draft"}
+                </span>
+              </h4>
               <div className="meta">
                 {ev.date}
                 {ev.time ? ` · ${ev.time}` : ""} · {ev.tickets_sold} ticket{ev.tickets_sold === 1 ? "" : "s"} sold
@@ -147,6 +155,15 @@ export default function Events() {
             <div className="form-field">
               <label>Cost budget (₦)</label>
               <input type="number" min="0" value={costBudget} onChange={(e) => setCostBudget(e.target.value)} placeholder="Staff, decor, performer fees..." />
+            </div>
+            <div className="form-field full">
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+                Publish to the website now
+              </label>
+              <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "4px 0 0" }}>
+                Leave unchecked to save as a draft — it stays hidden from the public Events page until you publish it.
+              </p>
             </div>
           </div>
           <div style={{ marginTop: 12 }}>
