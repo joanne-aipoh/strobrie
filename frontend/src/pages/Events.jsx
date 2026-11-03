@@ -37,12 +37,19 @@ function localDateKey(iso) {
 // so a multi-slot event's header shows the whole window while the dropdown lets
 // people pick a specific hour. Returns null (fall back to the event's own time)
 // for events whose tiers aren't named as clock times.
-function parseClockLabel(label) {
-  const m = /(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(label || "");
-  if (!m) return null;
-  let hours = Number(m[1]) % 12;
-  if (/pm/i.test(m[3])) hours += 12;
-  return hours * 60 + Number(m[2]);
+// Pull every clock time ("10:00 AM") out of a tier label. A slot may be a
+// single time or a range like "10:00 AM - 12:00 PM" (sessions run two hours),
+// so we grab all of them and let slotWindow take the extremes.
+function parseClockTimes(label) {
+  const re = /(\d{1,2}):(\d{2})\s*(am|pm)/gi;
+  const out = [];
+  let m;
+  while ((m = re.exec(label || "")) !== null) {
+    let hours = Number(m[1]) % 12;
+    if (/pm/i.test(m[3])) hours += 12;
+    out.push(hours * 60 + Number(m[2]));
+  }
+  return out;
 }
 
 function formatMinutes(mins) {
@@ -53,10 +60,11 @@ function formatMinutes(mins) {
 }
 
 function slotWindow(tiers) {
-  const times = (tiers || []).map((t) => parseClockLabel(t.name)).filter((v) => v != null);
+  const times = (tiers || []).flatMap((t) => parseClockTimes(t.name));
   if (times.length < 2) return null;
   const start = Math.min(...times);
-  const end = Math.max(...times) + 60; // each slot runs an hour
+  const end = Math.max(...times);
+  if (end <= start) return null;
   return `${formatMinutes(start)} - ${formatMinutes(end)}`;
 }
 
