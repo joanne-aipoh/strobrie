@@ -29,7 +29,7 @@ function downloadCSV(filename, rows) {
 }
 
 export default function Reports() {
-  const { currentStaff } = usePosAuth();
+  const { currentStaff, isManager } = usePosAuth();
   const [sales, setSales] = useState(null);
   const [waste, setWaste] = useState(null);
   const [customers, setCustomers] = useState(null);
@@ -230,9 +230,11 @@ export default function Reports() {
                         Voided
                       </span>
                     ) : (
-                      <button className="link-btn" style={{ marginLeft: 8, color: "var(--rust-dark)" }} onClick={() => handleVoid(s.id, s.total)}>
-                        Void
-                      </button>
+                      isManager && (
+                        <button className="link-btn" style={{ marginLeft: 8, color: "var(--rust-dark)" }} onClick={() => handleVoid(s.id, s.total)}>
+                          Void
+                        </button>
+                      )
                     )}
                   </td>
                 </tr>

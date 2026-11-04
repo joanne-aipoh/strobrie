@@ -48,18 +48,31 @@ export function PosAuthProvider({ children }) {
     return staff;
   }
 
+  // Self-service PIN change (also used for the forced change on first login).
+  // On success the stored session is updated so the forced-change gate clears.
+  async function changePin(currentPin, newPin) {
+    const staff = await posApi.changePin(currentStaff.id, currentPin, newPin);
+    persist(staff);
+    return staff;
+  }
+
   function logout() {
     persist(null);
   }
 
+  const role = currentStaff?.role;
   const value = {
     staffList,
     currentStaff,
-    isManager: currentStaff?.role === "manager",
+    isManager: role === "manager",
+    // Front desk sits above staff: it gets the operational areas (orders,
+    // products, events, reports) but not staff admin or voids.
+    canManageOps: role === "manager" || role === "front_desk",
     refreshStaffList,
     login,
     logout,
     setupFirstManager,
+    changePin,
   };
 
   return <PosAuthContext.Provider value={value}>{children}</PosAuthContext.Provider>;

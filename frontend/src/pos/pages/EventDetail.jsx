@@ -11,7 +11,7 @@ function fmt(n) {
 export default function EventDetail() {
   const { eventId } = useParams();
   const navigate = useNavigate();
-  const { currentStaff, isManager } = usePosAuth();
+  const { currentStaff, canManageOps } = usePosAuth();
   const [event, setEvent] = useState(null);
   const [tickets, setTickets] = useState(null);
   const [checkinPay, setCheckinPay] = useState({});
@@ -245,17 +245,17 @@ export default function EventDetail() {
               <span className={`checkin-badge ${event.published ? "in" : "out"}`}>
                 {event.published ? "Live on website" : "Draft"}
               </span>
-              {isManager && (
+              {canManageOps && (
                 <button className="link-btn" style={{ fontSize: 12 }} onClick={togglePublish}>
                   {event.published ? "Unpublish" : "Publish"}
                 </button>
               )}
-              {isManager && (
+              {canManageOps && (
                 <button className="link-btn" style={{ fontSize: 12 }} onClick={startEdit}>
                   Edit
                 </button>
               )}
-              {isManager && tickets.length === 0 && (
+              {canManageOps && tickets.length === 0 && (
                 <button className="remove-btn" style={{ fontSize: 12 }} onClick={deleteEvent}>
                   Delete event
                 </button>
@@ -271,7 +271,7 @@ export default function EventDetail() {
         )}
       </div>
 
-      {isManager && (
+      {canManageOps && (
         <div className="panel">
           <h3>Ticket tiers</h3>
           <table className="log-table">
@@ -368,7 +368,7 @@ export default function EventDetail() {
         </div>
       )}
 
-      {isManager && (
+      {canManageOps && (
         <div className="metric-grid">
           <div className="metric-card">
             <div className="label">Ticket revenue</div>

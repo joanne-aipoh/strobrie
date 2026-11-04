@@ -2,28 +2,41 @@ import { useState } from "react";
 import { usePosAuth } from "../PosAuthContext.jsx";
 import { posApi } from "../posApi.js";
 
+function roleLabel(role) {
+  return role === "front_desk" ? "front desk" : role;
+}
+
 export default function ManageStaff() {
   const { staffList, currentStaff, refreshStaffList } = usePosAuth();
   const [name, setName] = useState("");
-  const [pin, setPin] = useState("");
   const [role, setRole] = useState("staff");
   const [error, setError] = useState("");
+  // Shown once after a create/reset so the manager can read out the temp PIN.
+  const [issued, setIssued] = useState(null); // { name, pin }
 
   async function addStaff() {
     if (!name.trim()) {
       setError("Enter a name.");
       return;
     }
-    if (!/^\d{4,6}$/.test(pin)) {
-      setError("PIN must be 4-6 digits.");
-      return;
-    }
     try {
-      await posApi.addStaff({ name: name.trim(), pin, role });
+      const created = await posApi.addStaff({ name: name.trim(), role });
       await refreshStaffList();
+      setIssued({ name: created.name, pin: created.temp_pin });
       setName("");
-      setPin("");
       setRole("staff");
+      setError("");
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function resetPin(id, staffName) {
+    if (!window.confirm(`Reset ${staffName}'s PIN? They'll get a new temporary PIN and must set their own next login.`)) return;
+    try {
+      const res = await posApi.resetPin(id);
+      await refreshStaffList();
+      setIssued({ name: staffName, pin: res.temp_pin });
       setError("");
     } catch (err) {
       setError(err.message);
@@ -42,39 +55,68 @@ export default function ManageStaff() {
   return (
     <div className="panel">
       <h3>Staff accounts</h3>
+
+      {issued && (
+        <div
+          className="panel"
+          style={{ background: "var(--sand, #fdf6ec)", border: "1px solid var(--rust, #c2773f)", marginBottom: 12 }}
+        >
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>Temporary PIN for {issued.name}</div>
+          <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: 4, fontVariantNumeric: "tabular-nums" }}>
+            {issued.pin}
+          </div>
+          <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 4 }}>
+            Give this to {issued.name}. They'll be asked to set their own PIN on first login. This won't be shown again.
+          </div>
+          <button className="link-btn" style={{ marginTop: 8 }} onClick={() => setIssued(null)}>
+            Done
+          </button>
+        </div>
+      )}
+
       {(staffList || []).map((s) => (
         <div className="staff-row" key={s.id}>
           <span>
-            {s.name} <span className="role-tag" style={{ marginLeft: 6 }}>{s.role}</span>
+            {s.name} <span className="role-tag" style={{ marginLeft: 6 }}>{roleLabel(s.role)}</span>
+            {s.must_change_pin && (
+              <span style={{ marginLeft: 6, fontSize: 11, color: "var(--rust-dark, #a2531f)" }}>
+                · PIN not set yet
+              </span>
+            )}
           </span>
-          <button className="link-btn" onClick={() => removeStaff(s.id)}>
-            Remove
-          </button>
+          <span style={{ display: "flex", gap: 10 }}>
+            <button className="link-btn" onClick={() => resetPin(s.id, s.name)}>
+              Reset PIN
+            </button>
+            {s.id !== currentStaff.id && (
+              <button className="link-btn" onClick={() => removeStaff(s.id)}>
+                Remove
+              </button>
+            )}
+          </span>
         </div>
       ))}
+
       <div className="form-grid" style={{ marginTop: 14 }}>
         <div className="form-field">
           <label>Name</label>
           <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" />
         </div>
         <div className="form-field">
-          <label>PIN (4-6 digits)</label>
-          <input
-            type="password"
-            inputMode="numeric"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            placeholder="e.g. 1234"
-          />
-        </div>
-        <div className="form-field">
           <label>Role</label>
           <select value={role} onChange={(e) => setRole(e.target.value)}>
             <option value="staff">Staff</option>
+            <option value="front_desk">Front desk</option>
             <option value="manager">Manager</option>
           </select>
         </div>
       </div>
+      <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 6 }}>
+        New staff get an auto-generated temporary PIN (shown once here) and set their own on first login.
+        <br />
+        <strong>Staff</strong>: till, tabs, loyalty, waste, event tickets. <strong>Front desk</strong>: + orders,
+        products, events &amp; reports. <strong>Manager</strong>: everything, incl. staff admin &amp; voids.
+      </p>
       {error && <div className="error-text">{error}</div>}
       <button className="log-btn" onClick={addStaff}>
         Add staff member

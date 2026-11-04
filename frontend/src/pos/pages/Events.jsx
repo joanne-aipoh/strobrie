@@ -9,7 +9,7 @@ function fmt(n) {
 }
 
 export default function Events() {
-  const { currentStaff, isManager } = usePosAuth();
+  const { currentStaff, canManageOps } = usePosAuth();
   const navigate = useNavigate();
   const [events, setEvents] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -121,7 +121,7 @@ export default function Events() {
             </div>
           ))
         )}
-        {isManager && (
+        {canManageOps && (
           <button className="link-btn" style={{ marginTop: 10 }} onClick={() => setShowCreate((v) => !v)}>
             {showCreate ? "Cancel" : "+ Create event"}
           </button>

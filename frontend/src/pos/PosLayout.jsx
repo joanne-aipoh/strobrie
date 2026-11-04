@@ -6,20 +6,26 @@ import { isFlowHost, posPath } from "./posBase.js";
 import { useOrderAlerts } from "./useOrderAlerts.js";
 import Login from "./pages/Login.jsx";
 import ManageStaff from "./pages/ManageStaff.jsx";
+import { ChangePinForm, ForcePinChange } from "./pages/ChangePin.jsx";
 
 const MAIN_SITE_URL = "https://strobrie.com";
 
+function roleLabel(role) {
+  return role === "front_desk" ? "front desk" : role;
+}
+
 function PosShell() {
-  const { currentStaff, isManager, logout } = usePosAuth();
+  const { currentStaff, isManager, canManageOps, logout } = usePosAuth();
   const [showManageStaff, setShowManageStaff] = useState(false);
+  const [showChangePin, setShowChangePin] = useState(false);
   const location = useLocation();
-  const { unseenCount, markSeen } = useOrderAlerts(isManager);
+  const { unseenCount, markSeen } = useOrderAlerts(canManageOps);
 
   // Opening the Orders tab clears the badge — that's "seeing" the new ones.
   useEffect(() => {
-    if (isManager && location.pathname.endsWith("/orders")) markSeen();
+    if (canManageOps && location.pathname.endsWith("/orders")) markSeen();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, isManager]);
+  }, [location.pathname, canManageOps]);
 
   if (!currentStaff) {
     return (
@@ -29,6 +35,12 @@ function PosShell() {
         </div>
       </div>
     );
+  }
+
+  // New hires (and manager-reset accounts) must set their own PIN before they
+  // can use anything else.
+  if (currentStaff.must_change_pin) {
+    return <ForcePinChange />;
   }
 
   return (
@@ -41,7 +53,10 @@ function PosShell() {
           </div>
           <div className="header-user">
             <span>{currentStaff.name}</span>
-            <span className="role-tag">{currentStaff.role}</span>
+            <span className="role-tag">{roleLabel(currentStaff.role)}</span>
+            <button className="link-btn" onClick={() => setShowChangePin((v) => !v)}>
+              {showChangePin ? "Close" : "Change PIN"}
+            </button>
             {isManager && (
               <button className="link-btn" onClick={() => setShowManageStaff((v) => !v)}>
                 {showManageStaff ? "Hide staff admin" : "Manage staff"}
@@ -61,9 +76,9 @@ function PosShell() {
         <nav className="tabs">
           <NavLink to={posPath("/sell")}>Sell</NavLink>
           <NavLink to={posPath("/customers")}>Customer Loyalty</NavLink>
-          {isManager && <NavLink to={posPath("/products")}>Products</NavLink>}
+          {canManageOps && <NavLink to={posPath("/products")}>Products</NavLink>}
           <NavLink to={posPath("/events")}>Events</NavLink>
-          {isManager && (
+          {canManageOps && (
             <NavLink to={posPath("/orders")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
               Orders
               {unseenCount > 0 && (
@@ -85,9 +100,12 @@ function PosShell() {
               )}
             </NavLink>
           )}
-          {isManager && <NavLink to={posPath("/reports")}>Reports</NavLink>}
+          {canManageOps && <NavLink to={posPath("/reports")}>Reports</NavLink>}
         </nav>
 
+        {showChangePin && (
+          <ChangePinForm onDone={() => setShowChangePin(false)} onCancel={() => setShowChangePin(false)} />
+        )}
         {showManageStaff && isManager && <ManageStaff />}
 
         <Outlet />
@@ -104,6 +122,14 @@ function RequireManager({ children }) {
 
 export function PosManagerRoute({ children }) {
   return <RequireManager>{children}</RequireManager>;
+}
+
+// Front-desk-or-manager areas (orders, products, inventory, reports). Staff are
+// bounced back to the till.
+export function PosOpsRoute({ children }) {
+  const { canManageOps } = usePosAuth();
+  if (!canManageOps) return <Navigate to={posPath("/sell")} replace />;
+  return children;
 }
 
 export default function PosLayout() {

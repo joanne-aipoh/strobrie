@@ -13,7 +13,10 @@ class Staff(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120))
     pin_hash: Mapped[str] = mapped_column(String(64))
-    role: Mapped[str] = mapped_column(String(20), default="staff")
+    role: Mapped[str] = mapped_column(String(20), default="staff")  # staff | front_desk | manager
+    # New hires get an auto-generated temporary PIN and must set their own on
+    # first login. Defaults false so existing accounts aren't forced to change.
+    must_change_pin: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

@@ -26,6 +26,12 @@ export const posApi = {
   setupFirstManager: (data) => request("/api/pos/staff/setup", { method: "POST", body: JSON.stringify(data) }),
   addStaff: (data) => request("/api/pos/staff", { method: "POST", body: JSON.stringify(data) }),
   removeStaff: (id) => request(`/api/pos/staff/${id}`, { method: "DELETE" }),
+  resetPin: (id) => request(`/api/pos/staff/${id}/reset-pin`, { method: "POST" }),
+  changePin: (staffId, currentPin, newPin) =>
+    request("/api/pos/staff/change-pin", {
+      method: "POST",
+      body: JSON.stringify({ staff_id: staffId, current_pin: currentPin, new_pin: newPin }),
+    }),
   login: (staffId, pin) =>
     request("/api/pos/staff/login", { method: "POST", body: JSON.stringify({ staff_id: staffId, pin }) }),
 

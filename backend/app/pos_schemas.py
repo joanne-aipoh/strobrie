@@ -12,10 +12,21 @@ PaymentMethod = Literal["Cash", "Moniepoint", "Zenith Transfer"]
 # --- Staff / auth -----------------------------------------------------------
 
 
+Role = Literal["staff", "front_desk", "manager"]
+
+
 class StaffCreate(BaseModel):
+    # Used only for the first-manager setup, where the manager picks their own PIN.
     name: str = Field(min_length=1, max_length=120)
     pin: str = Field(pattern=r"^\d{4,6}$")
-    role: Literal["staff", "manager"] = "staff"
+    role: Role = "manager"
+
+
+class StaffAdd(BaseModel):
+    # A manager adds a teammate: no PIN here — the server issues a temporary one
+    # that the new hire must change on first login.
+    name: str = Field(min_length=1, max_length=120)
+    role: Role = "staff"
 
 
 class StaffOut(BaseModel):
@@ -24,6 +35,19 @@ class StaffOut(BaseModel):
     id: int
     name: str
     role: str
+    must_change_pin: bool = False
+
+
+class StaffCreatedOut(StaffOut):
+    # Returned once when a staff member is created or their PIN is reset, so the
+    # manager can read out the temporary PIN. Never stored or shown again.
+    temp_pin: str
+
+
+class ChangePinRequest(BaseModel):
+    staff_id: int
+    current_pin: str
+    new_pin: str = Field(pattern=r"^\d{4,6}$")
 
 
 class LoginRequest(BaseModel):

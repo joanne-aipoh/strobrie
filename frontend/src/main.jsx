@@ -10,7 +10,7 @@ import Events from "./pages/Events.jsx";
 import EventTicketConfirmation from "./pages/EventTicketConfirmation.jsx";
 import Space from "./pages/Space.jsx";
 import Visit from "./pages/Visit.jsx";
-import PosLayout, { PosManagerRoute } from "./pos/PosLayout.jsx";
+import PosLayout, { PosOpsRoute } from "./pos/PosLayout.jsx";
 import PosSell from "./pos/pages/Sell.jsx";
 import PosWaste from "./pos/pages/Waste.jsx";
 import PosCustomers from "./pos/pages/Customers.jsx";
@@ -67,33 +67,33 @@ createRoot(document.getElementById("root")).render(
           <Route
             path="inventory"
             element={
-              <PosManagerRoute>
+              <PosOpsRoute>
                 <PosInventory />
-              </PosManagerRoute>
+              </PosOpsRoute>
             }
           />
           <Route
             path="reports"
             element={
-              <PosManagerRoute>
+              <PosOpsRoute>
                 <PosReports />
-              </PosManagerRoute>
+              </PosOpsRoute>
             }
           />
           <Route
             path="products"
             element={
-              <PosManagerRoute>
+              <PosOpsRoute>
                 <PosProducts />
-              </PosManagerRoute>
+              </PosOpsRoute>
             }
           />
           <Route
             path="orders"
             element={
-              <PosManagerRoute>
+              <PosOpsRoute>
                 <PosOrders />
-              </PosManagerRoute>
+              </PosOpsRoute>
             }
           />
         </Route>
