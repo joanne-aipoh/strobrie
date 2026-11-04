@@ -21,9 +21,39 @@ function formatFlavorBreakdown(json) {
     .join(", ");
 }
 
+const PERIODS = [
+  { key: "today", label: "Today" },
+  { key: "week", label: "This week" },
+  { key: "month", label: "This month" },
+  { key: "all", label: "All" },
+];
+
+// Earliest created_at to include for a given period (local time). "week" starts
+// Monday; "all" returns the epoch so nothing is filtered out.
+function periodStart(key) {
+  const now = new Date();
+  if (key === "today") {
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  if (key === "week") {
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    const mondayOffset = (d.getDay() + 6) % 7; // Sun=6 … Mon=0
+    d.setDate(d.getDate() - mondayOffset);
+    return d;
+  }
+  if (key === "month") {
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  return new Date(0);
+}
+
 export default function Orders() {
   const [orders, setOrders] = useState(null);
   const [showFulfilled, setShowFulfilled] = useState(false);
+  const [period, setPeriod] = useState("today");
 
   function load() {
     return shopApi.adminListOrders().then(setOrders);
@@ -40,14 +70,38 @@ export default function Orders() {
 
   if (!orders) return <p>Loading&hellip;</p>;
 
-  // Fulfilled orders are done — keep them out of the working list by default
-  // so it doesn't pile up with orders that no longer need attention.
-  const fulfilledCount = orders.filter((o) => o.status === "fulfilled").length;
-  const visibleOrders = showFulfilled ? orders : orders.filter((o) => o.status !== "fulfilled");
+  // Narrow to the chosen time window first (by when the order was placed)…
+  const startDate = periodStart(period);
+  const periodOrders = orders.filter((o) => new Date(o.created_at) >= startDate);
+  const periodLabel = PERIODS.find((p) => p.key === period)?.label || "";
+
+  // …then keep fulfilled orders out of the working list by default so it
+  // doesn't pile up with orders that no longer need attention.
+  const fulfilledCount = periodOrders.filter((o) => o.status === "fulfilled").length;
+  const visibleOrders = showFulfilled ? periodOrders : periodOrders.filter((o) => o.status !== "fulfilled");
 
   return (
     <div className="panel">
-      <h3>Shop Orders ({orders.length})</h3>
+      <h3>Shop Orders ({periodOrders.length})</h3>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+        {PERIODS.map((p) => (
+          <button
+            key={p.key}
+            className="link-btn"
+            onClick={() => setPeriod(p.key)}
+            style={{
+              padding: "4px 12px",
+              borderRadius: 999,
+              border: `1px solid ${period === p.key ? "var(--rust, #c2773f)" : "rgba(0,0,0,0.15)"}`,
+              background: period === p.key ? "var(--rust, #c2773f)" : "transparent",
+              color: period === p.key ? "#fff" : "inherit",
+              fontWeight: period === p.key ? 700 : 500,
+            }}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
       {fulfilledCount > 0 && (
         <button
           className="link-btn"
@@ -58,7 +112,13 @@ export default function Orders() {
         </button>
       )}
       {visibleOrders.length === 0 ? (
-        <div className="empty-note">{orders.length === 0 ? "No orders yet." : "No orders need attention right now."}</div>
+        <div className="empty-note">
+          {periodOrders.length === 0
+            ? period === "all"
+              ? "No orders yet."
+              : `No orders for ${periodLabel.toLowerCase()}.`
+            : "No orders need attention right now."}
+        </div>
       ) : (
         visibleOrders.map((order) => (
           <div
