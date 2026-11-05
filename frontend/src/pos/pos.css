@@ -28,7 +28,7 @@
    (Flow is now installed as a home-screen app on staff phones). The narrow
    layout lives in the media query at the bottom of this file. */
 .pos-app .pos-shell{width:100%;max-width:1000px;margin:0 auto;padding:20px 16px 60px;}
-.pos-app header.top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;}
+.pos-app header.top{display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px;margin-bottom:18px;}
 .pos-app .brand{display:flex;align-items:baseline;gap:10px;}
 .pos-app .brand h1{
   font-family:Georgia,"Times New Roman",serif;
@@ -173,7 +173,8 @@
   width:140px;text-align:center;letter-spacing:6px;font-size:20px;
   border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--white);
 }
-.pos-app .header-user{display:flex;align-items:center;gap:10px;font-size:13px;flex-wrap:wrap;}
+.pos-app .header-user{display:flex;align-items:center;gap:8px;font-size:13px;}
+.pos-app .header-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-left:auto;}
 .pos-app .header-user .role-tag{
   font-size:10.5px;text-transform:uppercase;letter-spacing:0.4px;
   background:#f6e0e6;color:var(--rust-dark);padding:2px 7px;border-radius:999px;
@@ -206,6 +207,8 @@
   /* Forms go one field per row so inputs are full-width and tappable. */
   .pos-app .form-grid{grid-template-columns:1fr;}
   .pos-app .brand h1{font-size:22px;}
+  /* Name/role stay beside the brand; the action buttons drop to their own row. */
+  .pos-app .header-actions{flex-basis:100%;margin-left:0;}
   .pos-app nav.tabs{gap:2px;}
   .pos-app nav.tabs button{padding:9px 11px;font-size:13.5px;}
   .pos-app .panel{padding:14px;}

@@ -55,6 +55,8 @@ function PosShell() {
           <div className="header-user">
             <span>{currentStaff.name}</span>
             <span className="role-tag">{roleLabel(currentStaff.role)}</span>
+          </div>
+          <div className="header-actions">
             <button className="link-btn" onClick={() => setShowChangePin((v) => !v)}>
               {showChangePin ? "Close" : "Change PIN"}
             </button>
