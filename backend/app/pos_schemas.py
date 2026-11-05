@@ -49,6 +49,11 @@ class RoleUpdate(BaseModel):
     role: Role
 
 
+class NameUpdate(BaseModel):
+    # A manager corrects/changes a teammate's display name.
+    name: str = Field(min_length=1, max_length=120)
+
+
 class ChangePinRequest(BaseModel):
     staff_id: int
     current_pin: str

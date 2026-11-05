@@ -89,6 +89,22 @@ def set_role(staff_id: int, payload: pos_schemas.RoleUpdate, db: Session = Depen
     return staff
 
 
+@router.post("/{staff_id}/rename", response_model=pos_schemas.StaffOut)
+def rename_staff(staff_id: int, payload: pos_schemas.NameUpdate, db: Session = Depends(get_db)):
+    """Manager action: change a teammate's display name. Login is by name + PIN,
+    so renaming just changes the label they tap at login; their PIN is kept."""
+    staff = db.get(pos_models.Staff, staff_id)
+    if staff is None:
+        raise HTTPException(status_code=404, detail="Staff member not found")
+    name = payload.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Name can't be empty")
+    staff.name = name
+    db.commit()
+    db.refresh(staff)
+    return staff
+
+
 @router.post("/change-pin", response_model=pos_schemas.StaffOut)
 def change_pin(payload: pos_schemas.ChangePinRequest, db: Session = Depends(get_db)):
     """Self-service: a staff member replaces their own PIN. Requires the current

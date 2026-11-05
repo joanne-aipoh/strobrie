@@ -29,6 +29,8 @@ export const posApi = {
   resetPin: (id) => request(`/api/pos/staff/${id}/reset-pin`, { method: "POST" }),
   setStaffRole: (id, role) =>
     request(`/api/pos/staff/${id}/role`, { method: "POST", body: JSON.stringify({ role }) }),
+  renameStaff: (id, name) =>
+    request(`/api/pos/staff/${id}/rename`, { method: "POST", body: JSON.stringify({ name }) }),
   changePin: (staffId, currentPin, newPin) =>
     request("/api/pos/staff/change-pin", {
       method: "POST",

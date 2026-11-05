@@ -11,6 +11,8 @@ export default function ManageStaff() {
   const [name, setName] = useState("");
   const [role, setRole] = useState("staff");
   const [error, setError] = useState("");
+  // Per-row name drafts while a manager is editing a teammate's name.
+  const [nameDrafts, setNameDrafts] = useState({});
   // Shown once after a create/reset so the manager can read out the temp PIN.
   const [issued, setIssued] = useState(null); // { name, pin }
 
@@ -62,6 +64,31 @@ export default function ManageStaff() {
     }
   }
 
+  async function commitName(id, current) {
+    const draft = (nameDrafts[id] ?? "").trim();
+    // Nothing to do if unchanged or the field was emptied.
+    if (!draft || draft === current) {
+      setNameDrafts((d) => {
+        const next = { ...d };
+        delete next[id];
+        return next;
+      });
+      return;
+    }
+    try {
+      await posApi.renameStaff(id, draft);
+      await refreshStaffList();
+      setNameDrafts((d) => {
+        const next = { ...d };
+        delete next[id];
+        return next;
+      });
+      setError("");
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   return (
     <div className="panel">
       <h3>Staff accounts</h3>
@@ -87,7 +114,24 @@ export default function ManageStaff() {
       {(staffList || []).map((s) => (
         <div className="staff-row" key={s.id}>
           <span>
-            {s.name}
+            <input
+              className="staff-name-input"
+              value={nameDrafts[s.id] ?? s.name}
+              onChange={(e) => setNameDrafts((d) => ({ ...d, [s.id]: e.target.value }))}
+              onBlur={() => commitName(s.id, s.name)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.target.blur();
+                if (e.key === "Escape") {
+                  setNameDrafts((d) => {
+                    const next = { ...d };
+                    delete next[s.id];
+                    return next;
+                  });
+                  e.target.blur();
+                }
+              }}
+              aria-label={`Name for ${s.name}`}
+            />
             {s.id === currentStaff.id ? (
               <span className="role-tag" style={{ marginLeft: 6 }}>{roleLabel(s.role)}</span>
             ) : (
@@ -136,6 +180,8 @@ export default function ManageStaff() {
         </div>
       </div>
       <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 6 }}>
+        Tap a name to rename someone, or use the dropdown to change their role.
+        <br />
         New staff get an auto-generated temporary PIN (shown once here) and set their own on first login.
         <br />
         <strong>Staff</strong>: till, tabs, loyalty, waste, event tickets. <strong>Front desk</strong>: + orders,
