@@ -4,6 +4,7 @@ import { posApi, PAYMENT_METHODS } from "../posApi.js";
 import { shopApi } from "../../shop/shopApi.js";
 import { queueSale, cacheMenu, cachedMenu, isNetworkError } from "../offline.js";
 import ApprovalModal from "./ApprovalModal.jsx";
+import ModifierPicker from "./ModifierPicker.jsx";
 
 const CATEGORY_ORDER = ["Coffee", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Extras", "Breakfast", "Lunch", "Brunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer"];
 const NAIRA_PER_POINT_REDEEM = 1;
@@ -68,6 +69,7 @@ export default function Sell() {
   const { currentStaff, canManageOps, staffList } = usePosAuth();
   // Staff need a front-desk/manager PIN to close a tab or reduce its total.
   const [pendingApproval, setPendingApproval] = useState(null); // { label, run }
+  const [modifierProduct, setModifierProduct] = useState(null); // product being configured
   const approvers = (staffList || []).filter((s) => s.role === "front_desk" || s.role === "manager");
   const [menu, setMenu] = useState(null);
   const [activeCat, setActiveCat] = useState(null);
@@ -164,6 +166,14 @@ export default function Sell() {
 
   function qtyInCart(itemId) {
     return cart.find((c) => c.menuItemId === itemId)?.qty || 0;
+  }
+
+  // A product with priced choices opens the picker; a composed line is added
+  // (not merged, since each selection is distinct).
+  function addModifierLine({ name, price }) {
+    const p = modifierProduct;
+    setCart((prev) => [...prev, { menuItemId: p.id, name, category: p.category, price, qty: 1 }]);
+    setModifierProduct(null);
   }
 
   function addToCart(item) {
@@ -543,9 +553,14 @@ export default function Sell() {
                 className="item-card"
                 disabled={soldOut}
                 style={soldOut ? { opacity: 0.5, cursor: "not-allowed" } : undefined}
-                onClick={() => addToCart(item)}
+                onClick={() => (item.modifiers?.length ? setModifierProduct(item) : addToCart(item))}
               >
-                <div className="name">{item.name}</div>
+                <div className="name">
+                  {item.name}
+                  {item.modifiers?.length > 0 && (
+                    <span style={{ color: "var(--ink-soft)", fontWeight: 400 }}> ›</span>
+                  )}
+                </div>
                 {soldOut ? <div className="price">Sold out</div> : <div className="price">{fmt(item.price)}</div>}
                 {remaining !== null && !soldOut && (
                   <div style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 2 }}>{remaining} left</div>
@@ -802,6 +817,13 @@ export default function Sell() {
           </div>
         )}
       </div>
+      {modifierProduct && (
+        <ModifierPicker
+          product={modifierProduct}
+          onAdd={addModifierLine}
+          onCancel={() => setModifierProduct(null)}
+        />
+      )}
       {pendingApproval && (
         <ApprovalModal
           actionLabel={pendingApproval.label}

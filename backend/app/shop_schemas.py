@@ -15,6 +15,18 @@ class ProductPhotoOut(BaseModel):
     sort_order: int
 
 
+class ModifierOption(BaseModel):
+    label: str = Field(min_length=1, max_length=80)
+    price: int = Field(ge=0)
+
+
+class ModifierGroup(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+    kind: Literal["variant", "addon"] = "variant"
+    required: bool = False
+    options: list[ModifierOption] = Field(default_factory=list)
+
+
 class ProductOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -28,6 +40,7 @@ class ProductOut(BaseModel):
     unavailable: bool
     is_active: bool
     sort_order: int
+    modifiers: list[ModifierGroup] = Field(default_factory=list)
     photos: list[ProductPhotoOut]
 
 
@@ -37,6 +50,7 @@ class ProductCreate(BaseModel):
     category: str = Field(min_length=1, max_length=50)
     price: int = Field(ge=0)
     stock_qty: int | None = Field(default=None, ge=0)
+    modifiers: list[ModifierGroup] = Field(default_factory=list)
 
 
 class ProductUpdate(BaseModel):
@@ -47,6 +61,7 @@ class ProductUpdate(BaseModel):
     stock_qty: int | None = Field(default=None, ge=0)
     unavailable: bool = False
     is_active: bool = True
+    modifiers: list[ModifierGroup] = Field(default_factory=list)
 
 
 class PhotoReorderRequest(BaseModel):

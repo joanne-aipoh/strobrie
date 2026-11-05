@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -21,6 +21,12 @@ class Product(Base):
     # flag a batch that's been sitting for a while so staff can decide
     # whether to discount it or pull it, rather than an automatic price cut.
     stock_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    # Optional priced choices for this item, as a list of groups. Each group:
+    #   {"name": "Flavor", "kind": "variant"|"addon", "required": bool,
+    #    "options": [{"label": "Passion Fruit", "price": 7000}, ...]}
+    # variant = pick one, option price REPLACES the base price; addon = pick any,
+    # each option price is ADDED. Empty list = a plain single-price item.
+    modifiers: Mapped[list] = mapped_column(JSON, default=list, server_default="[]")
     # A quick day-to-day "86" toggle for a made-to-order item that can't be
     # made right now (e.g. out of chicken today) — separate from stock_qty,
     # which tracks a countable batch. Blocks ordering in Flow and the shop

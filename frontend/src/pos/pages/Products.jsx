@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import ModifierEditor from "./ModifierEditor.jsx";
 import { photoUrl, shopApi } from "../../shop/shopApi.js";
 import { groupProducts, productsInCard } from "../../shop/productGrouping.js";
 
@@ -127,6 +128,7 @@ function ProductPhotos({ product, onChanged }) {
 
 function ProductForm({ initial, onSubmit, onCancel, categories }) {
   const [form, setForm] = useState(initial || BLANK_FORM);
+  const [modifiers, setModifiers] = useState(initial?.modifiers || []);
   const [error, setError] = useState("");
 
   async function handleSubmit() {
@@ -143,6 +145,17 @@ function ProductForm({ initial, onSubmit, onCancel, categories }) {
       setError("Enter a price greater than 0.");
       return;
     }
+    // Drop blank groups/options; coerce prices to whole naira.
+    const cleanModifiers = (modifiers || [])
+      .map((g) => ({
+        name: (g.name || "").trim(),
+        kind: g.kind === "addon" ? "addon" : "variant",
+        required: g.kind !== "addon",
+        options: (g.options || [])
+          .filter((o) => (o.label || "").trim())
+          .map((o) => ({ label: o.label.trim(), price: parseInt(o.price, 10) || 0 })),
+      }))
+      .filter((g) => g.name && g.options.length);
     try {
       await onSubmit({
         name: form.name.trim(),
@@ -150,6 +163,7 @@ function ProductForm({ initial, onSubmit, onCancel, categories }) {
         category: form.category.trim(),
         price,
         stock_qty: form.stock_qty === "" ? null : parseInt(form.stock_qty, 10),
+        modifiers: cleanModifiers,
         ...(initial ? { is_active: form.is_active, unavailable: form.unavailable } : {}),
       });
     } catch (err) {
@@ -189,6 +203,9 @@ function ProductForm({ initial, onSubmit, onCancel, categories }) {
       <div className="form-field full">
         <label>Description</label>
         <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+      </div>
+      <div className="form-field full">
+        <ModifierEditor value={modifiers} onChange={setModifiers} />
       </div>
       {error && <div className="error-text full">{error}</div>}
       <div className="full" style={{ display: "flex", gap: 10 }}>
