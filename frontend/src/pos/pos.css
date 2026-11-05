@@ -24,10 +24,10 @@
   color: var(--ink);
 }
 .pos-app *{box-sizing:border-box;}
-/* Fixed width, not max-width — Flow is a staff tool used on a till/desktop,
-   so the layout stays pixel-for-pixel identical regardless of window size
-   instead of reflowing; a narrower window just scrolls horizontally. */
-.pos-app .pos-shell{width:1000px;margin:0 auto;padding:20px 16px 60px;}
+/* Fluid up to a 1000px desktop/till width, then stacks for phones & tablets
+   (Flow is now installed as a home-screen app on staff phones). The narrow
+   layout lives in the media query at the bottom of this file. */
+.pos-app .pos-shell{width:100%;max-width:1000px;margin:0 auto;padding:20px 16px 60px;}
 .pos-app header.top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;}
 .pos-app .brand{display:flex;align-items:baseline;gap:10px;}
 .pos-app .brand h1{
@@ -180,3 +180,34 @@
 .pos-app .checkin-badge{font-size:11px;padding:2px 8px;border-radius:999px;}
 .pos-app .checkin-badge.in{background:#eaf1e5;color:#3b5b31;}
 .pos-app .checkin-badge.out{background:#f6e0e6;color:var(--rust-dark);}
+
+/* --- Phones & small tablets ------------------------------------------------
+   The till also runs on phones now (installed as a PWA), so the two-column
+   desktop layout collapses to a single column and spacing tightens up. iPad
+   in landscape (>760px) keeps the roomier desktop layout. */
+@media (max-width: 760px) {
+  .pos-app .pos-shell{padding:14px 14px 48px;}
+  /* Sell screen: items above, cart below, each full width. */
+  .pos-app .layout{grid-template-columns:1fr;}
+  .pos-app .cart{position:static;}
+  /* Forms go one field per row so inputs are full-width and tappable. */
+  .pos-app .form-grid{grid-template-columns:1fr;}
+  .pos-app .brand h1{font-size:22px;}
+  .pos-app nav.tabs{gap:2px;}
+  .pos-app nav.tabs button{padding:9px 11px;font-size:13.5px;}
+  .pos-app .panel{padding:14px;}
+  /* Wide data tables (Orders/Reports) scroll sideways within their panel
+     instead of blowing out the page width. */
+  .pos-app table.log-table{display:block;overflow-x:auto;white-space:nowrap;}
+  /* Comfortable tap targets. */
+  .pos-app .cat-btn,.pos-app .pay-btn{padding-top:10px;padding-bottom:10px;}
+  .pos-app .qty-ctrl button{width:30px;height:30px;font-size:16px;}
+  /* Staff rows: name/role and the action buttons wrap instead of squashing. */
+  .pos-app .staff-row{flex-wrap:wrap;gap:6px 10px;}
+  .pos-app .staff-name-input{width:100%;}
+}
+
+/* Very small phones: let item cards use two columns cleanly. */
+@media (max-width: 380px) {
+  .pos-app .item-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));}
+}
