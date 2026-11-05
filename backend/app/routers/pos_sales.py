@@ -78,6 +78,16 @@ def build_sale(
 
 @router.post("", response_model=pos_schemas.SaleOut, status_code=201)
 def charge(payload: pos_schemas.ChargeRequest, db: Session = Depends(get_db)):
+    # Idempotent re-sync: a sale rung up offline carries a device-generated id.
+    # If we've already recorded it, return that record instead of duplicating it,
+    # so retrying a sync (or a flaky connection) can't double-charge the books.
+    if payload.client_uuid is not None:
+        existing = db.scalar(
+            select(pos_models.Sale).where(pos_models.Sale.client_uuid == payload.client_uuid)
+        )
+        if existing is not None:
+            return existing
+
     staff = db.get(pos_models.Staff, payload.staff_id)
     if staff is None:
         raise HTTPException(status_code=404, detail="Staff member not found")
@@ -86,12 +96,29 @@ def charge(payload: pos_schemas.ChargeRequest, db: Session = Depends(get_db)):
     if payload.customer_id is not None:
         customer = db.get(pos_models.LoyaltyCustomer, payload.customer_id)
         if customer is None:
-            raise HTTPException(status_code=404, detail="Customer not found")
+            # An offline sale's customer may have been removed meanwhile; don't
+            # lose the sale over it — just record it without the loyalty link.
+            if payload.offline:
+                customer = None
+            else:
+                raise HTTPException(status_code=404, detail="Customer not found")
 
-    deductions = pos_stock.take_stock(db, payload.items)
+    # Offline sales never redeem points (the device couldn't verify the live
+    # balance) and are recorded even if stock has since run short.
+    if payload.offline:
+        redeem_points = 0
+        deductions = pos_stock.take_stock_force(db, payload.items)
+    else:
+        redeem_points = payload.redeem_points
+        deductions = pos_stock.take_stock(db, payload.items)
+
     sale = build_sale(
-        db, staff, customer, payload.items, payload.payment_method, payload.redeem_points, deductions
+        db, staff, customer, payload.items, payload.payment_method, redeem_points, deductions
     )
+    sale.offline = payload.offline
+    sale.client_uuid = payload.client_uuid
+    if payload.client_timestamp is not None:
+        sale.timestamp = payload.client_timestamp
     db.commit()
     db.refresh(sale)
     return sale

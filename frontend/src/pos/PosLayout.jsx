@@ -7,6 +7,7 @@ import { useOrderAlerts } from "./useOrderAlerts.js";
 import Login from "./pages/Login.jsx";
 import ManageStaff from "./pages/ManageStaff.jsx";
 import { ChangePinForm, ForcePinChange } from "./pages/ChangePin.jsx";
+import OfflineBar from "./OfflineBar.jsx";
 
 const MAIN_SITE_URL = "https://strobrie.com";
 
@@ -102,6 +103,8 @@ function PosShell() {
           )}
           {canManageOps && <NavLink to={posPath("/reports")}>Reports</NavLink>}
         </nav>
+
+        <OfflineBar />
 
         {showChangePin && (
           <ChangePinForm onDone={() => setShowChangePin(false)} onCancel={() => setShowChangePin(false)} />

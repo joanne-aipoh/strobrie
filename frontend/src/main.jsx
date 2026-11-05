@@ -32,6 +32,16 @@ import { pageView, startPixel } from "./metaPixel.js";
 
 startPixel();
 
+// Register the service worker so Flow (and the site) can load with no network.
+// It only caches the app shell + static assets; API calls stay network-only.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      /* offline support just won't be available; the app still works online */
+    });
+  });
+}
+
 // A single-page app never reloads between pages, so the pixel's PageView has
 // to be sent on every route change rather than once from index.html.
 function PixelPageViews() {

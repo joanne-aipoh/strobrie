@@ -72,6 +72,11 @@ class Sale(Base):
     voided: Mapped[bool] = mapped_column(Boolean, default=False)
     voided_by_id: Mapped[int | None] = mapped_column(ForeignKey("staff.id"), default=None)
     voided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    # Offline till: a device-generated id so re-syncing a sale that was rung up
+    # offline can't create a duplicate, and a flag marking it as synced-from-offline
+    # (so a manager can tell which sales skipped the live stock check).
+    client_uuid: Mapped[str | None] = mapped_column(String(64), unique=True, default=None)
+    offline: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     staff: Mapped["Staff"] = relationship(foreign_keys=[staff_id])
     customer: Mapped["LoyaltyCustomer | None"] = relationship()

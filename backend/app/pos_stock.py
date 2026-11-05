@@ -86,6 +86,18 @@ def take_stock(db: Session, items) -> dict[str, float]:
     return deductions
 
 
+def take_stock_force(db: Session, items) -> dict[str, float]:
+    """Like take_stock but never refuses — for syncing a sale that already
+    happened offline. The sale was physically made and paid for, so we record it
+    and let stock fall (possibly negative); a manager reconciles any overshoot.
+    """
+    products = load_products(db, items)
+    deductions = ingredient_deductions(db, items)
+    apply_ingredients(db, deductions, -1)
+    apply_product_stock(db, items, products, -1)
+    return deductions
+
+
 def return_stock(db: Session, items, deductions: dict[str, float]) -> None:
     """Undo a take_stock — used by a void, a cancelled tab, or a tab being re-saved."""
     products = load_products(db, items)

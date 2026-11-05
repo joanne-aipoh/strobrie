@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePosAuth } from "../PosAuthContext.jsx";
 import { posApi, PAYMENT_METHODS } from "../posApi.js";
 import { shopApi } from "../../shop/shopApi.js";
+import { queueSale, cacheMenu, cachedMenu, isNetworkError } from "../offline.js";
 
 const CATEGORY_ORDER = ["Coffee", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Extras", "Breakfast", "Lunch", "Brunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer"];
 const NAIRA_PER_POINT_REDEEM = 1;
@@ -109,12 +110,39 @@ export default function Sell() {
   useEffect(() => () => toastTimer.current && clearTimeout(toastTimer.current), []);
   const [lastReceipt, setLastReceipt] = useState(null);
 
+  // Live connection state, so the till can switch to offline selling and so we
+  // can disable loyalty redemption (balance can't be verified without a server).
+  const [online, setOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
+  }, []);
+
+  function pickMenu(items) {
+    setMenu(items);
+    setActiveCat((prev) => prev || CATEGORY_ORDER.find((c) => items.some((i) => i.category === c)) || items[0]?.category);
+    return items;
+  }
+
   function loadMenu() {
-    return shopApi.adminListProducts().then((items) => {
-      setMenu(items);
-      setActiveCat((prev) => prev || CATEGORY_ORDER.find((c) => items.some((i) => i.category === c)) || items[0]?.category);
-      return items;
-    });
+    return shopApi
+      .adminListProducts()
+      .then((items) => {
+        cacheMenu(items); // keep a copy so the till can still sell offline
+        return pickMenu(items);
+      })
+      .catch((err) => {
+        // Offline / server unreachable: fall back to the last menu we cached.
+        const cached = cachedMenu();
+        if (cached) return pickMenu(cached);
+        throw err;
+      });
   }
 
   function loadTabs() {
@@ -349,18 +377,43 @@ export default function Sell() {
     if (cart.length === 0) return;
     setChargeStatus("submitting");
     setChargeError("");
+    // Tabs and loyalty redemption need the live server; they're online-only.
+    if (activeTab && !navigator.onLine) {
+      setChargeError("You're offline — tabs need a connection. Take this as a direct sale instead.");
+      setChargeStatus("idle");
+      return;
+    }
     try {
       const body = {
         staff_id: currentStaff.id,
         payment_method: payMethod,
         items: cartToLines(),
         customer_id: attachedCustomer?.id ?? null,
-        redeem_points: cappedRedeem,
+        redeem_points: navigator.onLine ? cappedRedeem : 0,
       };
-      // Settling a tab records the same sale, and closes the tab with it.
-      const sale = activeTab
-        ? await posApi.settleTab(activeTab.id, body)
-        : await posApi.charge(body);
+
+      let sale;
+      let queued = false;
+      if (activeTab) {
+        // Settling a tab records the same sale, and closes the tab with it.
+        sale = await posApi.settleTab(activeTab.id, body);
+      } else if (!navigator.onLine) {
+        sale = queueSale(body); // save locally, sync later
+        queued = true;
+      } else {
+        try {
+          sale = await posApi.charge(body);
+        } catch (err) {
+          // Connection dropped mid-charge: don't lose the sale — queue it.
+          if (isNetworkError(err)) {
+            sale = queueSale(body);
+            queued = true;
+          } else {
+            throw err;
+          }
+        }
+      }
+
       const receipt = {
         items: cart,
         subtotal: sale.subtotal,
@@ -374,11 +427,17 @@ export default function Sell() {
       };
       setLastReceipt(receipt);
       const custNote = attachedCustomer ? ` — ${attachedCustomer.name} earned ${sale.points_earned} pts` : "";
-      showToast(`Sale recorded — ${fmt(sale.total)} (${sale.payment_method})${custNote}`);
+      showToast(
+        queued
+          ? `Saved offline — ${fmt(sale.total)} (${sale.payment_method}). Will sync when you're back online.`
+          : `Sale recorded — ${fmt(sale.total)} (${sale.payment_method})${custNote}`,
+      );
       clearOrder();
       setChargeStatus("idle");
-      loadMenu();
-      if (activeTab) loadTabs();
+      if (!queued) {
+        loadMenu();
+        if (activeTab) loadTabs();
+      }
     } catch (err) {
       setChargeError(err.message);
       setChargeStatus("idle");
@@ -601,7 +660,8 @@ export default function Sell() {
                 type="number"
                 min="0"
                 max={attachedCustomer.points}
-                value={redeemPoints}
+                value={online ? redeemPoints : ""}
+                disabled={!online}
                 onChange={(e) => {
                   const raw = e.target.value;
                   if (raw === "") {
@@ -610,8 +670,13 @@ export default function Sell() {
                   }
                   setRedeemPoints(String(Math.max(0, Math.min(Number(raw) || 0, attachedCustomer.points))));
                 }}
-                placeholder="0"
+                placeholder={online ? "0" : "unavailable offline"}
               />
+              {!online && (
+                <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 2 }}>
+                  Redeeming is off while offline — this sale still earns points.
+                </div>
+              )}
             </div>
           </div>
         ) : (

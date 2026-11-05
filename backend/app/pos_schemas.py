@@ -104,6 +104,13 @@ class ChargeRequest(BaseModel):
     items: list[CartLine] = Field(min_length=1)
     customer_id: int | None = None
     redeem_points: int = 0
+    # Offline till: present only on sales rung up while the device had no
+    # connection and now being synced. client_uuid makes the sync idempotent;
+    # client_timestamp preserves the real sale time; offline=True records the
+    # sale even if stock has since run short (the money was already taken).
+    client_uuid: str | None = None
+    client_timestamp: datetime | None = None
+    offline: bool = False
 
 
 class SaleItemOut(BaseModel):
@@ -134,6 +141,7 @@ class SaleOut(BaseModel):
     points_redeemed: int
     points_earned: int
     voided: bool
+    offline: bool = False
     items: list[SaleItemOut]
 
 
