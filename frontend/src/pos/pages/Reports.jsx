@@ -28,8 +28,38 @@ function downloadCSV(filename, rows) {
   URL.revokeObjectURL(url);
 }
 
+const PERIODS = [
+  { key: "today", label: "Today" },
+  { key: "week", label: "This week" },
+  { key: "month", label: "This month" },
+  { key: "all", label: "All time" },
+];
+
+// Earliest sale timestamp to include for a period (local time). "week" starts
+// Monday; "all" returns the epoch so nothing is filtered out.
+function periodStart(key) {
+  const now = new Date();
+  if (key === "today") {
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  if (key === "week") {
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    const mondayOffset = (d.getDay() + 6) % 7; // Sun=6 … Mon=0
+    d.setDate(d.getDate() - mondayOffset);
+    return d;
+  }
+  if (key === "month") {
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  return new Date(0);
+}
+
 export default function Reports() {
   const { currentStaff, isManager } = usePosAuth();
+  const [period, setPeriod] = useState("today");
   const [sales, setSales] = useState(null);
   const [waste, setWaste] = useState(null);
   const [customers, setCustomers] = useState(null);
@@ -57,15 +87,18 @@ export default function Reports() {
   const staffName = (id) => staffList.find((s) => s.id === id)?.name || "—";
   const customerName = (id) => (id ? customers.find((c) => c.id === id)?.name || "—" : "—");
 
+  const startDate = periodStart(period);
+  const periodLabel = PERIODS.find((p) => p.key === period)?.label || "";
+  const inPeriod = (ts) => new Date(ts) >= startDate;
+
   const validSales = sales.filter((s) => !s.voided);
-  const todayStr = new Date().toDateString();
-  const todaysSales = validSales.filter((s) => new Date(s.timestamp).toDateString() === todayStr);
-  const todaysTotal = todaysSales.reduce((s, x) => s + x.total, 0);
+  const periodSales = validSales.filter((s) => inPeriod(s.timestamp));
+  const periodTotal = periodSales.reduce((s, x) => s + x.total, 0);
   const allTimeTotal = validSales.reduce((s, x) => s + x.total, 0);
-  const wasteTotal = waste.reduce((s, w) => s + w.cost_impact, 0);
+  const periodWaste = waste.filter((w) => inPeriod(w.timestamp)).reduce((s, w) => s + w.cost_impact, 0);
 
   const catTotals = {};
-  validSales.forEach((s) => {
+  periodSales.forEach((s) => {
     s.items.forEach((it) => {
       const key = it.category || "Other";
       catTotals[key] = (catTotals[key] || 0) + it.price * it.qty;
@@ -74,7 +107,9 @@ export default function Reports() {
   const maxCat = Math.max(1, ...Object.values(catTotals));
   const catEntries = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
 
-  const recentSales = sales.slice(0, 15);
+  // All sales (incl. voided, shown struck-through) within the period, newest
+  // first, capped so a long "All time" list doesn't render thousands of rows.
+  const recentSales = sales.filter((s) => inPeriod(s.timestamp)).slice(0, 50);
 
   async function handleVoid(saleId, total) {
     if (!window.confirm(`Void this sale for ${fmt(total)}? This restores inventory and loyalty points.`)) return;
@@ -147,22 +182,45 @@ export default function Reports() {
 
   return (
     <>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+        {PERIODS.map((p) => (
+          <button
+            key={p.key}
+            className="link-btn"
+            onClick={() => setPeriod(p.key)}
+            style={{
+              padding: "5px 14px",
+              borderRadius: 999,
+              textDecoration: "none",
+              border: `1px solid ${period === p.key ? "var(--rust)" : "rgba(0,0,0,0.15)"}`,
+              background: period === p.key ? "var(--rust)" : "transparent",
+              color: period === p.key ? "#fff" : "var(--ink)",
+              fontWeight: period === p.key ? 700 : 500,
+            }}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
       <div className="metric-grid">
         <div className="metric-card">
-          <div className="label">Today's sales</div>
-          <div className="value">{fmt(todaysTotal)}</div>
+          <div className="label">{periodLabel} sales</div>
+          <div className="value">{fmt(periodTotal)}</div>
         </div>
         <div className="metric-card">
-          <div className="label">All-time sales</div>
-          <div className="value">{fmt(allTimeTotal)}</div>
+          <div className="label">{periodLabel} transactions</div>
+          <div className="value">{periodSales.length}</div>
         </div>
+        {period !== "all" && (
+          <div className="metric-card">
+            <div className="label">All-time sales</div>
+            <div className="value">{fmt(allTimeTotal)}</div>
+          </div>
+        )}
         <div className="metric-card">
-          <div className="label">Transactions</div>
-          <div className="value">{validSales.length}</div>
-        </div>
-        <div className="metric-card">
-          <div className="label">Waste cost logged</div>
-          <div className="value">{fmt(wasteTotal)}</div>
+          <div className="label">{periodLabel} waste cost</div>
+          <div className="value">{fmt(periodWaste)}</div>
         </div>
         <div className="metric-card">
           <div className="label">Loyalty customers</div>
@@ -171,9 +229,9 @@ export default function Reports() {
       </div>
 
       <div className="panel">
-        <h3>Sales by category</h3>
+        <h3>Sales by category — {periodLabel}</h3>
         {catEntries.length === 0 ? (
-          <div className="empty-note">No sales recorded yet.</div>
+          <div className="empty-note">No sales in this period.</div>
         ) : (
           catEntries.map(([cat, amt]) => (
             <div className="bar-row" key={cat}>
@@ -189,7 +247,7 @@ export default function Reports() {
 
       <div className="panel">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <h3 style={{ margin: 0 }}>Recent sales (voids reverse loyalty &amp; inventory)</h3>
+          <h3 style={{ margin: 0 }}>Sales — {periodLabel} (voids reverse loyalty &amp; inventory)</h3>
           <div>
             <button className="link-btn" onClick={exportSalesCSV}>
               Export sales CSV
@@ -200,7 +258,7 @@ export default function Reports() {
           </div>
         </div>
         {recentSales.length === 0 ? (
-          <div className="empty-note">No sales recorded yet.</div>
+          <div className="empty-note">No sales in this period.</div>
         ) : (
           <table className="log-table">
             <thead>
