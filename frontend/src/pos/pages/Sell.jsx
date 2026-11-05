@@ -3,6 +3,7 @@ import { usePosAuth } from "../PosAuthContext.jsx";
 import { posApi, PAYMENT_METHODS } from "../posApi.js";
 import { shopApi } from "../../shop/shopApi.js";
 import { queueSale, cacheMenu, cachedMenu, isNetworkError } from "../offline.js";
+import ApprovalModal from "./ApprovalModal.jsx";
 
 const CATEGORY_ORDER = ["Coffee", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Extras", "Breakfast", "Lunch", "Brunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer"];
 const NAIRA_PER_POINT_REDEEM = 1;
@@ -64,7 +65,10 @@ function printReceipt(receipt) {
 }
 
 export default function Sell() {
-  const { currentStaff } = usePosAuth();
+  const { currentStaff, canManageOps, staffList } = usePosAuth();
+  // Staff need a front-desk/manager PIN to close a tab or reduce its total.
+  const [pendingApproval, setPendingApproval] = useState(null); // { label, run }
+  const approvers = (staffList || []).filter((s) => s.role === "front_desk" || s.role === "manager");
   const [menu, setMenu] = useState(null);
   const [activeCat, setActiveCat] = useState(null);
   const [cart, setCart] = useState([]);
@@ -329,13 +333,22 @@ export default function Sell() {
     setNamingTab(true);
   }
 
-  async function saveTab(rawLabel) {
+  function saveTab(rawLabel) {
     if (cart.length === 0) return;
     const label = (rawLabel ?? "").trim();
     if (!label) {
       setTabError("Give the tab a name so it can be found again.");
       return;
     }
+    // Staff can add to a tab freely, but reducing its total needs approval.
+    if (activeTab && !canManageOps && subtotal < tabTotal(activeTab)) {
+      setPendingApproval({ label: "save this tab with items removed", run: () => doSaveTab(label) });
+      return;
+    }
+    doSaveTab(label);
+  }
+
+  async function doSaveTab(label) {
     setTabBusy(true);
     setTabError("");
     try {
@@ -355,7 +368,17 @@ export default function Sell() {
     }
   }
 
-  async function cancelTab() {
+  function cancelTab() {
+    if (!activeTab) return;
+    // Staff need a front-desk/manager PIN to void a tab.
+    if (!canManageOps) {
+      setPendingApproval({ label: "close this tab without payment", run: doCancelTab });
+      return;
+    }
+    doCancelTab();
+  }
+
+  async function doCancelTab() {
     if (!activeTab) return;
     setTabBusy(true);
     setTabError("");
@@ -373,7 +396,17 @@ export default function Sell() {
     }
   }
 
-  async function charge() {
+  function charge() {
+    if (cart.length === 0) return;
+    // Staff taking payment on a tab for less than it was saved at needs approval.
+    if (activeTab && !canManageOps && subtotal < tabTotal(activeTab)) {
+      setPendingApproval({ label: "take payment on this tab with items removed", run: doCharge });
+      return;
+    }
+    doCharge();
+  }
+
+  async function doCharge() {
     if (cart.length === 0) return;
     setChargeStatus("submitting");
     setChargeError("");
@@ -769,6 +802,18 @@ export default function Sell() {
           </div>
         )}
       </div>
+      {pendingApproval && (
+        <ApprovalModal
+          actionLabel={pendingApproval.label}
+          approvers={approvers}
+          onApprove={() => {
+            const run = pendingApproval.run;
+            setPendingApproval(null);
+            run();
+          }}
+          onCancel={() => setPendingApproval(null)}
+        />
+      )}
     </div>
   );
 }
