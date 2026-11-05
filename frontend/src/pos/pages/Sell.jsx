@@ -70,6 +70,7 @@ export default function Sell() {
   // Staff need a front-desk/manager PIN to close a tab or reduce its total.
   const [pendingApproval, setPendingApproval] = useState(null); // { label, run }
   const [modifierProduct, setModifierProduct] = useState(null); // product being configured
+  const [search, setSearch] = useState("");
   const approvers = (staffList || []).filter((s) => s.role === "front_desk" || s.role === "manager");
   const [menu, setMenu] = useState(null);
   const [activeCat, setActiveCat] = useState(null);
@@ -162,7 +163,13 @@ export default function Sell() {
   }, []);
 
   const categories = menu ? CATEGORY_ORDER.filter((c) => menu.some((i) => i.category === c)) : [];
-  const itemsInCat = menu ? menu.filter((i) => i.category === activeCat) : [];
+  const searchQuery = search.trim().toLowerCase();
+  // When searching, match across ALL items by name; otherwise show the category.
+  const itemsInCat = menu
+    ? searchQuery
+      ? menu.filter((i) => i.name.toLowerCase().includes(searchQuery))
+      : menu.filter((i) => i.category === activeCat)
+    : [];
 
   function qtyInCart(itemId) {
     return cart.find((c) => c.menuItemId === itemId)?.qty || 0;
@@ -510,13 +517,45 @@ export default function Sell() {
             </div>
           </div>
         )}
-        <div className="categories">
-          {categories.map((c) => (
-            <button key={c} className={`cat-btn ${c === activeCat ? "active" : ""}`} onClick={() => setActiveCat(c)}>
-              {c}
+        <div style={{ position: "relative", marginBottom: 12 }}>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search all items…"
+            style={{
+              width: "100%",
+              border: "1px solid var(--line)",
+              borderRadius: 10,
+              padding: "10px 34px 10px 12px",
+              fontSize: 14,
+              background: "var(--white)",
+            }}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="link-btn"
+              style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", textDecoration: "none", fontSize: 16 }}
+              aria-label="Clear search"
+            >
+              ✕
             </button>
-          ))}
+          )}
         </div>
+        {searchQuery ? (
+          <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginBottom: 10 }}>
+            {itemsInCat.length} result{itemsInCat.length === 1 ? "" : "s"} for “{search.trim()}”
+          </div>
+        ) : (
+          <div className="categories">
+            {categories.map((c) => (
+              <button key={c} className={`cat-btn ${c === activeCat ? "active" : ""}`} onClick={() => setActiveCat(c)}>
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="item-grid">
           {showCustomForm ? (
             <div className="item-card" style={{ cursor: "default" }}>
