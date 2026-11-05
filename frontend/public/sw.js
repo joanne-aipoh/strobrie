@@ -11,7 +11,7 @@
 //   - static assets -> stale-while-revalidate (serve cache fast, refresh in bg).
 //   - /api/ and cross-origin -> left to the network untouched.
 
-const CACHE = "flow-cache-v1";
+const CACHE = "flow-cache-v2";
 const SHELL = "/index.html";
 
 self.addEventListener("install", (event) => {
