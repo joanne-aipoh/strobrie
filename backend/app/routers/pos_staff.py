@@ -76,6 +76,19 @@ def reset_pin(staff_id: int, db: Session = Depends(get_db)):
     )
 
 
+@router.post("/{staff_id}/role", response_model=pos_schemas.StaffOut)
+def set_role(staff_id: int, payload: pos_schemas.RoleUpdate, db: Session = Depends(get_db)):
+    """Manager action: change a teammate's role (staff ↔ front desk ↔ manager)
+    without removing and re-adding them, so their PIN is kept."""
+    staff = db.get(pos_models.Staff, staff_id)
+    if staff is None:
+        raise HTTPException(status_code=404, detail="Staff member not found")
+    staff.role = payload.role
+    db.commit()
+    db.refresh(staff)
+    return staff
+
+
 @router.post("/change-pin", response_model=pos_schemas.StaffOut)
 def change_pin(payload: pos_schemas.ChangePinRequest, db: Session = Depends(get_db)):
     """Self-service: a staff member replaces their own PIN. Requires the current

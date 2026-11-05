@@ -52,6 +52,16 @@ export default function ManageStaff() {
     await refreshStaffList();
   }
 
+  async function changeRole(id, newRole) {
+    try {
+      await posApi.setStaffRole(id, newRole);
+      await refreshStaffList();
+      setError("");
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   return (
     <div className="panel">
       <h3>Staff accounts</h3>
@@ -77,7 +87,21 @@ export default function ManageStaff() {
       {(staffList || []).map((s) => (
         <div className="staff-row" key={s.id}>
           <span>
-            {s.name} <span className="role-tag" style={{ marginLeft: 6 }}>{roleLabel(s.role)}</span>
+            {s.name}
+            {s.id === currentStaff.id ? (
+              <span className="role-tag" style={{ marginLeft: 6 }}>{roleLabel(s.role)}</span>
+            ) : (
+              <select
+                value={s.role}
+                onChange={(e) => changeRole(s.id, e.target.value)}
+                style={{ marginLeft: 8, fontSize: 12, padding: "2px 6px" }}
+                title="Change role"
+              >
+                <option value="staff">Staff</option>
+                <option value="front_desk">Front desk</option>
+                <option value="manager">Manager</option>
+              </select>
+            )}
             {s.must_change_pin && (
               <span style={{ marginLeft: 6, fontSize: 11, color: "var(--rust-dark, #a2531f)" }}>
                 · PIN not set yet

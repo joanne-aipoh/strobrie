@@ -27,6 +27,8 @@ export const posApi = {
   addStaff: (data) => request("/api/pos/staff", { method: "POST", body: JSON.stringify(data) }),
   removeStaff: (id) => request(`/api/pos/staff/${id}`, { method: "DELETE" }),
   resetPin: (id) => request(`/api/pos/staff/${id}/reset-pin`, { method: "POST" }),
+  setStaffRole: (id, role) =>
+    request(`/api/pos/staff/${id}/role`, { method: "POST", body: JSON.stringify({ role }) }),
   changePin: (staffId, currentPin, newPin) =>
     request("/api/pos/staff/change-pin", {
       method: "POST",

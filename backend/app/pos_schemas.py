@@ -44,6 +44,11 @@ class StaffCreatedOut(StaffOut):
     temp_pin: str
 
 
+class RoleUpdate(BaseModel):
+    # A manager promotes/demotes a teammate (staff ↔ front desk ↔ manager).
+    role: Role
+
+
 class ChangePinRequest(BaseModel):
     staff_id: int
     current_pin: str
