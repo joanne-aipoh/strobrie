@@ -6,6 +6,11 @@ export const isFlowHost = typeof window !== "undefined" && window.location.hostn
 
 export const posBase = isFlowHost ? "" : "/pos";
 
+// The public online shop is paused (behind a maintenance page), so no online
+// orders come in. Hide Flow's "Orders" queue and stop polling for new orders
+// until the shop is live again — flip this back to true to restore it.
+export const ordersEnabled = false;
+
 export function posPath(path = "/") {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   return `${posBase}${normalized}` || "/";

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Navigate, Outlet, useLocation } from "react-router-dom";
 import "./pos.css";
 import { PosAuthProvider, usePosAuth } from "./PosAuthContext.jsx";
-import { isFlowHost, posPath } from "./posBase.js";
+import { isFlowHost, posPath, ordersEnabled } from "./posBase.js";
 import { useOrderAlerts } from "./useOrderAlerts.js";
 import Login from "./pages/Login.jsx";
 import ManageStaff from "./pages/ManageStaff.jsx";
@@ -20,11 +20,11 @@ function PosShell() {
   const [showManageStaff, setShowManageStaff] = useState(false);
   const [showChangePin, setShowChangePin] = useState(false);
   const location = useLocation();
-  const { unseenCount, markSeen } = useOrderAlerts(canManageOps);
+  const { unseenCount, markSeen } = useOrderAlerts(canManageOps && ordersEnabled);
 
   // Opening the Orders tab clears the badge — that's "seeing" the new ones.
   useEffect(() => {
-    if (canManageOps && location.pathname.endsWith("/orders")) markSeen();
+    if (canManageOps && ordersEnabled && location.pathname.endsWith("/orders")) markSeen();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, canManageOps]);
 
@@ -79,7 +79,7 @@ function PosShell() {
           <NavLink to={posPath("/customers")}>Customer Loyalty</NavLink>
           {canManageOps && <NavLink to={posPath("/products")}>Products</NavLink>}
           <NavLink to={posPath("/events")}>Events</NavLink>
-          {canManageOps && (
+          {canManageOps && ordersEnabled && (
             <NavLink to={posPath("/orders")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
               Orders
               {unseenCount > 0 && (

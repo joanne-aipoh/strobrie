@@ -27,7 +27,7 @@ import Cart from "./shop/pages/Cart.jsx";
 import Checkout from "./shop/pages/Checkout.jsx";
 import OrderConfirmation from "./shop/pages/OrderConfirmation.jsx";
 import { isShopHost } from "./shop/shopBase.js";
-import { isFlowHost, posPath } from "./pos/posBase.js";
+import { isFlowHost, posPath, ordersEnabled } from "./pos/posBase.js";
 import { pageView, startPixel } from "./metaPixel.js";
 
 startPixel();
@@ -101,9 +101,13 @@ createRoot(document.getElementById("root")).render(
           <Route
             path="orders"
             element={
-              <PosOpsRoute>
-                <PosOrders />
-              </PosOpsRoute>
+              ordersEnabled ? (
+                <PosOpsRoute>
+                  <PosOrders />
+                </PosOpsRoute>
+              ) : (
+                <Navigate to={posPath("/sell")} replace />
+              )
             }
           />
         </Route>
