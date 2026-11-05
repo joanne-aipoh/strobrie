@@ -90,14 +90,7 @@ createRoot(document.getElementById("root")).render(
               </PosOpsRoute>
             }
           />
-          <Route
-            path="products"
-            element={
-              <PosOpsRoute>
-                <PosProducts />
-              </PosOpsRoute>
-            }
-          />
+          <Route path="products" element={<PosProducts />} />
           <Route
             path="orders"
             element={

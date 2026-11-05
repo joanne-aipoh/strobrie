@@ -79,7 +79,7 @@ function PosShell() {
         <nav className="tabs">
           <NavLink to={posPath("/sell")}>Sell</NavLink>
           <NavLink to={posPath("/customers")}>Loyalty</NavLink>
-          {canManageOps && <NavLink to={posPath("/products")}>Products</NavLink>}
+          <NavLink to={posPath("/products")}>Products</NavLink>
           <NavLink to={posPath("/events")}>Events</NavLink>
           {canManageOps && ordersEnabled && (
             <NavLink to={posPath("/orders")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
