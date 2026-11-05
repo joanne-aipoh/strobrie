@@ -153,7 +153,11 @@ function ProductForm({ initial, onSubmit, onCancel, categories }) {
         required: g.kind !== "addon",
         options: (g.options || [])
           .filter((o) => (o.label || "").trim())
-          .map((o) => ({ label: o.label.trim(), price: parseInt(o.price, 10) || 0 })),
+          .map((o) => ({
+            label: o.label.trim(),
+            price: parseInt(o.price, 10) || 0,
+            ...(o.percent != null && o.percent !== "" ? { percent: parseFloat(o.percent) } : {}),
+          })),
       }))
       .filter((g) => g.name && g.options.length);
     try {

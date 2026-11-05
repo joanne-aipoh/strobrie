@@ -66,13 +66,24 @@ export default function ModifierEditor({ value, onChange }) {
                 placeholder="Option (e.g. Passion Fruit)"
               />
               <input
-                style={{ width: 110 }}
+                style={{ width: 90 }}
                 type="number"
                 min="0"
-                value={o.price}
+                value={o.price ?? ""}
                 onChange={(e) => setOption(gi, oi, { price: e.target.value })}
-                placeholder={g.kind === "variant" ? "price" : "+ added"}
+                placeholder={g.kind === "variant" ? "price" : "+ ₦"}
               />
+              {g.kind === "addon" && (
+                <input
+                  style={{ width: 70 }}
+                  type="number"
+                  min="0"
+                  value={o.percent ?? ""}
+                  onChange={(e) => setOption(gi, oi, { percent: e.target.value === "" ? null : e.target.value })}
+                  placeholder="or %"
+                  title="Percent of the chosen price (overrides ₦)"
+                />
+              )}
               <button className="link-btn" onClick={() => removeOption(gi, oi)} title="Remove option">
                 ✕
               </button>

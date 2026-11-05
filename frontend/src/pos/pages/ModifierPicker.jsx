@@ -20,29 +20,35 @@ export default function ModifierPicker({ product, onAdd, onCancel }) {
   // addonSel: Set of "groupIndex:optionIndex".
   const [addonSel, setAddonSel] = useState(() => new Set());
 
-  const { price, name } = useMemo(() => {
-    let p = product.price;
+  // An add-on's amount: a flat price, or a percent of the chosen variant price
+  // (e.g. a cake "extra layer" = 38% of the selected size).
+  const optAmount = (opt, base) =>
+    opt.percent != null ? Math.round((opt.percent / 100) * base) : opt.price || 0;
+
+  const { price, name, base } = useMemo(() => {
+    let b = product.price;
     const parts = [];
     groups.forEach((g, gi) => {
       if (g.kind === "variant") {
         const opt = g.options[variantSel[gi] ?? 0];
         if (opt) {
-          p = opt.price;
+          b = opt.price;
           parts.push(opt.label);
         }
       }
     });
+    let p = b;
     groups.forEach((g, gi) => {
       if (g.kind === "addon") {
         g.options.forEach((opt, oi) => {
           if (addonSel.has(`${gi}:${oi}`)) {
-            p += opt.price;
+            p += optAmount(opt, b);
             parts.push(opt.label);
           }
         });
       }
     });
-    return { price: p, name: parts.length ? `${product.name} · ${parts.join(", ")}` : product.name };
+    return { price: p, name: parts.length ? `${product.name} · ${parts.join(", ")}` : product.name, base: b };
   }, [groups, variantSel, addonSel, product]);
 
   function toggleAddon(gi, oi) {
@@ -99,7 +105,7 @@ export default function ModifierPicker({ product, onAdd, onCancel }) {
                   >
                     {opt.label}
                     <span style={{ opacity: 0.85, marginLeft: 6 }}>
-                      {g.kind === "variant" ? fmt(opt.price) : `+${fmt(opt.price)}`}
+                      {g.kind === "variant" ? fmt(opt.price) : `+${fmt(optAmount(opt, base))}`}
                     </span>
                   </button>
                 );

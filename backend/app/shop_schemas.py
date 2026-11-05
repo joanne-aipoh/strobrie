@@ -17,7 +17,11 @@ class ProductPhotoOut(BaseModel):
 
 class ModifierOption(BaseModel):
     label: str = Field(min_length=1, max_length=80)
-    price: int = Field(ge=0)
+    # Flat amount (addon: added; variant: the line price). For an addon that
+    # should scale with the chosen size/variant, set percent instead (e.g. a
+    # cake "extra layer" at 38% of the selected size's price).
+    price: int = Field(default=0, ge=0)
+    percent: float | None = Field(default=None, ge=0)
 
 
 class ModifierGroup(BaseModel):
