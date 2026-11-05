@@ -200,9 +200,9 @@
    in landscape (>760px) keeps the roomier desktop layout. */
 @media (max-width: 760px) {
   .pos-app .pos-shell{padding:14px 14px 48px;}
-  /* Sell screen: items above, cart below, each full width. */
+  /* Sell screen: order panel on top, menu below, each full width. */
   .pos-app .layout{grid-template-columns:1fr;}
-  .pos-app .cart{position:static;}
+  .pos-app .layout > .cart{order:-1;position:static;}
   /* Forms go one field per row so inputs are full-width and tappable. */
   .pos-app .form-grid{grid-template-columns:1fr;}
   .pos-app .brand h1{font-size:22px;}
