@@ -524,19 +524,7 @@ export default function Sell() {
       </div>
 
       <div className="cart">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 12 }}>
-          <h3 style={{ margin: 0 }}>{activeTab ? `Tab — ${activeTab.label}` : "Current order"}</h3>
-          {!activeTab && (
-            <button
-              className="link-btn"
-              onClick={clearOrder}
-              disabled={cart.length === 0 && !attachedCustomer}
-              title="Clear this order and start fresh"
-            >
-              + New sale
-            </button>
-          )}
-        </div>
+        <h3>{activeTab ? `Tab — ${activeTab.label}` : "Current order"}</h3>
         {activeTab && (
           <div
             style={{
