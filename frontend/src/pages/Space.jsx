@@ -121,6 +121,7 @@ function BookingForm() {
       <input
         type="date"
         required
+        min={new Date().toLocaleDateString("en-CA")}
         value={form.preferred_date}
         onChange={(e) => setForm({ ...form, preferred_date: e.target.value })}
       />
