@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import { newEventId, track } from "../metaPixel.js";
 import { SHOW_TICKETED_EVENTS } from "../eventsVisibility.js";
@@ -459,6 +460,46 @@ export default function Events() {
           </p>
         </div>
       </section>
+
+      <div className="container" style={{ marginBottom: "1.5rem" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "1rem",
+            flexWrap: "wrap",
+            background: "linear-gradient(135deg, #f3e3cf 0%, #e9cfa9 100%)",
+            border: "1px solid #e0c49c",
+            borderRadius: 18,
+            padding: "1.25rem 1.5rem",
+          }}
+        >
+          <div>
+            <div style={{ fontSize: "0.8rem", letterSpacing: 1, fontWeight: 700, textTransform: "uppercase", color: "#8a5428" }}>
+              Hands-on at the café
+            </div>
+            <h3 style={{ margin: "0.2rem 0 0.1rem", fontSize: "1.5rem", color: "#2e2218" }}>Pottery Sessions</h3>
+            <p style={{ margin: 0, color: "#6a563f" }}>
+              Book a 2-hour slot — Tue, Fri &amp; Sat · from ₦15,000 per person.
+            </p>
+          </div>
+          <Link
+            to="/pottery"
+            style={{
+              background: "#b5713e",
+              color: "#fff",
+              fontWeight: 700,
+              padding: "0.75rem 1.4rem",
+              borderRadius: 12,
+              textDecoration: "none",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Book a session →
+          </Link>
+        </div>
+      </div>
 
       <p style={{ textAlign: "center", fontWeight: 700, fontSize: "1.1rem", margin: 0, padding: "0 1.5rem" }}>
         Book your spot now. Come back for new upcoming events weekly.
