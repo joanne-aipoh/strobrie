@@ -55,4 +55,6 @@ class BookingRequest(Base):
     guest_count: Mapped[int] = mapped_column(Integer)
     preferred_date: Mapped[datetime] = mapped_column(Date)
     notes: Mapped[str | None] = mapped_column(Text, default=None)
+    # Pipeline stage: new | contacted | quote_sent | confirmed | declined.
+    status: Mapped[str] = mapped_column(String(20), default="new", server_default="new")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -1,19 +1,12 @@
 import { useEffect, useState } from "react";
 import { posApi } from "./posApi.js";
 
-const STORAGE_KEY = "strobrie-pos-last-seen-space-request";
 const POLL_MS = 60000;
 
-// Polls space-rental inquiries so Flow can badge new (unseen) ones on the nav.
-// "New" = id greater than the last one the manager opened the page on.
+// Polls space-rental inquiries so Flow can badge the ones still needing action
+// — i.e. those still at the "new" stage. Moving an inquiry along the pipeline
+// (Contacted / Quote sent / …) drops it from the count.
 export function useSpaceAlerts(enabled) {
-  const [lastSeenId, setLastSeenId] = useState(() => {
-    try {
-      return parseInt(localStorage.getItem(STORAGE_KEY) || "0", 10);
-    } catch {
-      return 0;
-    }
-  });
   const [requests, setRequests] = useState([]);
 
   useEffect(() => {
@@ -35,17 +28,6 @@ export function useSpaceAlerts(enabled) {
     };
   }, [enabled]);
 
-  const unseenCount = requests.filter((r) => r.id > lastSeenId).length;
-
-  function markSeen() {
-    const maxId = requests.reduce((m, r) => Math.max(m, r.id), lastSeenId);
-    setLastSeenId(maxId);
-    try {
-      localStorage.setItem(STORAGE_KEY, String(maxId));
-    } catch {
-      /* ignore */
-    }
-  }
-
-  return { unseenCount, markSeen };
+  const newCount = requests.filter((r) => (r.status || "new") === "new").length;
+  return { newCount };
 }

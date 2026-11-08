@@ -71,4 +71,12 @@ class BookingRequestOut(BaseModel):
     guest_count: int
     preferred_date: date
     notes: str | None
+    status: str = "new"
     created_at: datetime
+
+
+BookingStatus = Literal["new", "contacted", "quote_sent", "confirmed", "declined"]
+
+
+class BookingStatusUpdate(BaseModel):
+    status: BookingStatus

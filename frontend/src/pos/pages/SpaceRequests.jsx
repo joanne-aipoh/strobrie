@@ -9,6 +9,14 @@ function fmtDate(d) {
   return new Date(d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
 }
 
+const STAGES = [
+  { key: "new", label: "New", bg: "#fde4d0", color: "#b3500a" },
+  { key: "contacted", label: "Contacted", bg: "#dfeaf7", color: "#1d4f8c" },
+  { key: "quote_sent", label: "Quote sent", bg: "#e7defb", color: "#5a37a8" },
+  { key: "confirmed", label: "Confirmed", bg: "#dff0e0", color: "#1e7d34" },
+  { key: "declined", label: "Declined", bg: "#f7dede", color: "#9c2626" },
+];
+
 export default function SpaceRequests() {
   const [rows, setRows] = useState(null);
   const [error, setError] = useState("");
@@ -19,6 +27,15 @@ export default function SpaceRequests() {
       .then(setRows)
       .catch((e) => setError(e.message));
   }, []);
+
+  async function changeStatus(id, status) {
+    try {
+      const updated = await posApi.setSpaceRequestStatus(id, status);
+      setRows((rows) => rows.map((r) => (r.id === id ? updated : r)));
+    } catch (e) {
+      setError(e.message);
+    }
+  }
 
   if (error) return <div className="panel"><div className="error-text">{error}</div></div>;
   if (!rows) return <p>Loading&hellip;</p>;
@@ -38,11 +55,29 @@ export default function SpaceRequests() {
             className="panel"
             style={{ background: "var(--cream-2)", marginBottom: 10, boxShadow: "none" }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
               <strong style={{ fontSize: 15 }}>{r.name}</strong>
-              <span style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-                received {new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+                  received {new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                </span>
+                {(() => {
+                  const st = STAGES.find((s) => s.key === r.status) || STAGES[0];
+                  return (
+                    <select
+                      value={r.status || "new"}
+                      onChange={(e) => changeStatus(r.id, e.target.value)}
+                      style={{ background: st.bg, color: st.color, border: "none", borderRadius: 999, padding: "5px 10px", fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}
+                    >
+                      {STAGES.map((s) => (
+                        <option key={s.key} value={s.key} style={{ background: "#fff", color: "var(--ink)" }}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                  );
+                })()}
+              </div>
             </div>
             <div style={{ fontSize: 13.5, marginTop: 4 }}>
               <a href={`mailto:${r.email}`} style={{ color: "var(--rust-dark)" }}>{r.email}</a>

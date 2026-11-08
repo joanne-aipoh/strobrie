@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from .. import email_utils, meta_capi, models, schemas
@@ -16,6 +16,17 @@ def list_space_requests(db: Session = Depends(get_db)):
         .order_by(models.BookingRequest.created_at.desc())
         .all()
     )
+
+
+@admin_router.post("/{req_id}/status", response_model=schemas.BookingRequestOut)
+def set_status(req_id: int, payload: schemas.BookingStatusUpdate, db: Session = Depends(get_db)):
+    req = db.get(models.BookingRequest, req_id)
+    if req is None:
+        raise HTTPException(status_code=404, detail="Inquiry not found")
+    req.status = payload.status
+    db.commit()
+    db.refresh(req)
+    return req
 
 
 @router.post("", response_model=schemas.BookingRequestOut, status_code=201)

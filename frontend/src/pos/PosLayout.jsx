@@ -22,20 +22,15 @@ function PosShell() {
   const [showChangePin, setShowChangePin] = useState(false);
   const location = useLocation();
   const { unseenCount, markSeen } = useOrderAlerts(canManageOps && ordersEnabled);
-  const { unseenCount: spaceUnseen, markSeen: markSpaceSeen } = useSpaceAlerts(canManageOps);
+  // Badge = inquiries still at the "new" stage; it clears as you move them
+  // along the pipeline (Contacted / Quote sent / …) on the Space-rentals page.
+  const { newCount: spaceNew } = useSpaceAlerts(canManageOps);
 
   // Opening the Orders tab clears its badge.
   useEffect(() => {
     if (canManageOps && ordersEnabled && location.pathname.endsWith("/orders")) markSeen();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, canManageOps]);
-
-  // Clear the space-rentals badge while that page is open — including when more
-  // inquiries load in while it's being viewed, or the manager refreshed onto it.
-  useEffect(() => {
-    if (canManageOps && spaceUnseen > 0 && location.pathname.endsWith("/space-requests")) markSpaceSeen();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, spaceUnseen, canManageOps]);
 
   if (!currentStaff) {
     return (
@@ -94,7 +89,7 @@ function PosShell() {
           {canManageOps && (
             <NavLink to={posPath("/space-requests")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
               Space rentals
-              {spaceUnseen > 0 && (
+              {spaceNew > 0 && (
                 <span
                   style={{
                     background: "var(--rust)",
@@ -108,7 +103,7 @@ function PosShell() {
                     textAlign: "center",
                   }}
                 >
-                  {spaceUnseen}
+                  {spaceNew}
                 </span>
               )}
             </NavLink>
