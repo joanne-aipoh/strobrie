@@ -169,7 +169,7 @@ def _send(to_email: str, subject: str, html: str, error_context: str) -> bool:
 
 
 def send_space_request_alert(
-    name, email, space, event_type, guest_count, preferred_date, notes, created_at
+    name, email, phone, space, event_type, guest_count, preferred_date, notes, created_at
 ) -> bool:
     """Alert the café when someone submits a space-rental inquiry. Goes to
     BOOKING_ALERT_EMAIL, or the café's own Gmail (SMTP_USER) if that's unset."""
@@ -185,6 +185,7 @@ def send_space_request_alert(
       <h2 style="color:#c23f68;margin-bottom:4px">New space-rental inquiry</h2>
       <p style="margin-top:0"><strong>{esc(name)}</strong> &lt;{esc(email)}&gt;</p>
       <table cellpadding="6" style="border-collapse:collapse;font-size:14px">
+        <tr><td style="color:#6b5763">Phone</td><td><strong>{esc(phone)}</strong></td></tr>
         <tr><td style="color:#6b5763">Space</td><td><strong>{esc(space)}</strong></td></tr>
         <tr><td style="color:#6b5763">Event type</td><td>{esc(event_type)}</td></tr>
         <tr><td style="color:#6b5763">Guests</td><td>{esc(guest_count)}</td></tr>

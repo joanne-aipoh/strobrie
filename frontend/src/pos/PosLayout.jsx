@@ -4,6 +4,7 @@ import "./pos.css";
 import { PosAuthProvider, usePosAuth } from "./PosAuthContext.jsx";
 import { isFlowHost, posPath, ordersEnabled } from "./posBase.js";
 import { useOrderAlerts } from "./useOrderAlerts.js";
+import { useSpaceAlerts } from "./useSpaceAlerts.js";
 import Login from "./pages/Login.jsx";
 import ManageStaff from "./pages/ManageStaff.jsx";
 import { ChangePinForm, ForcePinChange } from "./pages/ChangePin.jsx";
@@ -21,10 +22,12 @@ function PosShell() {
   const [showChangePin, setShowChangePin] = useState(false);
   const location = useLocation();
   const { unseenCount, markSeen } = useOrderAlerts(canManageOps && ordersEnabled);
+  const { unseenCount: spaceUnseen, markSeen: markSpaceSeen } = useSpaceAlerts(canManageOps);
 
-  // Opening the Orders tab clears the badge — that's "seeing" the new ones.
+  // Opening a tab clears its badge — that's "seeing" the new ones.
   useEffect(() => {
     if (canManageOps && ordersEnabled && location.pathname.endsWith("/orders")) markSeen();
+    if (canManageOps && location.pathname.endsWith("/space-requests")) markSpaceSeen();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, canManageOps]);
 
@@ -82,7 +85,28 @@ function PosShell() {
           <NavLink to={posPath("/products")}>Products</NavLink>
           <NavLink to={posPath("/events")}>Events</NavLink>
           {canManageOps && <NavLink to={posPath("/pottery")}>Pottery</NavLink>}
-          {canManageOps && <NavLink to={posPath("/space-requests")}>Space rentals</NavLink>}
+          {canManageOps && (
+            <NavLink to={posPath("/space-requests")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              Space rentals
+              {spaceUnseen > 0 && (
+                <span
+                  style={{
+                    background: "var(--rust)",
+                    color: "#fff",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    padding: "3px 6px",
+                    borderRadius: 999,
+                    minWidth: 18,
+                    textAlign: "center",
+                  }}
+                >
+                  {spaceUnseen}
+                </span>
+              )}
+            </NavLink>
+          )}
           {canManageOps && ordersEnabled && (
             <NavLink to={posPath("/orders")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
               Orders

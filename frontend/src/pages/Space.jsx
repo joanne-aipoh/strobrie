@@ -36,6 +36,7 @@ function BookingForm() {
   const [form, setForm] = useState({
     name: "",
     email: "",
+    phone: "",
     event_type: "birthday",
     space: "indoor",
     guest_count: 10,
@@ -83,6 +84,13 @@ function BookingForm() {
         required
         value={form.email}
         onChange={(e) => setForm({ ...form, email: e.target.value })}
+      />
+      <input
+        type="tel"
+        placeholder="Phone number"
+        required
+        value={form.phone}
+        onChange={(e) => setForm({ ...form, phone: e.target.value })}
       />
       <select value={form.space} onChange={(e) => setForm({ ...form, space: e.target.value })}>
         {SPACES.map((s) => (

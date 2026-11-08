@@ -51,6 +51,7 @@ class ContactMessageOut(BaseModel):
 class BookingRequestCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     email: EmailStr
+    phone: str = Field(min_length=3, max_length=30)
     event_type: Literal["birthday", "corporate", "brunch", "private_dinner", "other"]
     space: Literal["indoor", "green_patio", "front_lawn"]
     guest_count: int = Field(ge=1, le=150)
@@ -64,6 +65,7 @@ class BookingRequestOut(BaseModel):
     id: int
     name: str
     email: EmailStr
+    phone: str | None = None
     event_type: str
     space: str
     guest_count: int

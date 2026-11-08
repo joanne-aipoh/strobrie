@@ -46,6 +46,12 @@ export default function SpaceRequests() {
             </div>
             <div style={{ fontSize: 13.5, marginTop: 4 }}>
               <a href={`mailto:${r.email}`} style={{ color: "var(--rust-dark)" }}>{r.email}</a>
+              {r.phone && (
+                <>
+                  {" · "}
+                  <a href={`tel:${r.phone}`} style={{ color: "var(--rust-dark)" }}>{r.phone}</a>
+                </>
+              )}
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 18px", marginTop: 8, fontSize: 13.5 }}>
               <span><span style={{ color: "var(--ink-soft)" }}>Space:</span> <strong>{titleize(r.space)}</strong></span>

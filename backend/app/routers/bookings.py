@@ -34,6 +34,7 @@ def create_booking_request(
         email_utils.send_space_request_alert,
         booking.name,
         booking.email,
+        booking.phone,
         booking.space,
         booking.event_type,
         booking.guest_count,
