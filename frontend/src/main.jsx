@@ -35,14 +35,22 @@ import { pageView, startPixel } from "./metaPixel.js";
 
 startPixel();
 
-// Register the service worker so Flow (and the site) can load with no network.
-// It only caches the app shell + static assets; API calls stay network-only.
+// Offline support is only for Flow (the till). The public site and shop should
+// always be fresh, so we register the service worker on the Flow host only and
+// actively unregister any that lingered on the other hosts (it used to register
+// everywhere, which made the marketing site cache a stale version).
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {
-      /* offline support just won't be available; the app still works online */
+  if (isFlowHost) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
     });
-  });
+  } else {
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((regs) => regs.forEach((r) => r.unregister()))
+      .catch(() => {});
+    if (window.caches) caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
+  }
 }
 
 // A single-page app never reloads between pages, so the pixel's PageView has
