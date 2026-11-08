@@ -85,9 +85,9 @@ export default function Visit() {
               </a>
             </p>
           </div>
-          <div>
+          <div style={{ textAlign: "center" }}>
             <h2>Enjoyed your visit?</h2>
-            <div style={{ textAlign: "center" }}>
+            <div>
               <a
                 href="https://g.page/r/CWGBB7Y1Vzl9EAE/review"
                 target="_blank"
