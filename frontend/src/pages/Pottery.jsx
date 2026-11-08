@@ -187,7 +187,7 @@ export default function Pottery() {
             Strobriē Café
           </div>
           <h1 style={{ fontSize: 34, margin: "6px 0 8px", color: INK }}>Book a Pottery Session</h1>
-          <p style={{ color: SOFT, fontSize: 15, margin: 0 }}>
+          <p style={{ color: SOFT, fontSize: "clamp(10px, 3vw, 15px)", margin: 0, whiteSpace: "nowrap" }}>
             Tuesdays, Fridays &amp; Saturdays · 2-hour slots · ₦15,000 per person · limited seats
           </p>
         </div>
