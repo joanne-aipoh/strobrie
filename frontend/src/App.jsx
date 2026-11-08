@@ -19,6 +19,7 @@ function Header() {
         <nav className="nav">
           <NavLink to="/menu">Menu</NavLink>
           <NavLink to="/events">Events</NavLink>
+          <NavLink to="/pottery">Pottery</NavLink>
           <NavLink to="/space">Space</NavLink>
           {SHOW_SHOP_LINKS &&
             (isLocalDev ? <NavLink to="/shop">Shop</NavLink> : <a href={SHOP_SITE_URL}>Shop</a>)}

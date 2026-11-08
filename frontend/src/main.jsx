@@ -10,6 +10,8 @@ import Events from "./pages/Events.jsx";
 import EventTicketConfirmation from "./pages/EventTicketConfirmation.jsx";
 import Space from "./pages/Space.jsx";
 import Visit from "./pages/Visit.jsx";
+import Pottery from "./pages/Pottery.jsx";
+import PotteryConfirmation from "./pages/PotteryConfirmation.jsx";
 import PosLayout, { PosOpsRoute } from "./pos/PosLayout.jsx";
 import PosSell from "./pos/pages/Sell.jsx";
 import PosWaste from "./pos/pages/Waste.jsx";
@@ -20,6 +22,7 @@ import PosInventory from "./pos/pages/Inventory.jsx";
 import PosReports from "./pos/pages/Reports.jsx";
 import PosProducts from "./pos/pages/Products.jsx";
 import PosOrders from "./pos/pages/Orders.jsx";
+import PosPottery from "./pos/pages/Pottery.jsx";
 import ShopLayout from "./shop/ShopLayout.jsx";
 import Catalog from "./shop/pages/Catalog.jsx";
 import ProductDetail from "./shop/pages/ProductDetail.jsx";
@@ -65,6 +68,8 @@ createRoot(document.getElementById("root")).render(
             <Route path="events/confirmation" element={<EventTicketConfirmation />} />
             <Route path="space" element={<Space />} />
             <Route path="visit" element={<Visit />} />
+            <Route path="pottery" element={<Pottery />} />
+            <Route path="pottery/confirmation" element={<PotteryConfirmation />} />
           </Route>
         )}
         <Route path={isFlowHost ? "/" : "/pos"} element={<PosLayout />}>
@@ -74,6 +79,14 @@ createRoot(document.getElementById("root")).render(
           <Route path="customers" element={<PosCustomers />} />
           <Route path="events" element={<PosEvents />} />
           <Route path="events/:eventId" element={<PosEventDetail />} />
+          <Route
+            path="pottery"
+            element={
+              <PosOpsRoute>
+                <PosPottery />
+              </PosOpsRoute>
+            }
+          />
           <Route
             path="inventory"
             element={

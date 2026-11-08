@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from . import models, pos_models, shop_models
+from . import models, pos_models, pottery_models, shop_models
 from .database import Base, engine
 from .routers import (
     bookings,
@@ -19,6 +19,7 @@ from .routers import (
     pos_staff,
     pos_tabs,
     pos_waste,
+    pottery,
     shop_orders,
     shop_products,
 )
@@ -52,6 +53,8 @@ app.include_router(pos_waste.router)
 app.include_router(pos_inventory.router)
 app.include_router(pos_events.router)
 app.include_router(events_public.router)
+app.include_router(pottery.public_router)
+app.include_router(pottery.admin_router)
 app.include_router(shop_products.router)
 app.include_router(shop_orders.router)
 

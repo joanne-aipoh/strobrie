@@ -42,4 +42,11 @@ export const api = {
       body: JSON.stringify(data),
     }),
   verifyTicket: (reference) => request(`/api/ticketed-events/tickets/verify/${reference}`),
+
+  // Pottery self-booking (paid via Paystack)
+  getPotteryAvailability: () => request("/api/pottery/availability"),
+  bookPottery: (data) => request("/api/pottery/book", { method: "POST", body: JSON.stringify(data) }),
+  verifyPottery: (reference) => request(`/api/pottery/verify/${reference}`),
+  requestPrivatePottery: (data) =>
+    request("/api/pottery/private-request", { method: "POST", body: JSON.stringify(data) }),
 };
