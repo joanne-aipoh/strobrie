@@ -24,12 +24,18 @@ function PosShell() {
   const { unseenCount, markSeen } = useOrderAlerts(canManageOps && ordersEnabled);
   const { unseenCount: spaceUnseen, markSeen: markSpaceSeen } = useSpaceAlerts(canManageOps);
 
-  // Opening a tab clears its badge — that's "seeing" the new ones.
+  // Opening the Orders tab clears its badge.
   useEffect(() => {
     if (canManageOps && ordersEnabled && location.pathname.endsWith("/orders")) markSeen();
-    if (canManageOps && location.pathname.endsWith("/space-requests")) markSpaceSeen();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, canManageOps]);
+
+  // Clear the space-rentals badge while that page is open — including when more
+  // inquiries load in while it's being viewed, or the manager refreshed onto it.
+  useEffect(() => {
+    if (canManageOps && spaceUnseen > 0 && location.pathname.endsWith("/space-requests")) markSpaceSeen();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, spaceUnseen, canManageOps]);
 
   if (!currentStaff) {
     return (
