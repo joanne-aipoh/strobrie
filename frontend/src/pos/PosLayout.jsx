@@ -187,6 +187,51 @@ export function PosOpsRoute({ children }) {
   return children;
 }
 
+// Shows when a new Flow build is deployed (service worker is waiting). Tapping
+// Update activates it and reloads — so the till never runs a stale version.
+function UpdateBanner() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const on = () => setShow(true);
+    window.addEventListener("flow-update-available", on);
+    return () => window.removeEventListener("flow-update-available", on);
+  }, []);
+  if (!show) return null;
+  function doUpdate() {
+    const reg = window.__flowSwReg;
+    if (reg && reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
+    else window.location.reload();
+  }
+  return (
+    <div
+      style={{
+        position: "fixed",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 3000,
+        background: "var(--rust, #c2773f)",
+        color: "#fff",
+        padding: "10px 16px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 14,
+        fontSize: 14,
+        fontWeight: 600,
+      }}
+    >
+      A new version of Flow is ready.
+      <button
+        onClick={doUpdate}
+        style={{ background: "#fff", color: "var(--rust-dark, #a2531f)", border: "none", borderRadius: 8, padding: "6px 14px", fontWeight: 700, cursor: "pointer" }}
+      >
+        Update now
+      </button>
+    </div>
+  );
+}
+
 export default function PosLayout() {
   // Nothing else sets a title, so every route inherited index.html's — the
   // cafe's marketing one. Staff often have the public site open in another
@@ -202,6 +247,7 @@ export default function PosLayout() {
 
   return (
     <PosAuthProvider>
+      <UpdateBanner />
       <PosShell />
     </PosAuthProvider>
   );

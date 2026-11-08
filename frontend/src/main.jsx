@@ -43,7 +43,30 @@ startPixel();
 if ("serviceWorker" in navigator) {
   if (isFlowHost) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      const notify = (reg) => {
+        window.__flowSwReg = reg;
+        window.dispatchEvent(new Event("flow-update-available"));
+      };
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((reg) => {
+          if (reg.waiting && navigator.serviceWorker.controller) notify(reg);
+          reg.addEventListener("updatefound", () => {
+            const sw = reg.installing;
+            if (!sw) return;
+            sw.addEventListener("statechange", () => {
+              if (sw.state === "installed" && navigator.serviceWorker.controller) notify(reg);
+            });
+          });
+        })
+        .catch(() => {});
+      // When the new worker takes over (after the user taps Update), reload once.
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (reloaded) return;
+        reloaded = true;
+        window.location.reload();
+      });
     });
   } else {
     navigator.serviceWorker

@@ -64,25 +64,28 @@ export default function Reports() {
   const [waste, setWaste] = useState(null);
   const [customers, setCustomers] = useState(null);
   const [staffList, setStaffList] = useState(null);
+  const [pottery, setPottery] = useState(null);
 
   async function loadAll() {
-    const [s, w, c, st] = await Promise.all([
+    const [s, w, c, st, pt] = await Promise.all([
       posApi.listSales(),
       posApi.listWaste(),
       posApi.listCustomers(),
       posApi.listStaff(),
+      posApi.potteryBookings().catch(() => []),
     ]);
     setSales(s);
     setWaste(w);
     setCustomers(c);
     setStaffList(st);
+    setPottery(pt);
   }
 
   useEffect(() => {
     loadAll();
   }, []);
 
-  if (!sales || !waste || !customers || !staffList) return <p>Loading&hellip;</p>;
+  if (!sales || !waste || !customers || !staffList || !pottery) return <p>Loading&hellip;</p>;
 
   const staffName = (id) => staffList.find((s) => s.id === id)?.name || "—";
   const customerName = (id) => (id ? customers.find((c) => c.id === id)?.name || "—" : "—");
@@ -96,6 +99,10 @@ export default function Reports() {
   const periodTotal = periodSales.reduce((s, x) => s + x.total, 0);
   const allTimeTotal = validSales.reduce((s, x) => s + x.total, 0);
   const periodWaste = waste.filter((w) => inPeriod(w.timestamp)).reduce((s, w) => s + w.cost_impact, 0);
+  // Pottery is paid via Paystack (separate from till sales) — surface it so the
+  // day's take isn't understated. Scoped by when the booking was paid.
+  const periodPottery = pottery.filter((b) => inPeriod(b.created_at));
+  const periodPotteryTotal = periodPottery.reduce((s, b) => s + b.amount, 0);
 
   const catTotals = {};
   periodSales.forEach((s) => {
@@ -218,6 +225,15 @@ export default function Reports() {
             <div className="value">{fmt(allTimeTotal)}</div>
           </div>
         )}
+        <div className="metric-card">
+          <div className="label">{periodLabel} pottery</div>
+          <div className="value">{fmt(periodPotteryTotal)}</div>
+          {periodPottery.length > 0 && (
+            <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 2 }}>
+              {periodPottery.length} booking{periodPottery.length === 1 ? "" : "s"}
+            </div>
+          )}
+        </div>
         <div className="metric-card">
           <div className="label">{periodLabel} waste cost</div>
           <div className="value">{fmt(periodWaste)}</div>

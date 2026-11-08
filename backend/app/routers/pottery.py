@@ -2,10 +2,10 @@ import os
 import uuid
 from datetime import date, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import paystack, pottery_models, pottery_schemas
+from .. import email_utils, paystack, pottery_models, pottery_schemas
 from ..database import get_db
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
@@ -127,7 +127,7 @@ def book(payload: pottery_schemas.BookRequest, db: Session = Depends(get_db)):
 
 
 @public_router.get("/verify/{reference}", response_model=pottery_schemas.BookingOut)
-def verify(reference: str, db: Session = Depends(get_db)):
+def verify(reference: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     booking = (
         db.query(pottery_models.PotteryBooking).filter_by(payment_reference=reference).first()
     )
@@ -143,6 +143,17 @@ def verify(reference: str, db: Session = Depends(get_db)):
         booking.paid = True
         db.commit()
         db.refresh(booking)
+        # Confirmation email to the customer (best-effort, off the request).
+        background_tasks.add_task(
+            email_utils.send_pottery_confirmation,
+            booking.customer_name,
+            booking.customer_email,
+            booking.date,
+            booking.time_slot,
+            booking.session_type,
+            booking.seats,
+            booking.amount,
+        )
     return booking
 
 
@@ -199,6 +210,16 @@ def set_block(payload: pottery_schemas.BlockRequest, db: Session = Depends(get_d
         db.delete(existing)
         db.commit()
     return {"ok": True}
+
+
+@admin_router.get("/bookings", response_model=list[pottery_schemas.BookingOut])
+def list_bookings(db: Session = Depends(get_db)):
+    return (
+        db.query(pottery_models.PotteryBooking)
+        .filter_by(paid=True)
+        .order_by(pottery_models.PotteryBooking.created_at.desc())
+        .all()
+    )
 
 
 @admin_router.delete("/bookings/{booking_id}", status_code=204)

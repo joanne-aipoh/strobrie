@@ -62,6 +62,14 @@ def create_booking_request(
         booking.notes,
         booking.created_at,
     )
+    # Acknowledge to the customer.
+    background_tasks.add_task(
+        email_utils.send_space_inquiry_ack,
+        booking.name,
+        booking.email,
+        booking.space,
+        booking.preferred_date,
+    )
     context = meta_capi.request_context(request)
     background_tasks.add_task(
         meta_capi.send_event,

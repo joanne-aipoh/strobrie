@@ -198,6 +198,47 @@ def send_space_request_alert(
     return _send(to, f"New space inquiry — {name} ({space})", html, "space request alert")
 
 
+_POTTERY_TIMES = {"10:00": "10:00 AM", "12:00": "12:00 PM", "14:00": "2:00 PM"}
+
+
+def send_pottery_confirmation(name, email, booking_date, time_slot, session_type, seats, amount) -> bool:
+    """Confirm a paid pottery booking to the customer."""
+    when = booking_date.strftime("%A, %d %B %Y") if hasattr(booking_date, "strftime") else str(booking_date)
+    t = _POTTERY_TIMES.get(time_slot, time_slot)
+    kind = "Private session" if session_type == "private" else f"Public session · {seats} {'person' if seats == 1 else 'people'}"
+    html = f"""
+    <div style="font-family:Arial,Helvetica,sans-serif;color:#2b1d22;max-width:520px">
+      <h2 style="color:#b5713e">Your pottery session is booked 🏺</h2>
+      <p>Hi {name.split(' ')[0]}, your spot at Strobriē is confirmed.</p>
+      <table cellpadding="6" style="border-collapse:collapse;font-size:15px">
+        <tr><td style="color:#6b5763">Date</td><td><strong>{when}</strong></td></tr>
+        <tr><td style="color:#6b5763">Time</td><td><strong>{t}</strong> (2 hours)</td></tr>
+        <tr><td style="color:#6b5763">Session</td><td>{kind}</td></tr>
+        <tr><td style="color:#6b5763">Paid</td><td>{_fmt_naira(amount)}</td></tr>
+      </table>
+      <p style="color:#6b5763">See you at the studio! Reply to this email if you need to make a change.</p>
+      <p style="color:#6b5763;font-size:12.5px">Strobriē By Joanne</p>
+    </div>
+    """
+    return _send(email, "Your Strobriē pottery session is booked", html, "pottery confirmation")
+
+
+def send_space_inquiry_ack(name, email, space, preferred_date) -> bool:
+    """Acknowledge a space-rental inquiry to the customer."""
+    when = preferred_date.strftime("%A, %d %B %Y") if hasattr(preferred_date, "strftime") else str(preferred_date)
+    nice_space = str(space).replace("_", " ").title()
+    html = f"""
+    <div style="font-family:Arial,Helvetica,sans-serif;color:#2b1d22;max-width:520px">
+      <h2 style="color:#b5713e">We got your request 🎉</h2>
+      <p>Hi {name.split(' ')[0]}, thanks for your interest in hosting at Strobriē.</p>
+      <p>We've received your inquiry for <strong>{nice_space}</strong> around <strong>{when}</strong> and
+      will reach out shortly to talk through the details.</p>
+      <p style="color:#6b5763;font-size:12.5px">Strobriē By Joanne</p>
+    </div>
+    """
+    return _send(email, "We received your Strobriē space inquiry", html, "space inquiry ack")
+
+
 def _build_ticket_email_html(ticket: pos_models.Ticket, quantity: int = 1) -> str:
     event = ticket.event
     tier = ticket.tier

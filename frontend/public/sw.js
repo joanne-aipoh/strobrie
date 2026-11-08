@@ -18,7 +18,12 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE).then((cache) => cache.add(SHELL)).catch(() => {}),
   );
-  self.skipWaiting();
+  // Don't auto-activate — wait so the app can show an "update available" prompt
+  // and skip waiting only when the user taps it (see main.jsx).
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
