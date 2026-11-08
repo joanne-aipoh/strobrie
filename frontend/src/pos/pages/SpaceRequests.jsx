@@ -34,6 +34,7 @@ export default function SpaceRequests() {
     try {
       const updated = await posApi.setSpaceRequestStatus(id, status);
       setRows((rows) => rows.map((r) => (r.id === id ? updated : r)));
+      window.dispatchEvent(new Event("space-requests-changed")); // refresh the nav badge now
     } catch (e) {
       setError(e.message);
     }
@@ -44,6 +45,7 @@ export default function SpaceRequests() {
       await posApi.deleteSpaceRequest(id);
       setRows((rows) => rows.filter((r) => r.id !== id));
       setConfirmingId(null);
+      window.dispatchEvent(new Event("space-requests-changed"));
     } catch (e) {
       setError(e.message);
     }

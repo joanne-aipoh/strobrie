@@ -22,9 +22,14 @@ export function useSpaceAlerts(enabled) {
     }
     poll();
     const id = setInterval(poll, POLL_MS);
+    // Re-poll immediately when the Space-rentals page changes/deletes an inquiry,
+    // so the badge updates at once instead of waiting for the next tick.
+    const onChanged = () => poll();
+    window.addEventListener("space-requests-changed", onChanged);
     return () => {
       cancelled = true;
       clearInterval(id);
+      window.removeEventListener("space-requests-changed", onChanged);
     };
   }, [enabled]);
 
