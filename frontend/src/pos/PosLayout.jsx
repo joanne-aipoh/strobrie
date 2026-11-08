@@ -82,6 +82,7 @@ function PosShell() {
           <NavLink to={posPath("/products")}>Products</NavLink>
           <NavLink to={posPath("/events")}>Events</NavLink>
           {canManageOps && <NavLink to={posPath("/pottery")}>Pottery</NavLink>}
+          {canManageOps && <NavLink to={posPath("/space-requests")}>Space rentals</NavLink>}
           {canManageOps && ordersEnabled && (
             <NavLink to={posPath("/orders")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
               Orders

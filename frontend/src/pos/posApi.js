@@ -66,6 +66,9 @@ export const posApi = {
   // inventory & recipes
   listInventory: () => request("/api/pos/inventory"),
   restock: (id, qty) => request(`/api/pos/inventory/${id}/restock`, { method: "POST", body: JSON.stringify({ qty }) }),
+  // space-rental inquiries
+  spaceRequests: () => request("/api/pos/space-requests"),
+
   // pottery self-booking
   potteryOverview: () => request("/api/pos/pottery/overview"),
   potterySetBlock: (data) => request("/api/pos/pottery/block", { method: "POST", body: JSON.stringify(data) }),

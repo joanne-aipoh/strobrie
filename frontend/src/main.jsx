@@ -23,6 +23,7 @@ import PosReports from "./pos/pages/Reports.jsx";
 import PosProducts from "./pos/pages/Products.jsx";
 import PosOrders from "./pos/pages/Orders.jsx";
 import PosPottery from "./pos/pages/Pottery.jsx";
+import PosSpaceRequests from "./pos/pages/SpaceRequests.jsx";
 import ShopLayout from "./shop/ShopLayout.jsx";
 import Catalog from "./shop/pages/Catalog.jsx";
 import ProductDetail from "./shop/pages/ProductDetail.jsx";
@@ -92,6 +93,14 @@ createRoot(document.getElementById("root")).render(
             element={
               <PosOpsRoute>
                 <PosPottery />
+              </PosOpsRoute>
+            }
+          />
+          <Route
+            path="space-requests"
+            element={
+              <PosOpsRoute>
+                <PosSpaceRequests />
               </PosOpsRoute>
             }
           />
