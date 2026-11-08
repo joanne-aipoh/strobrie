@@ -62,10 +62,63 @@ export default function PotteryAdmin() {
   });
 
   const openRequests = requests.filter((r) => r.status === "new");
+  const bookedSlots = slots.filter((s) => s.bookings.length > 0);
+  const totalBooked = bookedSlots.reduce((n, s) => n + s.bookings.length, 0);
 
   return (
     <>
       {error && <div className="error-text" style={{ marginBottom: 10 }}>{error}</div>}
+
+      <div className="panel">
+        <h3>Pottery bookings ({totalBooked})</h3>
+        {bookedSlots.length === 0 ? (
+          <div className="empty-note">No bookings yet.</div>
+        ) : (
+          bookedSlots.map((s) => (
+            <div key={`${s.date}-${s.time}`} style={{ padding: "8px 0", borderBottom: "1px solid var(--line)" }}>
+              <strong>{s.label} · {s.time_label}</strong>
+              <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 2 }}>
+                {s.bookings
+                  .map(
+                    (b) =>
+                      `${b.customer_name} — ${b.session_type === "private" ? "private" : b.seats + (b.seats === 1 ? " person" : " people")}` +
+                      (b.customer_phone ? ` · ${b.customer_phone}` : ""),
+                  )
+                  .join("   ·   ")}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="panel">
+        <h3>Private session requests {openRequests.length > 0 && `(${openRequests.length} new)`}</h3>
+        {requests.length === 0 ? (
+          <div className="empty-note">No requests yet.</div>
+        ) : (
+          requests.map((r) => (
+            <div
+              key={r.id}
+              style={{ padding: "10px 0", borderBottom: "1px solid var(--line)", opacity: r.status === "handled" ? 0.55 : 1 }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                <div>
+                  <strong>{r.customer_name}</strong> · {r.customer_phone} · {r.customer_email}
+                  <div style={{ fontSize: 13, color: "var(--rust-dark)", marginTop: 2 }}>Wants: {r.preferred}</div>
+                  {r.message && <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 2 }}>“{r.message}”</div>}
+                </div>
+                {r.status === "new" ? (
+                  <button className="link-btn" onClick={() => handleRequest(r.id)}>
+                    Mark handled
+                  </button>
+                ) : (
+                  <span className="reason-tag">Handled</span>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
 
       <div className="panel">
         <h3>Pottery — upcoming slots</h3>
@@ -110,39 +163,6 @@ export default function PotteryAdmin() {
                   </div>
                 );
               })}
-            </div>
-          ))
-        )}
-      </div>
-
-      <div className="panel">
-        <h3>Private session requests {openRequests.length > 0 && `(${openRequests.length} new)`}</h3>
-        {requests.length === 0 ? (
-          <div className="empty-note">No requests yet.</div>
-        ) : (
-          requests.map((r) => (
-            <div
-              key={r.id}
-              style={{
-                padding: "10px 0",
-                borderBottom: "1px solid var(--line)",
-                opacity: r.status === "handled" ? 0.55 : 1,
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-                <div>
-                  <strong>{r.customer_name}</strong> · {r.customer_phone} · {r.customer_email}
-                  <div style={{ fontSize: 13, color: "var(--rust-dark)", marginTop: 2 }}>Wants: {r.preferred}</div>
-                  {r.message && <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 2 }}>“{r.message}”</div>}
-                </div>
-                {r.status === "new" ? (
-                  <button className="link-btn" onClick={() => handleRequest(r.id)}>
-                    Mark handled
-                  </button>
-                ) : (
-                  <span className="reason-tag">Handled</span>
-                )}
-              </div>
             </div>
           ))
         )}
