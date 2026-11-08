@@ -201,6 +201,24 @@ def set_block(payload: pottery_schemas.BlockRequest, db: Session = Depends(get_d
     return {"ok": True}
 
 
+@admin_router.delete("/bookings/{booking_id}", status_code=204)
+def delete_booking(booking_id: int, db: Session = Depends(get_db)):
+    b = db.get(pottery_models.PotteryBooking, booking_id)
+    if b is None:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    db.delete(b)
+    db.commit()
+
+
+@admin_router.delete("/requests/{req_id}", status_code=204)
+def delete_request(req_id: int, db: Session = Depends(get_db)):
+    r = db.get(pottery_models.PotteryRequest, req_id)
+    if r is None:
+        raise HTTPException(status_code=404, detail="Request not found")
+    db.delete(r)
+    db.commit()
+
+
 @admin_router.get("/requests", response_model=list[pottery_schemas.RequestOut])
 def list_requests(db: Session = Depends(get_db)):
     return (

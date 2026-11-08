@@ -77,6 +77,8 @@ export const posApi = {
   potterySetBlock: (data) => request("/api/pos/pottery/block", { method: "POST", body: JSON.stringify(data) }),
   potteryRequests: () => request("/api/pos/pottery/requests"),
   potteryHandleRequest: (id) => request(`/api/pos/pottery/requests/${id}/handled`, { method: "POST" }),
+  deletePotteryBooking: (id) => request(`/api/pos/pottery/bookings/${id}`, { method: "DELETE" }),
+  deletePotteryRequest: (id) => request(`/api/pos/pottery/requests/${id}`, { method: "DELETE" }),
 
   getRecipe: (menuItemId) => request(`/api/pos/recipes/${menuItemId}`),
   setRecipe: (menuItemId, lines) =>

@@ -5,6 +5,7 @@ import { PosAuthProvider, usePosAuth } from "./PosAuthContext.jsx";
 import { isFlowHost, posPath, ordersEnabled } from "./posBase.js";
 import { useOrderAlerts } from "./useOrderAlerts.js";
 import { useSpaceAlerts } from "./useSpaceAlerts.js";
+import { usePotteryAlerts } from "./usePotteryAlerts.js";
 import Login from "./pages/Login.jsx";
 import ManageStaff from "./pages/ManageStaff.jsx";
 import { ChangePinForm, ForcePinChange } from "./pages/ChangePin.jsx";
@@ -25,6 +26,7 @@ function PosShell() {
   // Badge = inquiries still at the "new" stage; it clears as you move them
   // along the pipeline (Contacted / Quote sent / …) on the Space-rentals page.
   const { newCount: spaceNew } = useSpaceAlerts(canManageOps);
+  const { newCount: potteryNew } = usePotteryAlerts(canManageOps);
 
   // Opening the Orders tab clears its badge.
   useEffect(() => {
@@ -85,7 +87,28 @@ function PosShell() {
           <NavLink to={posPath("/customers")}>Loyalty</NavLink>
           <NavLink to={posPath("/products")}>Products</NavLink>
           <NavLink to={posPath("/events")}>Events</NavLink>
-          {canManageOps && <NavLink to={posPath("/pottery")}>Pottery</NavLink>}
+          {canManageOps && (
+            <NavLink to={posPath("/pottery")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              Pottery
+              {potteryNew > 0 && (
+                <span
+                  style={{
+                    background: "var(--rust)",
+                    color: "#fff",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    padding: "3px 6px",
+                    borderRadius: 999,
+                    minWidth: 18,
+                    textAlign: "center",
+                  }}
+                >
+                  {potteryNew}
+                </span>
+              )}
+            </NavLink>
+          )}
           {canManageOps && (
             <NavLink to={posPath("/space-requests")} style={{ display: "flex", alignItems: "center", gap: 6 }}>
               Space rentals

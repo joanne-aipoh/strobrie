@@ -16,6 +16,7 @@ export default function PotteryAdmin() {
   const [slots, setSlots] = useState(null);
   const [requests, setRequests] = useState(null);
   const [error, setError] = useState("");
+  const [confirming, setConfirming] = useState(null); // "b<id>" | "r<id>"
 
   function load() {
     return Promise.all([posApi.potteryOverview(), posApi.potteryRequests()])
@@ -43,6 +44,28 @@ export default function PotteryAdmin() {
     try {
       await posApi.potteryHandleRequest(id);
       await load();
+      window.dispatchEvent(new Event("pottery-requests-changed"));
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function delBooking(id) {
+    try {
+      await posApi.deletePotteryBooking(id);
+      await load();
+      setConfirming(null);
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function delRequest(id) {
+    try {
+      await posApi.deletePotteryRequest(id);
+      await load();
+      setConfirming(null);
+      window.dispatchEvent(new Event("pottery-requests-changed"));
     } catch (e) {
       setError(e.message);
     }
@@ -77,15 +100,24 @@ export default function PotteryAdmin() {
           bookedSlots.map((s) => (
             <div key={`${s.date}-${s.time}`} style={{ padding: "8px 0", borderBottom: "1px solid var(--line)" }}>
               <strong>{s.label} · {s.time_label}</strong>
-              <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 2 }}>
-                {s.bookings
-                  .map(
-                    (b) =>
-                      `${b.customer_name} — ${b.session_type === "private" ? "private" : b.seats + (b.seats === 1 ? " person" : " people")}` +
-                      (b.customer_phone ? ` · ${b.customer_phone}` : ""),
-                  )
-                  .join("   ·   ")}
-              </div>
+              {s.bookings.map((b) => (
+                <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 3 }}>
+                  <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+                    {b.customer_name} — {b.session_type === "private" ? "private" : `${b.seats} ${b.seats === 1 ? "person" : "people"}`}
+                    {b.customer_phone ? ` · ${b.customer_phone}` : ""}
+                  </span>
+                  {confirming === `b${b.id}` ? (
+                    <span style={{ fontSize: 12.5, whiteSpace: "nowrap" }}>
+                      Delete?{" "}
+                      <button className="link-btn" style={{ color: "var(--danger)", fontWeight: 700 }} onClick={() => delBooking(b.id)}>Yes</button>
+                      {"  "}
+                      <button className="link-btn" onClick={() => setConfirming(null)}>No</button>
+                    </span>
+                  ) : (
+                    <button className="link-btn" style={{ color: "var(--ink-soft)" }} onClick={() => setConfirming(`b${b.id}`)}>Delete</button>
+                  )}
+                </div>
+              ))}
             </div>
           ))
         )}
@@ -107,13 +139,25 @@ export default function PotteryAdmin() {
                   <div style={{ fontSize: 13, color: "var(--rust-dark)", marginTop: 2 }}>Wants: {r.preferred}</div>
                   {r.message && <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 2 }}>“{r.message}”</div>}
                 </div>
-                {r.status === "new" ? (
-                  <button className="link-btn" onClick={() => handleRequest(r.id)}>
-                    Mark handled
-                  </button>
-                ) : (
-                  <span className="reason-tag">Handled</span>
-                )}
+                <span style={{ display: "flex", gap: 10, alignItems: "center", whiteSpace: "nowrap" }}>
+                  {r.status === "new" ? (
+                    <button className="link-btn" onClick={() => handleRequest(r.id)}>
+                      Mark handled
+                    </button>
+                  ) : (
+                    <span className="reason-tag">Handled</span>
+                  )}
+                  {confirming === `r${r.id}` ? (
+                    <span style={{ fontSize: 12.5 }}>
+                      Delete?{" "}
+                      <button className="link-btn" style={{ color: "var(--danger)", fontWeight: 700 }} onClick={() => delRequest(r.id)}>Yes</button>
+                      {"  "}
+                      <button className="link-btn" onClick={() => setConfirming(null)}>No</button>
+                    </span>
+                  ) : (
+                    <button className="link-btn" style={{ color: "var(--ink-soft)" }} onClick={() => setConfirming(`r${r.id}`)}>Delete</button>
+                  )}
+                </span>
               </div>
             </div>
           ))
