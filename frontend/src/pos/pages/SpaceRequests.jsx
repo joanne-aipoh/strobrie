@@ -28,10 +28,22 @@ export default function SpaceRequests() {
       .catch((e) => setError(e.message));
   }, []);
 
+  const [confirmingId, setConfirmingId] = useState(null);
+
   async function changeStatus(id, status) {
     try {
       const updated = await posApi.setSpaceRequestStatus(id, status);
       setRows((rows) => rows.map((r) => (r.id === id ? updated : r)));
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function remove(id) {
+    try {
+      await posApi.deleteSpaceRequest(id);
+      setRows((rows) => rows.filter((r) => r.id !== id));
+      setConfirmingId(null);
     } catch (e) {
       setError(e.message);
     }
@@ -97,6 +109,24 @@ export default function SpaceRequests() {
             {r.notes && (
               <div style={{ fontSize: 13, color: "var(--rust-dark)", marginTop: 6 }}>Notes: “{r.notes}”</div>
             )}
+            <div style={{ marginTop: 8, textAlign: "right" }}>
+              {confirmingId === r.id ? (
+                <span style={{ fontSize: 12.5 }}>
+                  Delete this inquiry?{" "}
+                  <button className="link-btn" style={{ color: "var(--danger)", fontWeight: 700 }} onClick={() => remove(r.id)}>
+                    Yes, delete
+                  </button>
+                  {"   "}
+                  <button className="link-btn" onClick={() => setConfirmingId(null)}>
+                    Cancel
+                  </button>
+                </span>
+              ) : (
+                <button className="link-btn" style={{ color: "var(--ink-soft)" }} onClick={() => setConfirmingId(r.id)}>
+                  Delete
+                </button>
+              )}
+            </div>
           </div>
         ))
       )}

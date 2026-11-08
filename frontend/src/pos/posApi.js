@@ -70,6 +70,7 @@ export const posApi = {
   spaceRequests: () => request("/api/pos/space-requests"),
   setSpaceRequestStatus: (id, status) =>
     request(`/api/pos/space-requests/${id}/status`, { method: "POST", body: JSON.stringify({ status }) }),
+  deleteSpaceRequest: (id) => request(`/api/pos/space-requests/${id}`, { method: "DELETE" }),
 
   // pottery self-booking
   potteryOverview: () => request("/api/pos/pottery/overview"),

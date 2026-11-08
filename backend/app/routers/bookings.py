@@ -29,6 +29,15 @@ def set_status(req_id: int, payload: schemas.BookingStatusUpdate, db: Session = 
     return req
 
 
+@admin_router.delete("/{req_id}", status_code=204)
+def delete_space_request(req_id: int, db: Session = Depends(get_db)):
+    req = db.get(models.BookingRequest, req_id)
+    if req is None:
+        raise HTTPException(status_code=404, detail="Inquiry not found")
+    db.delete(req)
+    db.commit()
+
+
 @router.post("", response_model=schemas.BookingRequestOut, status_code=201)
 def create_booking_request(
     payload: schemas.BookingRequestCreate,
