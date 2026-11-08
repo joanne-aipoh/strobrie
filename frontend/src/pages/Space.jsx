@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import { newEventId, track } from "../metaPixel.js";
 
@@ -138,13 +138,15 @@ function BookingForm() {
   );
 }
 
-function SpaceCard({ space }) {
+function SpaceCard({ space, onOpen }) {
   return (
     <div className="event-card">
       <img
         src={space.photo}
         alt={space.name}
-        style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 12, marginBottom: "0.75rem" }}
+        onClick={() => onOpen({ src: space.photo, alt: space.name })}
+        style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 12, marginBottom: "0.75rem", cursor: "zoom-in" }}
+        title="Click to view full size"
       />
       <h3 style={{ marginBottom: 2 }}>{space.name}</h3>
       <p className="event-date" style={{ marginBottom: 8 }}>
@@ -157,6 +159,15 @@ function SpaceCard({ space }) {
 }
 
 export default function Space() {
+  const [lightbox, setLightbox] = useState(null); // { src, alt } | null
+
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e) => e.key === "Escape" && setLightbox(null);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightbox]);
+
   return (
     <section className="section">
       <div className="container">
@@ -168,9 +179,52 @@ export default function Space() {
 
         <div className="event-grid" style={{ marginTop: "1.5rem" }}>
           {SPACES.map((space) => (
-            <SpaceCard space={space} key={space.id} />
+            <SpaceCard space={space} key={space.id} onOpen={setLightbox} />
           ))}
         </div>
+
+        {lightbox && (
+          <div
+            onClick={() => setLightbox(null)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.9)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 2000,
+              padding: 16,
+              cursor: "zoom-out",
+            }}
+          >
+            <img
+              src={lightbox.src}
+              alt={lightbox.alt}
+              style={{ maxWidth: "95vw", maxHeight: "92vh", objectFit: "contain", borderRadius: 8, boxShadow: "0 10px 50px rgba(0,0,0,0.5)" }}
+            />
+            <button
+              onClick={() => setLightbox(null)}
+              aria-label="Close"
+              style={{
+                position: "fixed",
+                top: 14,
+                right: 18,
+                width: 42,
+                height: 42,
+                borderRadius: 999,
+                border: "none",
+                background: "rgba(255,255,255,0.18)",
+                color: "#fff",
+                fontSize: 24,
+                lineHeight: 1,
+                cursor: "pointer",
+              }}
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         <div className="form-card" style={{ maxWidth: 480, marginTop: "2.5rem" }}>
           <h2 style={{ marginTop: 0 }}>Request a Booking</h2>
