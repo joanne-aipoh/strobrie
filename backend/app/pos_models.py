@@ -173,6 +173,9 @@ class PosEvent(Base):
     # staff publish them. Defaults to published so pre-existing events (and any
     # created before this column existed) stay visible.
     published: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    # Info-only events just show details + photo on the website — no sign-up,
+    # no tickets, no booking form.
+    info_only: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     created_by_staff_id: Mapped[int] = mapped_column(ForeignKey("staff.id"))
 
     tiers: Mapped[list["TicketTier"]] = relationship(back_populates="event", cascade="all, delete-orphan")

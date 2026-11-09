@@ -49,6 +49,7 @@ def _to_public_event(db: Session, event: pos_models.PosEvent) -> pos_schemas.Pub
         time=event.time,
         description=event.description,
         image_url=event.image_url,
+        info_only=event.info_only,
         spots_remaining=spots_remaining,
         tiers=tiers_out,
     )

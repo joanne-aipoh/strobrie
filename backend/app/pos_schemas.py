@@ -306,7 +306,9 @@ class PosEventCreate(BaseModel):
     # New events start as drafts (hidden from the website) unless the creator
     # opts to publish straight away.
     published: bool = False
-    tiers: list[TierCreate] = Field(min_length=1)
+    # Info-only events show details + photo on the website with no sign-up.
+    info_only: bool = False
+    tiers: list[TierCreate] = Field(default_factory=list)
 
 
 class PosEventOut(BaseModel):
@@ -319,6 +321,7 @@ class PosEventOut(BaseModel):
     image_url: str | None = None
     cost_budget: int
     published: bool
+    info_only: bool = False
     tiers: list[TierOut]
     tickets_sold: int
 
@@ -387,6 +390,7 @@ class PublicEventOut(BaseModel):
     time: str | None
     description: str | None
     image_url: str | None = None
+    info_only: bool = False
     spots_remaining: int | None
     tiers: list[PublicTierOut]
 

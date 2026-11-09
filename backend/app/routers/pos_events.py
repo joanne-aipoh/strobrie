@@ -53,6 +53,7 @@ def _to_event_out(db: Session, event: pos_models.PosEvent) -> pos_schemas.PosEve
         image_url=event.image_url,
         cost_budget=event.cost_budget,
         published=event.published,
+        info_only=event.info_only,
         tiers=tiers_out,
         tickets_sold=total_sold,
     )
@@ -126,6 +127,7 @@ def create_event(payload: pos_schemas.PosEventCreate, db: Session = Depends(get_
         description=payload.description,
         cost_budget=payload.cost_budget,
         published=payload.published,
+        info_only=payload.info_only,
         created_by_staff_id=staff.id,
     )
     event.tiers = [
