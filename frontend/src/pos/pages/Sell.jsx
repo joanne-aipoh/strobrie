@@ -6,7 +6,20 @@ import { queueSale, cacheMenu, cachedMenu, isNetworkError } from "../offline.js"
 import ApprovalModal from "./ApprovalModal.jsx";
 import ModifierPicker from "./ModifierPicker.jsx";
 
-const CATEGORY_ORDER = ["Coffee", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Extras", "Breakfast", "Lunch", "Brunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer"];
+const CATEGORY_ORDER = ["Hot Coffee", "Iced Coffee", "Special Brews", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Extras", "Breakfast", "Lunch", "Brunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer"];
+
+// Coffee is one category in the DB (so the shop keeps grouping it), but on the
+// till it reads cleaner split into three tabs, derived from the drink name.
+const SPECIAL_COFFEE = new Set(["Maple Cream Brew", "Spanish Latte", "Oreo Latte", "Chai Latte", "Chocolate Latte"]);
+function coffeeTab(nm) {
+  if (/^(Iced|Ice Blended)/i.test(nm) || nm === "Dalgona Whipped Coffee") return "Iced Coffee";
+  if (/matcha/i.test(nm) || SPECIAL_COFFEE.has(nm)) return "Special Brews";
+  return "Hot Coffee";
+}
+// The tab an item belongs to (coffee items map to one of the three coffee tabs).
+function tabOf(item) {
+  return item.category === "Coffee" ? coffeeTab(item.name) : item.category;
+}
 const NAIRA_PER_POINT_REDEEM = 1;
 
 function tabTotal(tab) {
@@ -133,7 +146,7 @@ export default function Sell() {
 
   function pickMenu(items) {
     setMenu(items);
-    setActiveCat((prev) => prev || CATEGORY_ORDER.find((c) => items.some((i) => i.category === c)) || items[0]?.category);
+    setActiveCat((prev) => prev || CATEGORY_ORDER.find((c) => items.some((i) => tabOf(i) === c)) || items[0]?.category);
     return items;
   }
 
@@ -162,13 +175,13 @@ export default function Sell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const categories = menu ? CATEGORY_ORDER.filter((c) => menu.some((i) => i.category === c)) : [];
+  const categories = menu ? CATEGORY_ORDER.filter((c) => menu.some((i) => tabOf(i) === c)) : [];
   const searchQuery = search.trim().toLowerCase();
-  // When searching, match across ALL items by name; otherwise show the category.
+  // When searching, match across ALL items by name; otherwise show the tab.
   const itemsInCat = menu
     ? searchQuery
       ? menu.filter((i) => i.name.toLowerCase().includes(searchQuery))
-      : menu.filter((i) => i.category === activeCat)
+      : menu.filter((i) => tabOf(i) === activeCat)
     : [];
 
   function qtyInCart(itemId) {
