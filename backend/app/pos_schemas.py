@@ -316,6 +316,7 @@ class PosEventOut(BaseModel):
     time: str | None
     capacity: int | None
     description: str | None
+    image_url: str | None = None
     cost_budget: int
     published: bool
     tiers: list[TierOut]
@@ -385,6 +386,7 @@ class PublicEventOut(BaseModel):
     date: date
     time: str | None
     description: str | None
+    image_url: str | None = None
     spots_remaining: int | None
     tiers: list[PublicTierOut]
 
@@ -400,8 +402,9 @@ class EventBuyRequest(BaseModel):
 
 class EventCheckoutResponse(BaseModel):
     ticket_id: int
-    authorization_url: str
+    authorization_url: str | None = None  # null for a free event (no payment)
     reference: str
+    free: bool = False
 
 
 class PublicTicketOut(BaseModel):

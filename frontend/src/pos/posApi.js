@@ -81,6 +81,18 @@ export const posApi = {
   deletePotteryBooking: (id) => request(`/api/pos/pottery/bookings/${id}`, { method: "DELETE" }),
   deletePotteryRequest: (id) => request(`/api/pos/pottery/requests/${id}`, { method: "DELETE" }),
 
+  uploadEventImage: (eventId, file) => {
+    const form = new FormData();
+    form.append("file", file);
+    return fetch(`${API_BASE}/api/pos/events/${eventId}/image`, { method: "POST", body: form }).then(async (res) => {
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.detail || `Image upload failed (${res.status})`);
+      }
+      return res.json();
+    });
+  },
+
   getRecipe: (menuItemId) => request(`/api/pos/recipes/${menuItemId}`),
   setRecipe: (menuItemId, lines) =>
     request(`/api/pos/recipes/${menuItemId}`, { method: "PUT", body: JSON.stringify({ lines }) }),

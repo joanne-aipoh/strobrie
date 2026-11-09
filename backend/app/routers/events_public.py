@@ -48,6 +48,7 @@ def _to_public_event(db: Session, event: pos_models.PosEvent) -> pos_schemas.Pub
         date=event.date,
         time=event.time,
         description=event.description,
+        image_url=event.image_url,
         spots_remaining=spots_remaining,
         tiers=tiers_out,
     )
@@ -110,6 +111,15 @@ def buy_ticket(event_id: int, payload: pos_schemas.EventBuyRequest, db: Session 
     ]
     db.add_all(tickets)
     db.flush()  # assigns ticket ids without committing yet
+
+    # Free event — no payment; confirm the registration immediately.
+    if tier.price == 0:
+        for t in tickets:
+            t.paid = True
+        db.commit()
+        return pos_schemas.EventCheckoutResponse(
+            ticket_id=tickets[0].id, authorization_url=None, reference=reference, free=True
+        )
 
     callback_url = payload.callback_url or f"{FRONTEND_URL}/events/confirmation"
     try:

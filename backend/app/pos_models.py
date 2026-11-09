@@ -167,6 +167,7 @@ class PosEvent(Base):
     time: Mapped[str | None] = mapped_column(String(5), default=None)
     capacity: Mapped[int | None] = mapped_column(Integer, default=None)
     description: Mapped[str | None] = mapped_column(Text, default=None)
+    image_url: Mapped[str | None] = mapped_column(String(500), default=None)
     cost_budget: Mapped[int] = mapped_column(Integer, default=0)
     # Draft events are managed in Flow but hidden from the public website until
     # staff publish them. Defaults to published so pre-existing events (and any

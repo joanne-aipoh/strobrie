@@ -21,6 +21,8 @@ export default function Events() {
   const [description, setDescription] = useState("");
   const [costBudget, setCostBudget] = useState("");
   const [published, setPublished] = useState(false);
+  const [freeEntry, setFreeEntry] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
   const [tiers, setTiers] = useState([{ name: "General", price: "", qty: "", online_purchasable: true }]);
   const [error, setError] = useState("");
 
@@ -47,20 +49,23 @@ export default function Events() {
       setError("Pick a date.");
       return;
     }
-    const cleanTiers = tiers
-      .filter((t) => t.name.trim())
-      .map((t) => ({
-        name: t.name.trim(),
-        price: parseFloat(t.price) || 0,
-        qty: parseInt(t.qty) || 0,
-        online_purchasable: t.online_purchasable,
-      }));
+    // Free entry = one free "Admission" tier; otherwise use the tier editor.
+    const cleanTiers = freeEntry
+      ? [{ name: "Free entry", price: 0, qty: 0, online_purchasable: true }]
+      : tiers
+          .filter((t) => t.name.trim())
+          .map((t) => ({
+            name: t.name.trim(),
+            price: parseFloat(t.price) || 0,
+            qty: parseInt(t.qty) || 0,
+            online_purchasable: t.online_purchasable,
+          }));
     if (cleanTiers.length === 0) {
-      setError("Add at least one ticket tier with a name.");
+      setError("Add at least one ticket tier with a name, or tick Free entry.");
       return;
     }
     try {
-      const event = await posApi.createEvent({
+      let event = await posApi.createEvent({
         staff_id: currentStaff.id,
         name: name.trim(),
         date,
@@ -71,6 +76,13 @@ export default function Events() {
         published,
         tiers: cleanTiers,
       });
+      if (imageFile) {
+        try {
+          event = await posApi.uploadEventImage(event.id, imageFile);
+        } catch {
+          /* image optional — don't block the event on an upload hiccup */
+        }
+      }
       setEvents((prev) => [...prev, event]);
       setName("");
       setDate("");
@@ -79,6 +91,8 @@ export default function Events() {
       setDescription("");
       setCostBudget("");
       setPublished(false);
+      setFreeEntry(false);
+      setImageFile(null);
       setTiers([{ name: "General", price: "", qty: "", online_purchasable: true }]);
       setShowCreate(false);
       setError("");
@@ -100,6 +114,13 @@ export default function Events() {
         ) : (
           sorted.map((ev) => (
             <div className="event-card" key={ev.id} onClick={() => navigate(posPath(`/events/${ev.id}`))}>
+              {ev.image_url && (
+                <img
+                  src={ev.image_url}
+                  alt={ev.name}
+                  style={{ width: "100%", maxHeight: 140, objectFit: "cover", borderRadius: 8, marginBottom: 8 }}
+                />
+              )}
               <h4 style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 {ev.name}
                 <span className={`checkin-badge ${ev.published ? "in" : "out"}`}>
@@ -157,15 +178,35 @@ export default function Events() {
               <input type="number" min="0" value={costBudget} onChange={(e) => setCostBudget(e.target.value)} placeholder="Staff, decor, performer fees..." />
             </div>
             <div className="form-field full">
-              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
-                Publish to the website now
+              <label>Event image (optional)</label>
+              <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
+              {imageFile && <div style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 4 }}>Selected: {imageFile.name}</div>}
+            </div>
+            <div className="form-field full">
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "var(--ink)", cursor: "pointer" }}>
+                <input type="checkbox" checked={freeEntry} onChange={(e) => setFreeEntry(e.target.checked)} style={{ width: 16, height: 16, flexShrink: 0, margin: 0 }} />
+                <span>Free entry (no ticket price)</span>
               </label>
-              <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "4px 0 0" }}>
+              <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "4px 0 0 24px" }}>
+                Guests register online with no payment. Capacity still applies.
+              </p>
+            </div>
+            <div className="form-field full">
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "var(--ink)", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={published}
+                  onChange={(e) => setPublished(e.target.checked)}
+                  style={{ width: 16, height: 16, flexShrink: 0, margin: 0 }}
+                />
+                <span>Publish to the website now</span>
+              </label>
+              <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "4px 0 0 24px" }}>
                 Leave unchecked to save as a draft — it stays hidden from the public Events page until you publish it.
               </p>
             </div>
           </div>
+          {!freeEntry && (
           <div style={{ marginTop: 12 }}>
             <label style={{ display: "block", fontSize: 12, color: "var(--ink-soft)", marginBottom: 6 }}>Ticket tiers</label>
             {tiers.map((t, i) => (
@@ -210,6 +251,7 @@ export default function Events() {
               you can still sell those in person here, they just won't show on the public booking page.
             </p>
           </div>
+          )}
           {error && <div className="error-text" style={{ marginTop: 8 }}>{error}</div>}
           <button className="log-btn" onClick={createEvent}>
             Create event

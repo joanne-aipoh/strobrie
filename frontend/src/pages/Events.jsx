@@ -121,7 +121,9 @@ function BuySpotForm({ event }) {
         ...form,
         callback_url: `${window.location.origin}/events/confirmation`,
       });
-      window.location.href = result.authorization_url;
+      // Free events confirm immediately with no Paystack redirect.
+      window.location.href =
+        result.authorization_url || `/events/confirmation?reference=${result.reference}`;
     } catch (err) {
       setError(err.message);
       setStatus("idle");
@@ -274,9 +276,15 @@ function BuySpotForm({ event }) {
       {error && <p className="form-error">{error}</p>}
       <button type="submit" className="button button-primary" disabled={status === "submitting" || !selectedTier}>
         {status === "submitting"
-          ? "Redirecting to payment…"
+          ? selectedTier && selectedTier.price === 0
+            ? "Registering…"
+            : "Redirecting to payment…"
           : selectedTier
-          ? spots > 1
+          ? selectedTier.price === 0
+            ? spots > 1
+              ? `Register ${spots} spots — Free`
+              : "Register — Free entry"
+            : spots > 1
             ? `Book ${spots} spots — ${fmt(total)}`
             : `Book Spot — ${fmt(selectedTier.price)}`
           : "Book Spot"}
@@ -291,6 +299,13 @@ function TicketedEventCard({ event, featured }) {
       className="event-card upcoming-card"
       style={featured ? { padding: "2.25rem", maxWidth: 560, margin: "0 auto" } : undefined}
     >
+      {event.image_url && (
+        <img
+          src={event.image_url}
+          alt={event.name}
+          style={{ width: "100%", maxHeight: 240, objectFit: "cover", borderRadius: 12, marginBottom: "1rem" }}
+        />
+      )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
         <h3 style={{ margin: 0, fontSize: featured ? "1.6rem" : undefined }}>{event.name}</h3>
         {event.spots_remaining !== null && (

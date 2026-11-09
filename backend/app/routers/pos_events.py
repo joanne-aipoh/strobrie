@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+import os
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -6,6 +9,10 @@ from .. import pos_models, pos_schemas
 from ..database import get_db
 
 router = APIRouter(prefix="/api/pos", tags=["pos-events"])
+
+EVENTS_UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads", "events")
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 
 
 def _tickets_sold_for_tier(db: Session, tier_id: int) -> int:
@@ -43,6 +50,7 @@ def _to_event_out(db: Session, event: pos_models.PosEvent) -> pos_schemas.PosEve
         time=event.time,
         capacity=event.capacity,
         description=event.description,
+        image_url=event.image_url,
         cost_budget=event.cost_budget,
         published=event.published,
         tiers=tiers_out,
@@ -76,6 +84,31 @@ def get_event(event_id: int, db: Session = Depends(get_db)):
     event = db.get(pos_models.PosEvent, event_id)
     if event is None:
         raise HTTPException(status_code=404, detail="Event not found")
+    return _to_event_out(db, event)
+
+
+async def _save_event_image(event, file):
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Only JPEG, PNG, WEBP, or GIF images are allowed")
+    contents = await file.read()
+    if len(contents) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=400, detail="Image is too large (max 8MB)")
+    os.makedirs(EVENTS_UPLOAD_DIR, exist_ok=True)
+    ext = os.path.splitext(file.filename or "")[1] or ".jpg"
+    filename = f"{uuid.uuid4().hex}{ext}"
+    with open(os.path.join(EVENTS_UPLOAD_DIR, filename), "wb") as f:
+        f.write(contents)
+    event.image_url = f"/uploads/events/{filename}"
+
+
+@router.post("/events/{event_id}/image", response_model=pos_schemas.PosEventOut)
+async def upload_event_image(event_id: int, file: UploadFile, db: Session = Depends(get_db)):
+    event = db.get(pos_models.PosEvent, event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+    await _save_event_image(event, file)
+    db.commit()
+    db.refresh(event)
     return _to_event_out(db, event)
 
 
