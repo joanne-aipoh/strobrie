@@ -26,9 +26,11 @@ class ModifierOption(BaseModel):
 
 class ModifierGroup(BaseModel):
     name: str = Field(min_length=1, max_length=60)
-    kind: Literal["variant", "addon"] = "variant"
+    kind: Literal["variant", "addon", "matrix"] = "variant"
     required: bool = False
     options: list[ModifierOption] = Field(default_factory=list)
+    # For a "matrix" group: price grid indexed by [first-variant choice][this choice].
+    prices: list[list[int]] | None = None
 
 
 class ProductOut(BaseModel):
