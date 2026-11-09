@@ -40,6 +40,19 @@ export default function PotteryAdmin() {
     }
   }
 
+  // Disable (or re-enable) all of a day's slots in one tap.
+  async function toggleDay(g) {
+    const target = !g.slots.every((s) => s.blocked); // all blocked → enable; else disable
+    try {
+      await Promise.all(
+        g.slots.map((s) => posApi.potterySetBlock({ date: s.date, time_slot: s.time, blocked: target })),
+      );
+      await load();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
   async function handleRequest(id) {
     try {
       await posApi.potteryHandleRequest(id);
@@ -174,7 +187,16 @@ export default function PotteryAdmin() {
         ) : (
           byDate.map((g) => (
             <div key={g.date} style={{ marginBottom: 14 }}>
-              <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 6 }}>{g.label}</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
+                <div style={{ fontWeight: 700, fontSize: 13.5 }}>{g.label}</div>
+                <button
+                  className="link-btn"
+                  style={g.slots.every((s) => s.blocked) ? undefined : { color: "var(--rust-dark)" }}
+                  onClick={() => toggleDay(g)}
+                >
+                  {g.slots.every((s) => s.blocked) ? "Enable whole day" : "Disable whole day"}
+                </button>
+              </div>
               {g.slots.map((s) => {
                 const st = slotStatus(s);
                 return (
