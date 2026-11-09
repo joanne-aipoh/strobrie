@@ -147,19 +147,22 @@ function ProductForm({ initial, onSubmit, onCancel, categories }) {
     }
     // Drop blank groups/options; coerce prices to whole naira.
     const cleanModifiers = (modifiers || [])
-      .map((g) => ({
-        name: (g.name || "").trim(),
-        kind: g.kind === "addon" ? "addon" : "variant",
-        required: g.kind !== "addon",
-        options: (g.options || [])
-          .filter((o) => (o.label || "").trim())
-          .map((o) => ({
-            label: o.label.trim(),
-            price: parseInt(o.price, 10) || 0,
-            ...(o.percent != null && o.percent !== "" ? { percent: parseFloat(o.percent) } : {}),
-          })),
-      }))
-      .filter((g) => g.name && g.options.length);
+      .map((g) => {
+        if (g.kind === "matrix") return g; // grid-priced (e.g. pancakes) — preserve verbatim
+        return {
+          name: (g.name || "").trim(),
+          kind: g.kind === "addon" ? "addon" : "variant",
+          required: g.kind !== "addon",
+          options: (g.options || [])
+            .filter((o) => (o.label || "").trim())
+            .map((o) => ({
+              label: o.label.trim(),
+              price: parseInt(o.price, 10) || 0,
+              ...(o.percent != null && o.percent !== "" ? { percent: parseFloat(o.percent) } : {}),
+            })),
+        };
+      })
+      .filter((g) => g.kind === "matrix" || (g.name && g.options.length));
     try {
       await onSubmit({
         name: form.name.trim(),

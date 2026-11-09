@@ -5,36 +5,54 @@ function fmt(n) {
 }
 
 // Shown when a product with modifier groups is tapped on the Sell screen.
-// variant groups = pick one (replaces the price); addon groups = pick any
-// (each adds to the price). Returns a composed cart line to onAdd.
+//   variant = pick one, its price sets the line (options may be label-only, e.g.
+//             a flavour that doesn't set the price on its own)
+//   matrix  = pick one, price looked up from a grid by the FIRST variant group's
+//             choice × this choice (e.g. pancake Flavour × Size)
+//   addon   = pick any, each adds (flat, or a percent of the base)
 export default function ModifierPicker({ product, onAdd, onCancel }) {
   const groups = product.modifiers || [];
-  // variantSel: { groupIndex: optionIndex } — default to the first option.
-  const [variantSel, setVariantSel] = useState(() => {
+  const isPick = (g) => g.kind === "variant" || g.kind === "matrix";
+
+  // One selected option index per pick-one group (variant or matrix).
+  const [sel, setSel] = useState(() => {
     const init = {};
     groups.forEach((g, gi) => {
-      if (g.kind === "variant") init[gi] = 0;
+      if (isPick(g)) init[gi] = 0;
     });
     return init;
   });
-  // addonSel: Set of "groupIndex:optionIndex".
   const [addonSel, setAddonSel] = useState(() => new Set());
 
-  // An add-on's amount: a flat price, or a percent of the chosen variant price
-  // (e.g. a cake "extra layer" = 38% of the selected size).
-  const optAmount = (opt, base) =>
-    opt.percent != null ? Math.round((opt.percent / 100) * base) : opt.price || 0;
+  const optAmount = (opt, b) => (opt.percent != null ? Math.round((opt.percent / 100) * b) : opt.price || 0);
 
-  const { price, name, base } = useMemo(() => {
+  // The first variant group is the "primary" dimension a matrix reads (flavour).
+  const firstVariantGi = groups.findIndex((g) => g.kind === "variant");
+  const primaryIndex = firstVariantGi >= 0 ? sel[firstVariantGi] ?? 0 : 0;
+
+  const matrixPrice = (g, oi) => {
+    const row = g.prices && g.prices[primaryIndex];
+    return row && typeof row[oi] === "number" ? row[oi] : 0;
+  };
+
+  const { price, name } = useMemo(() => {
     let b = product.price;
     const parts = [];
     groups.forEach((g, gi) => {
       if (g.kind === "variant") {
-        const opt = g.options[variantSel[gi] ?? 0];
+        const opt = g.options[sel[gi] ?? 0];
         if (opt) {
-          b = opt.price;
+          if (typeof opt.price === "number") b = opt.price;
           parts.push(opt.label);
         }
+      }
+    });
+    groups.forEach((g, gi) => {
+      if (g.kind === "matrix") {
+        const oi = sel[gi] ?? 0;
+        const opt = g.options[oi];
+        b = matrixPrice(g, oi);
+        if (opt) parts.push(opt.label);
       }
     });
     let p = b;
@@ -48,8 +66,9 @@ export default function ModifierPicker({ product, onAdd, onCancel }) {
         });
       }
     });
-    return { price: p, name: parts.length ? `${product.name} · ${parts.join(", ")}` : product.name, base: b };
-  }, [groups, variantSel, addonSel, product]);
+    return { price: p, name: parts.length ? `${product.name} · ${parts.join(", ")}` : product.name };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groups, sel, addonSel, product, primaryIndex]);
 
   function toggleAddon(gi, oi) {
     setAddonSel((prev) => {
@@ -61,25 +80,18 @@ export default function ModifierPicker({ product, onAdd, onCancel }) {
     });
   }
 
+  function optLabel(g, opt, oi) {
+    if (g.kind === "addon") return `+${fmt(optAmount(opt, price))}`;
+    if (g.kind === "matrix") return fmt(matrixPrice(g, oi));
+    return typeof opt.price === "number" ? fmt(opt.price) : "";
+  }
+
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(43,29,34,0.5)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-        padding: 16,
-      }}
+      style={{ position: "fixed", inset: 0, background: "rgba(43,29,34,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}
       onClick={onCancel}
     >
-      <div
-        className="panel"
-        style={{ maxWidth: 420, width: "100%", margin: 0, maxHeight: "85vh", overflowY: "auto" }}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="panel" style={{ maxWidth: 420, width: "100%", margin: 0, maxHeight: "85vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
         <h3 style={{ marginTop: 0 }}>{product.name}</h3>
 
         {groups.map((g, gi) => (
@@ -90,23 +102,17 @@ export default function ModifierPicker({ product, onAdd, onCancel }) {
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {g.options.map((opt, oi) => {
-                const selected =
-                  g.kind === "variant" ? (variantSel[gi] ?? 0) === oi : addonSel.has(`${gi}:${oi}`);
+                const selected = isPick(g) ? (sel[gi] ?? 0) === oi : addonSel.has(`${gi}:${oi}`);
+                const priceLabel = optLabel(g, opt, oi);
                 return (
                   <button
                     key={oi}
                     type="button"
                     className={`cat-btn ${selected ? "active" : ""}`}
-                    onClick={() =>
-                      g.kind === "variant"
-                        ? setVariantSel((prev) => ({ ...prev, [gi]: oi }))
-                        : toggleAddon(gi, oi)
-                    }
+                    onClick={() => (isPick(g) ? setSel((prev) => ({ ...prev, [gi]: oi })) : toggleAddon(gi, oi))}
                   >
                     {opt.label}
-                    <span style={{ opacity: 0.85, marginLeft: 6 }}>
-                      {g.kind === "variant" ? fmt(opt.price) : `+${fmt(optAmount(opt, base))}`}
-                    </span>
+                    {priceLabel && <span style={{ opacity: 0.85, marginLeft: 6 }}>{priceLabel}</span>}
                   </button>
                 );
               })}

@@ -28,7 +28,17 @@ export default function ModifierEditor({ value, onChange }) {
         Options / add-ons (leave empty for a plain single-price item)
       </label>
 
-      {groups.map((g, gi) => (
+      {groups.map((g, gi) =>
+        g.kind === "matrix" ? (
+          <div key={gi} style={{ border: "1px solid var(--line)", borderRadius: 10, padding: 10, marginBottom: 10, background: "var(--cream-2)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 13 }}>
+              <strong>{g.name}</strong> — priced by grid ({g.options.map((o) => o.label).join(", ")})
+            </span>
+            <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={() => removeGroup(gi)}>
+              Remove
+            </button>
+          </div>
+        ) : (
         <div
           key={gi}
           style={{
