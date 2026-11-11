@@ -146,7 +146,7 @@ function SpaceCard({ space, onOpen }) {
         src={space.photo}
         alt={space.name}
         onClick={() => onOpen({ src: space.photo, alt: space.name })}
-        style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 12, marginBottom: "0.75rem", cursor: "zoom-in" }}
+        style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "contain", background: "#f5efe6", borderRadius: 12, marginBottom: "0.75rem", cursor: "zoom-in" }}
         title="Click to view full size"
       />
       <h3 style={{ marginBottom: 2 }}>{space.name}</h3>
