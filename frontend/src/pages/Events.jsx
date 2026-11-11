@@ -294,6 +294,8 @@ function BuySpotForm({ event }) {
 }
 
 function TicketedEventCard({ event, featured }) {
+  // Info-only events just show their details + full photo — no badge, no form.
+  const infoOnly = event.info_only;
   return (
     <div
       className="event-card upcoming-card"
@@ -303,12 +305,16 @@ function TicketedEventCard({ event, featured }) {
         <img
           src={event.image_url}
           alt={event.name}
-          style={{ width: "100%", maxHeight: 240, objectFit: "cover", borderRadius: 12, marginBottom: "1rem" }}
+          style={
+            infoOnly
+              ? { width: "100%", objectFit: "contain", borderRadius: 12, marginBottom: "1rem", background: "#f5efe6" }
+              : { width: "100%", maxHeight: 240, objectFit: "cover", borderRadius: 12, marginBottom: "1rem" }
+          }
         />
       )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
         <h3 style={{ margin: 0, fontSize: featured ? "1.6rem" : undefined }}>{event.name}</h3>
-        {event.spots_remaining !== null && (
+        {!infoOnly && event.spots_remaining !== null && (
           <span
             style={{
               flexShrink: 0,
@@ -331,7 +337,7 @@ function TicketedEventCard({ event, featured }) {
         {formatTicketedDate(event.date, slotWindow(event.tiers) || event.time)}
       </p>
       {event.description && <p>{event.description}</p>}
-      <BuySpotForm event={event} />
+      {!infoOnly && <BuySpotForm event={event} />}
     </div>
   );
 }

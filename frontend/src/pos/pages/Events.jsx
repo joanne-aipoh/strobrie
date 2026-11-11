@@ -21,7 +21,8 @@ export default function Events() {
   const [description, setDescription] = useState("");
   const [costBudget, setCostBudget] = useState("");
   const [published, setPublished] = useState(false);
-  const [freeEntry, setFreeEntry] = useState(false);
+  // "paid" = ticket tiers, "free" = free registration, "info" = details only, no sign-up
+  const [entryType, setEntryType] = useState("paid");
   const [imageFile, setImageFile] = useState(null);
   const [tiers, setTiers] = useState([{ name: "General", price: "", qty: "", online_purchasable: true }]);
   const [error, setError] = useState("");
@@ -49,20 +50,26 @@ export default function Events() {
       setError("Pick a date.");
       return;
     }
-    // Free entry = one free "Admission" tier; otherwise use the tier editor.
-    const cleanTiers = freeEntry
-      ? [{ name: "Free entry", price: 0, qty: 0, online_purchasable: true }]
-      : tiers
-          .filter((t) => t.name.trim())
-          .map((t) => ({
-            name: t.name.trim(),
-            price: parseFloat(t.price) || 0,
-            qty: parseInt(t.qty) || 0,
-            online_purchasable: t.online_purchasable,
-          }));
-    if (cleanTiers.length === 0) {
-      setError("Add at least one ticket tier with a name, or tick Free entry.");
-      return;
+    // Info-only = no tickets at all. Free = one free "Admission" tier.
+    // Paid = the tier editor.
+    let cleanTiers;
+    if (entryType === "info") {
+      cleanTiers = [];
+    } else if (entryType === "free") {
+      cleanTiers = [{ name: "Free entry", price: 0, qty: 0, online_purchasable: true }];
+    } else {
+      cleanTiers = tiers
+        .filter((t) => t.name.trim())
+        .map((t) => ({
+          name: t.name.trim(),
+          price: parseFloat(t.price) || 0,
+          qty: parseInt(t.qty) || 0,
+          online_purchasable: t.online_purchasable,
+        }));
+      if (cleanTiers.length === 0) {
+        setError("Add at least one ticket tier with a name, or choose Free / Info only.");
+        return;
+      }
     }
     try {
       let event = await posApi.createEvent({
@@ -70,10 +77,11 @@ export default function Events() {
         name: name.trim(),
         date,
         time: time || null,
-        capacity: capacity ? parseInt(capacity) : null,
+        capacity: entryType === "info" ? null : capacity ? parseInt(capacity) : null,
         description: description.trim() || null,
         cost_budget: parseFloat(costBudget) || 0,
         published,
+        info_only: entryType === "info",
         tiers: cleanTiers,
       });
       if (imageFile) {
@@ -91,7 +99,7 @@ export default function Events() {
       setDescription("");
       setCostBudget("");
       setPublished(false);
-      setFreeEntry(false);
+      setEntryType("paid");
       setImageFile(null);
       setTiers([{ name: "General", price: "", qty: "", online_purchasable: true }]);
       setShowCreate(false);
@@ -129,15 +137,21 @@ export default function Events() {
               </h4>
               <div className="meta">
                 {ev.date}
-                {ev.time ? ` · ${ev.time}` : ""} · {ev.tickets_sold} ticket{ev.tickets_sold === 1 ? "" : "s"} sold
-                {ev.capacity ? ` / ${ev.capacity} capacity` : ""}
+                {ev.time ? ` · ${ev.time}` : ""}
+                {ev.info_only
+                  ? " · Info only"
+                  : ` · ${ev.tickets_sold} ticket${ev.tickets_sold === 1 ? "" : "s"} sold${ev.capacity ? ` / ${ev.capacity} capacity` : ""}`}
               </div>
               <div>
-                {ev.tiers.map((t) => (
-                  <span className="tier-chip" key={t.id}>
-                    {t.name} · {fmt(t.price)}
-                  </span>
-                ))}
+                {ev.info_only ? (
+                  <span className="tier-chip">No sign-up — details only</span>
+                ) : (
+                  ev.tiers.map((t) => (
+                    <span className="tier-chip" key={t.id}>
+                      {t.name} · {fmt(t.price)}
+                    </span>
+                  ))
+                )}
               </div>
             </div>
           ))
@@ -165,10 +179,12 @@ export default function Events() {
               <label>Time</label>
               <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
             </div>
-            <div className="form-field">
-              <label>Capacity (optional)</label>
-              <input type="number" min="0" value={capacity} onChange={(e) => setCapacity(e.target.value)} placeholder="e.g. 40" />
-            </div>
+            {entryType !== "info" && (
+              <div className="form-field">
+                <label>Capacity (optional)</label>
+                <input type="number" min="0" value={capacity} onChange={(e) => setCapacity(e.target.value)} placeholder="e.g. 40" />
+              </div>
+            )}
             <div className="form-field full">
               <label>Description</label>
               <textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's the event about?" />
@@ -183,13 +199,28 @@ export default function Events() {
               {imageFile && <div style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 4 }}>Selected: {imageFile.name}</div>}
             </div>
             <div className="form-field full">
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "var(--ink)", cursor: "pointer" }}>
-                <input type="checkbox" checked={freeEntry} onChange={(e) => setFreeEntry(e.target.checked)} style={{ width: 16, height: 16, flexShrink: 0, margin: 0 }} />
-                <span>Free entry (no ticket price)</span>
-              </label>
-              <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: "4px 0 0 24px" }}>
-                Guests register online with no payment. Capacity still applies.
-              </p>
+              <label>Entry type</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+                {[
+                  ["paid", "Paid tickets", "Guests pay online. Set ticket tiers below."],
+                  ["free", "Free entry", "Guests register online with no payment. Capacity still applies."],
+                  ["info", "Info only — no sign-up", "Just show the event details and photo on the website. No tickets, no registration."],
+                ].map(([val, title, hint]) => (
+                  <label key={val} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "var(--ink)", cursor: "pointer" }}>
+                    <input
+                      type="radio"
+                      name="entryType"
+                      checked={entryType === val}
+                      onChange={() => setEntryType(val)}
+                      style={{ width: 16, height: 16, flexShrink: 0, margin: "2px 0 0" }}
+                    />
+                    <span>
+                      {title}
+                      <span style={{ display: "block", fontSize: 12, color: "var(--ink-soft)" }}>{hint}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
             <div className="form-field full">
               <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "var(--ink)", cursor: "pointer" }}>
@@ -206,7 +237,7 @@ export default function Events() {
               </p>
             </div>
           </div>
-          {!freeEntry && (
+          {entryType === "paid" && (
           <div style={{ marginTop: 12 }}>
             <label style={{ display: "block", fontSize: 12, color: "var(--ink-soft)", marginBottom: 6 }}>Ticket tiers</label>
             {tiers.map((t, i) => (
