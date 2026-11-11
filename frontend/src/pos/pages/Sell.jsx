@@ -6,7 +6,7 @@ import { queueSale, cacheMenu, cachedMenu, isNetworkError } from "../offline.js"
 import ApprovalModal from "./ApprovalModal.jsx";
 import ModifierPicker from "./ModifierPicker.jsx";
 
-const CATEGORY_ORDER = ["Hot Coffee", "Iced Coffee", "Special Brews", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Extras", "Breakfast", "Lunch", "Brunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer"];
+const CATEGORY_ORDER = ["Hot Coffee", "Iced Coffee", "Special Brews", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Breakfast", "Lunch", "Brunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer", "Extras"];
 
 // Coffee is one category in the DB (so the shop keeps grouping it), but on the
 // till it reads cleaner split into three tabs, derived from the drink name.
