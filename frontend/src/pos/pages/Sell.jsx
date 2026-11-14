@@ -863,7 +863,7 @@ export default function Sell() {
                   <div className="mods extra" key={i}>{e}</div>
                 ))}
                 <div className="p" style={{ cursor: "default", textDecoration: "none" }}>
-                  {fmt(c.price)} each
+                  {fmt(c.price)}
                 </div>
               </div>
               <div className="qty-ctrl">
