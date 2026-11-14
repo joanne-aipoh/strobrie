@@ -43,16 +43,24 @@
 }
 .pos-app .brand span{font-size:12px;color:var(--ink-soft);}
 .pos-app nav.tabs{display:flex;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+.pos-app nav.tabs a,
 .pos-app nav.tabs button{
   background:none;border:none;
-  padding:10px 16px;
-  font-size:14px;
+  padding:10px 14px;
+  font-size:14px;font-weight:500;
   color:var(--ink-soft);
+  text-decoration:none;
   cursor:pointer;
   border-bottom:2px solid transparent;
   margin-bottom:-1px;
+  white-space:nowrap;
+  border-radius:8px 8px 0 0;
+  transition:color .12s ease, background .12s ease;
 }
-.pos-app nav.tabs button.active{color:var(--rust-dark);border-bottom-color:var(--rust);font-weight:600;}
+.pos-app nav.tabs a:hover,
+.pos-app nav.tabs button:hover{color:var(--rust-dark);background:var(--cream-2);}
+.pos-app nav.tabs a.active,
+.pos-app nav.tabs button.active{color:var(--rust-dark);border-bottom-color:var(--rust);font-weight:700;background:none;}
 
 .pos-app .layout{display:grid;grid-template-columns:11fr 9fr;gap:20px;align-items:start;}
 
@@ -195,6 +203,8 @@
   background:#f6e0e6;color:var(--rust-dark);padding:2px 7px;border-radius:999px;
 }
 .pos-app .link-btn{background:none;border:none;color:var(--rust-dark);font-size:12.5px;cursor:pointer;text-decoration:underline;padding:0;}
+.pos-app .header-actions .link-btn{text-decoration:none;color:var(--ink-soft);font-size:13px;}
+.pos-app .header-actions .link-btn:hover{color:var(--rust-dark);text-decoration:underline;}
 .pos-app .staff-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
 .pos-app .staff-name-input{font:inherit;font-weight:600;width:9.5em;max-width:100%;padding:3px 7px;border:1px solid transparent;border-radius:6px;background:transparent;color:inherit;}
 .pos-app .staff-name-input:hover{border-color:var(--line);}
@@ -225,6 +235,7 @@
   /* Name/role stay beside the brand; the action buttons drop to their own row. */
   .pos-app .header-actions{flex-basis:100%;margin-left:0;}
   .pos-app nav.tabs{gap:2px;}
+  .pos-app nav.tabs a,
   .pos-app nav.tabs button{padding:9px 11px;font-size:13.5px;}
   .pos-app .panel{padding:14px;}
   /* Wide data tables (Orders/Reports) scroll sideways within their panel
