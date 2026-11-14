@@ -54,7 +54,7 @@
 }
 .pos-app nav.tabs button.active{color:var(--rust-dark);border-bottom-color:var(--rust);font-weight:600;}
 
-.pos-app .layout{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start;}
+.pos-app .layout{display:grid;grid-template-columns:3fr 2fr;gap:20px;align-items:start;}
 
 .pos-app .categories{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
 .pos-app .cat-btn{

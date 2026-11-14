@@ -857,34 +857,9 @@ export default function Sell() {
               <div className="info">
                 <div className="n">{splitItem(c.name).base}</div>
                 {splitItem(c.name).mods && <div className="mods">{splitItem(c.name).mods}</div>}
-                {editingPriceIdx === idx ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
-                    <input
-                      type="number"
-                      min="0"
-                      step="50"
-                      autoFocus
-                      aria-label={`Price for ${c.name}`}
-                      value={priceDraft}
-                      onChange={(e) => setPriceDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") commitEditPrice(idx);
-                        if (e.key === "Escape") cancelEditPrice();
-                      }}
-                      style={{ width: 90, fontSize: 12.5, padding: "3px 6px" }}
-                    />
-                    <button className="link-btn" onClick={() => commitEditPrice(idx)}>
-                      Set
-                    </button>
-                    <button className="link-btn" onClick={cancelEditPrice}>
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <div className="p" onClick={() => startEditPrice(idx)}>
-                    {fmt(c.price)} each · edit
-                  </div>
-                )}
+                <div className="p" style={{ cursor: "default", textDecoration: "none" }}>
+                  {fmt(c.price)} each
+                </div>
               </div>
               <div className="qty-ctrl">
                 <button onClick={() => changeQty(idx, -1)}>−</button>
