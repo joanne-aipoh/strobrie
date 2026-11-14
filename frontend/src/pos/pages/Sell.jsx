@@ -547,7 +547,7 @@ export default function Sell() {
     }
     // Staff can add to a tab freely, but reducing its total needs approval.
     if (activeTab && !canManageOps && subtotal < tabTotal(activeTab)) {
-      setPendingApproval({ label: "save this tab with items removed", run: () => doSaveTab(label) });
+      setPendingApproval({ label: "save this ticket with items removed", run: () => doSaveTab(label) });
       return;
     }
     doSaveTab(label);
@@ -581,10 +581,10 @@ export default function Sell() {
         // Keep the tab on screen with its saved items so the change visibly
         // "reflects" (and staff can keep adding) instead of the order vanishing.
         openTab(saved);
-        showToast(`Tab updated — ${saved.label}. Items saved.`);
+        showToast(`Ticket updated — ${saved.label}. Items saved.`);
       } else {
         clearOrder();
-        showToast(`Tab saved — ${saved.label}. Charge it when they're ready to pay.`);
+        showToast(`Ticket saved — ${saved.label}. Charge it when they're ready to pay.`);
       }
     } catch (err) {
       setTabError(err.message);
@@ -597,7 +597,7 @@ export default function Sell() {
     if (!activeTab) return;
     // Staff need a front-desk/manager PIN to void a tab.
     if (!canManageOps) {
-      setPendingApproval({ label: "close this tab without payment", run: doCancelTab });
+      setPendingApproval({ label: "void this ticket", run: doCancelTab });
       return;
     }
     doCancelTab();
@@ -625,7 +625,7 @@ export default function Sell() {
     if (cart.length === 0) return;
     // Staff taking payment on a tab for less than it was saved at needs approval.
     if (activeTab && !canManageOps && subtotal < tabTotal(activeTab)) {
-      setPendingApproval({ label: "take payment on this tab with items removed", run: doCharge });
+      setPendingApproval({ label: "take payment on this ticket with items removed", run: doCharge });
       return;
     }
     doCharge();
@@ -726,7 +726,7 @@ export default function Sell() {
         {openTabs.length > 0 && (
           <div className="panel" style={{ padding: 12, marginBottom: 14 }}>
             <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginBottom: 8 }}>
-              Open tabs ({openTabs.length}) — ordered, not paid for yet. Tap one to add to it or take payment.
+              Open tickets ({openTabs.length}) — ordered, not paid for yet. Tap one to add to it or take payment.
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {openTabs.map((t) => (
@@ -836,46 +836,19 @@ export default function Sell() {
 
       <div className="cart">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-          <h3 style={{ margin: 0 }}>{activeTab ? `Tab — ${activeTab.label}` : "Current order"}</h3>
+          <h3 style={{ margin: 0 }}>
+            {activeTab ? `Ticket — ${activeTab.label}` : "Current order"}
+            {activeTab && (
+              <span className="tab-status" style={{ marginLeft: 8, verticalAlign: "middle" }}>
+                <span className="dot" />
+                Open · {since(activeTab.opened_at)}
+              </span>
+            )}
+          </h3>
           <button className="link-btn" style={{ fontSize: 12.5, color: "var(--ink-soft)" }} onClick={printTestReceipt}>
             🖨 Test print
           </button>
         </div>
-        {activeTab && (
-          <div style={{ background: "var(--cream-2)", borderRadius: 10, padding: 12, marginBottom: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <span className="tab-status">
-                <span className="dot" />
-                Open · {since(activeTab.opened_at)}
-              </span>
-              <span style={{ fontSize: 12, color: "var(--ink-soft)" }}>Add items and save, or take payment.</span>
-            </div>
-            {confirmingClose ? (
-              <div style={{ marginTop: 10 }}>
-                <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginBottom: 8 }}>
-                  Close without taking payment? Anything on it goes back into stock.
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button className="mini-btn danger" onClick={cancelTab} disabled={tabBusy}>
-                    {tabBusy ? "Closing…" : "Yes, close it"}
-                  </button>
-                  <button className="mini-btn" onClick={() => setConfirmingClose(false)}>
-                    Keep it open
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <button className="mini-btn" onClick={clearOrder}>
-                  Leave it open
-                </button>
-                <button className="mini-btn danger" onClick={() => setConfirmingClose(true)} disabled={tabBusy}>
-                  Close without paying
-                </button>
-              </div>
-            )}
-          </div>
-        )}
         {cart.length === 0 ? (
           <div className="cart-empty">No items yet — tap a menu item to add it.</div>
         ) : (
@@ -1072,8 +1045,33 @@ export default function Sell() {
           disabled={cart.length === 0 || tabBusy}
           onClick={startSaveTab}
         >
-          {tabBusy ? "Saving…" : activeTab ? "Save changes to tab" : "Save as tab — pay later"}
+          {tabBusy ? "Saving…" : activeTab ? "Save changes to ticket" : "Save as ticket — pay later"}
         </button>
+        {activeTab &&
+          (confirmingClose ? (
+            <div style={{ marginTop: 10, background: "var(--cream-2)", borderRadius: 10, padding: 12 }}>
+              <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginBottom: 8 }}>
+                Void this ticket? Anything on it goes back into stock.
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="mini-btn danger" onClick={cancelTab} disabled={tabBusy}>
+                  {tabBusy ? "Voiding…" : "Yes, void it"}
+                </button>
+                <button className="mini-btn" onClick={() => setConfirmingClose(false)}>
+                  Keep ticket
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              className="link-btn"
+              style={{ display: "block", margin: "12px auto 0", color: "var(--rust-dark)" }}
+              onClick={() => setConfirmingClose(true)}
+              disabled={tabBusy}
+            >
+              Void ticket
+            </button>
+          ))}
         {toast && (
           <div className="toast">
             {toast}
