@@ -246,7 +246,7 @@ export default function Space() {
           </div>
         )}
 
-        <div className="form-card" style={{ maxWidth: 480, marginTop: "2.5rem" }}>
+        <div className="form-card" style={{ maxWidth: 640, marginTop: "2.5rem" }}>
           <h2 style={{ marginTop: 0 }}>Request a Booking</h2>
           <BookingForm />
         </div>
