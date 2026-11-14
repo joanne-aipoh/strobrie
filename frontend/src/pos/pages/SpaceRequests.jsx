@@ -107,7 +107,10 @@ export default function SpaceRequests() {
               <span><span style={{ color: "var(--ink-soft)" }}>Event:</span> {titleize(r.event_type)}</span>
               <span><span style={{ color: "var(--ink-soft)" }}>Guests:</span> {r.guest_count}</span>
               {r.spend != null && (
-                <span><span style={{ color: "var(--ink-soft)" }}>Spend:</span> <strong>₦{r.spend.toLocaleString("en-NG")}</strong></span>
+                <span>
+                  <span style={{ color: "var(--ink-soft)" }}>Booking:</span>{" "}
+                  <strong>{r.spend > 0 ? `Dining spend ₦${r.spend.toLocaleString("en-NG")} (free venue)` : "Space rental only"}</strong>
+                </span>
               )}
               <span><span style={{ color: "var(--ink-soft)" }}>Preferred:</span> <strong style={{ color: "var(--rust-dark)" }}>{fmtDate(r.preferred_date)}</strong></span>
             </div>

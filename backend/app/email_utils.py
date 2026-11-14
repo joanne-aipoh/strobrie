@@ -180,6 +180,13 @@ def send_space_request_alert(
     def esc(s):
         return (str(s) if s not in (None, "") else "—").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
+    if spend is None:
+        booking_label = "&mdash;"
+    elif spend > 0:
+        booking_label = f"Dining spend &#8358;{spend:,} (free venue)"
+    else:
+        booking_label = "Space rental only"
+
     html = f"""
     <div style="font-family:Arial,Helvetica,sans-serif;color:#2b1d22;max-width:520px">
       <h2 style="color:#c23f68;margin-bottom:4px">New space-rental inquiry</h2>
@@ -189,7 +196,7 @@ def send_space_request_alert(
         <tr><td style="color:#6b5763">Space</td><td><strong>{esc(space)}</strong></td></tr>
         <tr><td style="color:#6b5763">Event type</td><td>{esc(event_type)}</td></tr>
         <tr><td style="color:#6b5763">Guests</td><td>{esc(guest_count)}</td></tr>
-        <tr><td style="color:#6b5763">Dining spend</td><td>{('&#8358;' + format(spend, ',')) if spend else '&mdash;'}</td></tr>
+        <tr><td style="color:#6b5763">Booking</td><td>{booking_label}</td></tr>
         <tr><td style="color:#6b5763">Preferred date</td><td>{esc(preferred_date)}</td></tr>
         <tr><td style="color:#6b5763">Notes</td><td>{esc(notes)}</td></tr>
       </table>

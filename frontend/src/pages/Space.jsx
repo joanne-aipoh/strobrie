@@ -42,7 +42,10 @@ function BookingForm() {
     phone: "",
     event_type: "birthday",
     space: "indoor",
-    spend: SPACES[0].spend,
+    // "rent" = they just want the space (pay rent); "spend" = dining-spend deal
+    // (free venue). spend carries the committed dining amount (0 for rent-only).
+    mode: "rent",
+    spend: 0,
     guest_count: 10,
     preferred_date: "",
     notes: "",
@@ -97,18 +100,23 @@ function BookingForm() {
         onChange={(e) => setForm({ ...form, phone: e.target.value })}
       />
       <select
-        value={form.space}
+        value={`${form.space}:${form.mode}`}
         onChange={(e) => {
-          // Spend is recorded from the chosen space's tier (no separate control).
-          const picked = SPACES.find((s) => s.id === e.target.value);
-          setForm({ ...form, space: e.target.value, spend: picked ? picked.spend : form.spend });
+          // Each space has two options: rent the space, or do the dining-spend
+          // deal (free venue). spend holds the committed amount (0 for rent-only).
+          const [id, mode] = e.target.value.split(":");
+          const picked = SPACES.find((s) => s.id === id);
+          setForm({ ...form, space: id, mode, spend: mode === "spend" && picked ? picked.spend : 0 });
         }}
       >
-        {SPACES.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.name} — rent {s.price} · min. spend ₦{s.spend.toLocaleString("en-NG")}
-          </option>
-        ))}
+        {SPACES.flatMap((s) => [
+          <option key={`${s.id}:rent`} value={`${s.id}:rent`}>
+            {s.name} — space only (rent {s.price})
+          </option>,
+          <option key={`${s.id}:spend`} value={`${s.id}:spend`}>
+            {s.name} — dining spend ₦{s.spend.toLocaleString("en-NG")} (free venue)
+          </option>,
+        ])}
       </select>
       <select
         value={form.event_type}
