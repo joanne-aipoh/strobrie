@@ -849,17 +849,19 @@ export default function Sell() {
         {cart.length === 0 ? (
           <div className="cart-empty">No items yet — tap a menu item to add it.</div>
         ) : (
-          cart.map((c, idx) => (
+          cart.map((c, idx) => {
+            const { base, mods } = splitItem(c.name);
+            const parts = mods ? mods.split(", ") : [];
+            const choices = parts.filter((m) => !m.startsWith("+ "));
+            const extras = parts.filter((m) => m.startsWith("+ "));
+            return (
             <div className="cart-line" key={idx}>
               <div className="info">
-                <div className="n">{splitItem(c.name).base}</div>
-                {splitItem(c.name).mods && (
-                  <div className="mods">
-                    {splitItem(c.name).mods.split(", ").map((m, i) => (
-                      <div key={i}>{m}</div>
-                    ))}
-                  </div>
-                )}
+                <div className="n">{base}</div>
+                {choices.length > 0 && <div className="mods">{choices.join(", ")}</div>}
+                {extras.map((e, i) => (
+                  <div className="mods extra" key={i}>{e}</div>
+                ))}
                 <div className="p" style={{ cursor: "default", textDecoration: "none" }}>
                   {fmt(c.price)} each
                 </div>
@@ -873,7 +875,8 @@ export default function Sell() {
                 Remove
               </button>
             </div>
-          ))
+            );
+          })
         )}
 
         {discount > 0 ? (
