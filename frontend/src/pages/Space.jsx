@@ -47,8 +47,6 @@ function BookingForm() {
     preferred_date: "",
     notes: "",
   });
-  // Distinct dining-spend tiers across the three spaces, for the spend dropdown.
-  const SPEND_TIERS = [...new Set(SPACES.map((s) => s.spend))].sort((a, b) => a - b);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
 
@@ -101,24 +99,14 @@ function BookingForm() {
       <select
         value={form.space}
         onChange={(e) => {
-          // Default the dining spend to the chosen space's tier (still editable).
+          // Spend is recorded from the chosen space's tier (no separate control).
           const picked = SPACES.find((s) => s.id === e.target.value);
           setForm({ ...form, space: e.target.value, spend: picked ? picked.spend : form.spend });
         }}
       >
         {SPACES.map((s) => (
           <option key={s.id} value={s.id}>
-            {s.name} — {s.price}
-          </option>
-        ))}
-      </select>
-      <label style={{ fontSize: 13, color: "var(--color-text-soft, #6b6b6b)", marginTop: -4 }}>
-        Minimum dining spend (for complimentary venue access)
-      </label>
-      <select value={form.spend} onChange={(e) => setForm({ ...form, spend: Number(e.target.value) })}>
-        {SPEND_TIERS.map((amt) => (
-          <option key={amt} value={amt}>
-            ₦{amt.toLocaleString("en-NG")}
+            {s.name} — rent {s.price} · min. spend ₦{s.spend.toLocaleString("en-NG")}
           </option>
         ))}
       </select>
