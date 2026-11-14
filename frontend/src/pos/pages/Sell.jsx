@@ -856,7 +856,13 @@ export default function Sell() {
             <div className="cart-line" key={idx}>
               <div className="info">
                 <div className="n">{splitItem(c.name).base}</div>
-                {splitItem(c.name).mods && <div className="mods">{splitItem(c.name).mods}</div>}
+                {splitItem(c.name).mods && (
+                  <div className="mods">
+                    {splitItem(c.name).mods.split(", ").map((m, i) => (
+                      <div key={i}>{m}</div>
+                    ))}
+                  </div>
+                )}
                 <div className="p" style={{ cursor: "default", textDecoration: "none" }}>
                   {fmt(c.price)} each
                 </div>
