@@ -161,24 +161,30 @@ function kitchenHTML(k) {
   const items = k.items
     .map((it) => {
       const { base, mods } = splitItem(it.name);
-      return `<div class="kitem"><div class="krow">${it.qty} × ${esc(base)}</div>${mods ? `<div class="kmod">+ ${esc(mods)}</div>` : ""}</div>`;
+      return `<div class="kitem"><div class="krow">${it.qty} x ${esc(base)}</div>${mods ? `<div class="kmod">+ ${esc(mods)}</div>` : ""}</div>`;
     })
     .join("");
   const css = `
     @page { size: 80mm auto; margin: 3mm; }
-    body { font-family: "Courier New", monospace; width: 72mm; margin: 0; color: #000; }
-    .type { text-align: center; font-size: 22px; font-weight: 700; text-transform: uppercase; }
-    .ord { text-align: center; font-size: 16px; font-weight: 700; margin-top: 2px; }
-    .meta { text-align: center; font-size: 11px; margin-bottom: 4px; }
-    .hr { border-top: 2px solid #000; margin: 6px 0; }
+    body { font-family: "Courier New", monospace; width: 72mm; margin: 0; color: #000; font-size: 12px; }
+    .hdr { text-align: center; font-size: 12px; }
+    .no { text-align: center; font-size: 22px; font-weight: 700; margin-top: 2px; }
+    .ord { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .meta { font-size: 12px; margin: 1px 0; }
+    .hr { border-top: 1px dashed #000; margin: 6px 0; }
+    .type { text-align: center; font-size: 18px; font-weight: 700; }
     .kitem { margin: 8px 0; }
     .krow { font-size: 16px; font-weight: 700; }
     .kmod { font-size: 13px; padding-left: 14px; }
   `;
   return `<!doctype html><html><head><meta charset="utf-8"><title>Kitchen</title><style>${css}</style></head><body>
-    <div class="type">${ORDER_TYPE_LABEL[k.orderType] || "Dine in"}</div>
+    <div class="hdr">*** Kitchen ***</div>
+    ${k.orderNo ? `<div class="no">#${esc(k.orderNo)}</div>` : ""}
     ${k.orderName ? `<div class="ord">${esc(k.orderName)}</div>` : ""}
-    <div class="meta">${new Date(k.timestamp).toLocaleTimeString()} · ${esc(k.staffName)}</div>
+    <div class="meta">${new Date(k.timestamp).toLocaleString()}</div>
+    <div class="meta">${esc(k.staffName)}</div>
+    <div class="hr"></div>
+    <div class="type">${ORDER_TYPE_LABEL[k.orderType] || "Dine in"}</div>
     <div class="hr"></div>
     ${items}
     <div class="hr"></div>
@@ -512,6 +518,7 @@ export default function Sell() {
       if (kitchen.length) {
         printKitchenTicket({
           items: kitchen,
+          orderNo: saved.id,
           orderName: label,
           orderType,
           staffName: currentStaff.name,
@@ -630,6 +637,7 @@ export default function Sell() {
       if (!activeTab) {
         printKitchenTicket({
           items: cart,
+          orderNo: sale.id,
           orderName: receipt.orderName,
           orderType,
           staffName: currentStaff.name,
