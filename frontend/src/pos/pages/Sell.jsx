@@ -34,10 +34,10 @@ function since(iso) {
   const hasZone = /(Z|[+-]\d{2}:?\d{2})$/.test(iso);
   const ms = new Date(hasZone ? iso : `${iso}Z`).getTime();
   const mins = Math.max(0, Math.round((Date.now() - ms) / 60000));
-  if (mins < 60) return `${mins} min${mins === 1 ? "" : "s"}`;
+  if (mins < 60) return `${mins} min${mins === 1 ? "" : "s"} ago`;
   const h = Math.floor(mins / 60), m = mins % 60;
   const hr = `${h} hr${h === 1 ? "" : "s"}`;
-  return m ? `${hr} ${m} min${m === 1 ? "" : "s"}` : hr;
+  return (m ? `${hr} ${m} min${m === 1 ? "" : "s"}` : hr) + " ago";
 }
 
 function fmt(n) {
