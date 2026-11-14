@@ -764,67 +764,6 @@ export default function Sell() {
             </button>
           )}
         </div>
-        {attachedCustomer ? (
-          <div style={{ background: "var(--cream-2)", borderRadius: 8, padding: 10, marginBottom: 12 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-              <div>
-                <strong style={{ fontSize: 13 }}>{attachedCustomer.name}</strong>
-                <div style={{ fontSize: 11.5, color: "var(--ink-soft)" }}>{attachedCustomer.points} points available</div>
-              </div>
-              <button className="link-btn" onClick={detachCustomer}>
-                Remove
-              </button>
-            </div>
-            <div className="form-field">
-              <label>Redeem points (₦{NAIRA_PER_POINT_REDEEM} off per point)</label>
-              <input
-                type="number"
-                min="0"
-                max={attachedCustomer.points}
-                value={online ? redeemPoints : ""}
-                disabled={!online}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  if (raw === "") {
-                    setRedeemPoints("");
-                    return;
-                  }
-                  setRedeemPoints(String(Math.max(0, Math.min(Number(raw) || 0, attachedCustomer.points))));
-                }}
-                placeholder={online ? "0" : "unavailable offline"}
-              />
-              {!online && (
-                <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 2 }}>
-                  Redeeming is off while offline — this sale still earns points.
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div style={{ background: "var(--cream-2)", borderRadius: 8, padding: 10, marginBottom: 12 }}>
-            <div className="form-field" style={{ marginBottom: 6 }}>
-              <label>Customer phone (loyalty)</label>
-              <input type="text" value={custSearchPhone} onChange={(e) => setCustSearchPhone(e.target.value)} placeholder="e.g. 0803..." />
-            </div>
-            <button className="log-btn" style={{ width: "100%", padding: 7, fontSize: 12.5, marginTop: 0 }} onClick={searchCustomer}>
-              Find customer
-            </button>
-            {custSearchResult === "notfound" && (
-              <div style={{ marginTop: 10 }}>
-                <div className="error-text" style={{ marginBottom: 6 }}>No customer with that number yet.</div>
-                <div className="form-field" style={{ marginBottom: 6 }}>
-                  <label>Name for new customer</label>
-                  <input type="text" value={newCustName} onChange={(e) => setNewCustName(e.target.value)} placeholder="Full name" />
-                </div>
-                {custFormError && <div className="error-text" style={{ marginBottom: 6 }}>{custFormError}</div>}
-                <button className="log-btn" style={{ width: "100%", padding: 7, fontSize: 12.5 }} onClick={quickAddCustomer}>
-                  Add and attach
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
         {searchQuery ? (
           <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginBottom: 10 }}>
             {itemsInCat.length} result{itemsInCat.length === 1 ? "" : "s"} for “{search.trim()}”
@@ -907,6 +846,67 @@ export default function Sell() {
             🖨 Test print
           </button>
         </div>
+        {attachedCustomer ? (
+          <div style={{ background: "var(--cream-2)", borderRadius: 8, padding: 10, marginBottom: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <div>
+                <strong style={{ fontSize: 13 }}>{attachedCustomer.name}</strong>
+                <div style={{ fontSize: 11.5, color: "var(--ink-soft)" }}>{attachedCustomer.points} points available</div>
+              </div>
+              <button className="link-btn" onClick={detachCustomer}>
+                Remove
+              </button>
+            </div>
+            <div className="form-field">
+              <label>Redeem points (₦{NAIRA_PER_POINT_REDEEM} off per point)</label>
+              <input
+                type="number"
+                min="0"
+                max={attachedCustomer.points}
+                value={online ? redeemPoints : ""}
+                disabled={!online}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (raw === "") {
+                    setRedeemPoints("");
+                    return;
+                  }
+                  setRedeemPoints(String(Math.max(0, Math.min(Number(raw) || 0, attachedCustomer.points))));
+                }}
+                placeholder={online ? "0" : "unavailable offline"}
+              />
+              {!online && (
+                <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 2 }}>
+                  Redeeming is off while offline — this sale still earns points.
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div style={{ background: "var(--cream-2)", borderRadius: 8, padding: 10, marginBottom: 12 }}>
+            <div className="form-field" style={{ marginBottom: 6 }}>
+              <label>Customer phone (loyalty)</label>
+              <input type="text" value={custSearchPhone} onChange={(e) => setCustSearchPhone(e.target.value)} placeholder="e.g. 0803..." />
+            </div>
+            <button className="log-btn" style={{ width: "100%", padding: 7, fontSize: 12.5, marginTop: 0 }} onClick={searchCustomer}>
+              Find customer
+            </button>
+            {custSearchResult === "notfound" && (
+              <div style={{ marginTop: 10 }}>
+                <div className="error-text" style={{ marginBottom: 6 }}>No customer with that number yet.</div>
+                <div className="form-field" style={{ marginBottom: 6 }}>
+                  <label>Name for new customer</label>
+                  <input type="text" value={newCustName} onChange={(e) => setNewCustName(e.target.value)} placeholder="Full name" />
+                </div>
+                {custFormError && <div className="error-text" style={{ marginBottom: 6 }}>{custFormError}</div>}
+                <button className="log-btn" style={{ width: "100%", padding: 7, fontSize: 12.5 }} onClick={quickAddCustomer}>
+                  Add and attach
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {cart.length === 0 ? (
           <div className="cart-empty">No items yet — tap a menu item to add it.</div>
         ) : (
