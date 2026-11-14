@@ -89,7 +89,8 @@
 .pos-app .cart-empty{font-size:13px;color:var(--ink-soft);padding:10px 0;}
 .pos-app .cart-line{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);}
 .pos-app .cart-line .info{flex:1;min-width:0;}
-.pos-app .cart-line .info .n{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pos-app .cart-line .info .n{font-size:13px;font-weight:600;white-space:normal;word-break:break-word;}
+.pos-app .cart-line .info .mods{font-size:12px;color:var(--rust-dark);margin-top:1px;white-space:normal;line-height:1.35;}
 .pos-app .cart-line .info .p{font-size:12px;color:var(--ink-soft);cursor:pointer;text-decoration:underline dotted;}
 .pos-app .qty-ctrl{display:flex;align-items:center;gap:6px;}
 .pos-app .qty-ctrl button{

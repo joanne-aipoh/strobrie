@@ -893,7 +893,8 @@ export default function Sell() {
           cart.map((c, idx) => (
             <div className="cart-line" key={idx}>
               <div className="info">
-                <div className="n">{c.name}</div>
+                <div className="n">{splitItem(c.name).base}</div>
+                {splitItem(c.name).mods && <div className="mods">{splitItem(c.name).mods}</div>}
                 {editingPriceIdx === idx ? (
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
                     <input
