@@ -82,6 +82,13 @@ class BlockRequest(BaseModel):
     reason: str | None = Field(default=None, max_length=200)
 
 
+class RescheduleRequest(BaseModel):
+    """Staff move a paid booking to a different date/slot."""
+
+    date: date
+    time_slot: str
+
+
 class AdminSlotOut(BaseModel):
     date: date
     label: str

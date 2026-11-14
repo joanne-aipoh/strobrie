@@ -222,6 +222,46 @@ def list_bookings(db: Session = Depends(get_db)):
     )
 
 
+@admin_router.patch("/bookings/{booking_id}/reschedule", response_model=pottery_schemas.BookingOut)
+def reschedule_booking(
+    booking_id: int, payload: pottery_schemas.RescheduleRequest, db: Session = Depends(get_db)
+):
+    b = db.get(pottery_models.PotteryBooking, booking_id)
+    if b is None:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    if payload.time_slot not in TIMES:
+        raise HTTPException(status_code=400, detail="Pick a valid time slot (10:00, 12:00 or 14:00).")
+    if payload.date.weekday() not in DAYS:
+        raise HTTPException(status_code=400, detail="Pottery runs on Tue, Fri and Sat only.")
+
+    # Capacity/conflict check against the *other* paid bookings in the target
+    # slot — a booking can always move to the slot it's already in.
+    others = (
+        db.query(pottery_models.PotteryBooking)
+        .filter_by(date=payload.date, time_slot=payload.time_slot, paid=True)
+        .filter(pottery_models.PotteryBooking.id != booking_id)
+        .all()
+    )
+    if b.session_type == "private":
+        if others:
+            raise HTTPException(status_code=400, detail="That slot already has a booking — a private session needs the whole slot.")
+    else:
+        if any(o.session_type == "private" for o in others):
+            raise HTTPException(status_code=400, detail="That slot is taken by a private session.")
+        seats_taken = sum(o.seats for o in others if o.session_type == "public")
+        if seats_taken + b.seats > PUBLIC_CAPACITY:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Not enough room — that slot has {PUBLIC_CAPACITY - seats_taken} of {PUBLIC_CAPACITY} seats left.",
+            )
+
+    b.date = payload.date
+    b.time_slot = payload.time_slot
+    db.commit()
+    db.refresh(b)
+    return b
+
+
 @admin_router.delete("/bookings/{booking_id}", status_code=204)
 def delete_booking(booking_id: int, db: Session = Depends(get_db)):
     b = db.get(pottery_models.PotteryBooking, booking_id)

@@ -12,16 +12,27 @@ function slotStatus(s) {
   return { text: "Open", bg: "#eaf1e5", color: "#3b5b31" };
 }
 
+const TIME_LABELS = { "10:00": "10:00 AM", "12:00": "12:00 PM", "14:00": "2:00 PM" };
+
+function dateLabel(iso) {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("en-NG", { weekday: "short", day: "numeric", month: "short" });
+}
+
 export default function PotteryAdmin() {
   const [slots, setSlots] = useState(null);
+  const [bookings, setBookings] = useState(null);
   const [requests, setRequests] = useState(null);
   const [error, setError] = useState("");
   const [confirming, setConfirming] = useState(null); // "b<id>" | "r<id>"
+  const [rescheduling, setRescheduling] = useState(null); // booking id being moved
+  const [rsForm, setRsForm] = useState({ date: "", time: "" });
 
   function load() {
-    return Promise.all([posApi.potteryOverview(), posApi.potteryRequests()])
-      .then(([o, r]) => {
+    return Promise.all([posApi.potteryOverview(), posApi.potteryBookings(), posApi.potteryRequests()])
+      .then(([o, bk, r]) => {
         setSlots(o);
+        setBookings(bk);
         setRequests(r);
       })
       .catch((e) => setError(e.message));
@@ -63,6 +74,25 @@ export default function PotteryAdmin() {
     }
   }
 
+  function startReschedule(b, s) {
+    setConfirming(null);
+    // A booking for today isn't in the upcoming-dates list, so default the
+    // picker to the first available future date rather than an unlisted value.
+    const inUpcoming = slots.some((x) => x.date === s.date);
+    setRsForm({ date: inUpcoming ? s.date : slots[0]?.date || s.date, time: s.time });
+    setRescheduling(b.id);
+  }
+
+  async function saveReschedule(id) {
+    try {
+      await posApi.reschedulePotteryBooking(id, { date: rsForm.date, time_slot: rsForm.time });
+      setRescheduling(null);
+      await load();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
   async function delBooking(id) {
     try {
       await posApi.deletePotteryBooking(id);
@@ -84,7 +114,7 @@ export default function PotteryAdmin() {
     }
   }
 
-  if (!slots || !requests) return <p>Loading&hellip;</p>;
+  if (!slots || !bookings || !requests) return <p>Loading&hellip;</p>;
 
   // Group slots by date, preserving order.
   const byDate = [];
@@ -97,9 +127,41 @@ export default function PotteryAdmin() {
     g.slots.push(s);
   });
 
+  // Options for the reschedule pickers — every valid upcoming pottery date,
+  // and the three fixed time slots (with their labels).
+  const dateOpts = byDate.map((g) => ({ date: g.date, label: g.label }));
+  const timeOpts = [];
+  slots.forEach((s) => {
+    if (!timeOpts.find((t) => t.time === s.time)) timeOpts.push({ time: s.time, label: s.time_label });
+  });
+
   const openRequests = requests.filter((r) => r.status === "new");
-  const bookedSlots = slots.filter((s) => s.bookings.length > 0);
-  const totalBooked = bookedSlots.reduce((n, s) => n + s.bookings.length, 0);
+
+  // Group paid bookings from today onward by date + slot (soonest first).
+  // Built from the full bookings list — not the upcoming-slots overview — so a
+  // booking for today still shows up to reschedule; past sessions drop off.
+  const todayStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD, local
+  const bookingGroups = [];
+  [...bookings]
+    .filter((b) => b.date >= todayStr)
+    .sort((a, b) => `${a.date}${a.time_slot}`.localeCompare(`${b.date}${b.time_slot}`))
+    .forEach((b) => {
+      const key = `${b.date}-${b.time_slot}`;
+      let g = bookingGroups.find((x) => x.key === key);
+      if (!g) {
+        g = {
+          key,
+          date: b.date,
+          time: b.time_slot,
+          label: dateLabel(b.date),
+          time_label: TIME_LABELS[b.time_slot] || b.time_slot,
+          bookings: [],
+        };
+        bookingGroups.push(g);
+      }
+      g.bookings.push(b);
+    });
+  const totalBooked = bookingGroups.reduce((n, g) => n + g.bookings.length, 0);
 
   return (
     <>
@@ -107,27 +169,57 @@ export default function PotteryAdmin() {
 
       <div className="panel">
         <h3>Pottery bookings ({totalBooked})</h3>
-        {bookedSlots.length === 0 ? (
+        {bookingGroups.length === 0 ? (
           <div className="empty-note">No bookings yet.</div>
         ) : (
-          bookedSlots.map((s) => (
-            <div key={`${s.date}-${s.time}`} style={{ padding: "8px 0", borderBottom: "1px solid var(--line)" }}>
+          bookingGroups.map((s) => (
+            <div key={s.key} style={{ padding: "8px 0", borderBottom: "1px solid var(--line)" }}>
               <strong>{s.label} · {s.time_label}</strong>
               {s.bookings.map((b) => (
-                <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 3 }}>
-                  <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>
-                    {b.customer_name} — {b.session_type === "private" ? "private" : `${b.seats} ${b.seats === 1 ? "person" : "people"}`}
-                    {b.customer_phone ? ` · ${b.customer_phone}` : ""}
-                  </span>
-                  {confirming === `b${b.id}` ? (
-                    <span style={{ fontSize: 12.5, whiteSpace: "nowrap" }}>
-                      Delete?{" "}
-                      <button className="link-btn" style={{ color: "var(--danger)", fontWeight: 700 }} onClick={() => delBooking(b.id)}>Yes</button>
-                      {"  "}
-                      <button className="link-btn" onClick={() => setConfirming(null)}>No</button>
+                <div key={b.id} style={{ marginTop: 4 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+                      {b.customer_name} — {b.session_type === "private" ? "private" : `${b.seats} ${b.seats === 1 ? "person" : "people"}`}
+                      {b.customer_phone ? ` · ${b.customer_phone}` : ""}
                     </span>
-                  ) : (
-                    <button className="link-btn" style={{ color: "var(--ink-soft)" }} onClick={() => setConfirming(`b${b.id}`)}>Delete</button>
+                    {confirming === `b${b.id}` ? (
+                      <span style={{ fontSize: 12.5, whiteSpace: "nowrap" }}>
+                        Delete?{" "}
+                        <button className="link-btn" style={{ color: "var(--danger)", fontWeight: 700 }} onClick={() => delBooking(b.id)}>Yes</button>
+                        {"  "}
+                        <button className="link-btn" onClick={() => setConfirming(null)}>No</button>
+                      </span>
+                    ) : rescheduling === b.id ? null : (
+                      <span style={{ display: "flex", gap: 12, whiteSpace: "nowrap" }}>
+                        <button className="link-btn" onClick={() => startReschedule(b, s)}>Reschedule</button>
+                        <button className="link-btn" style={{ color: "var(--ink-soft)" }} onClick={() => setConfirming(`b${b.id}`)}>Delete</button>
+                      </span>
+                    )}
+                  </div>
+                  {rescheduling === b.id && (
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 6 }}>
+                      <span style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>Move to:</span>
+                      <select
+                        value={rsForm.date}
+                        onChange={(e) => setRsForm((f) => ({ ...f, date: e.target.value }))}
+                        style={{ padding: "4px 8px", borderRadius: 8, fontSize: 13 }}
+                      >
+                        {dateOpts.map((d) => (
+                          <option key={d.date} value={d.date}>{d.label}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={rsForm.time}
+                        onChange={(e) => setRsForm((f) => ({ ...f, time: e.target.value }))}
+                        style={{ padding: "4px 8px", borderRadius: 8, fontSize: 13 }}
+                      >
+                        {timeOpts.map((t) => (
+                          <option key={t.time} value={t.time}>{t.label}</option>
+                        ))}
+                      </select>
+                      <button className="link-btn" style={{ fontWeight: 700 }} onClick={() => saveReschedule(b.id)}>Save</button>
+                      <button className="link-btn" style={{ color: "var(--ink-soft)" }} onClick={() => setRescheduling(null)}>Cancel</button>
+                    </div>
                   )}
                 </div>
               ))}
