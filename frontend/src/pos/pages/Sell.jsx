@@ -34,8 +34,10 @@ function since(iso) {
   const hasZone = /(Z|[+-]\d{2}:?\d{2})$/.test(iso);
   const ms = new Date(hasZone ? iso : `${iso}Z`).getTime();
   const mins = Math.max(0, Math.round((Date.now() - ms) / 60000));
-  if (mins < 60) return `${mins}m`;
-  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+  if (mins < 60) return `${mins} min${mins === 1 ? "" : "s"}`;
+  const h = Math.floor(mins / 60), m = mins % 60;
+  const hr = `${h} hr${h === 1 ? "" : "s"}`;
+  return m ? `${hr} ${m} min${m === 1 ? "" : "s"}` : hr;
 }
 
 function fmt(n) {
@@ -840,47 +842,34 @@ export default function Sell() {
           </button>
         </div>
         {activeTab && (
-          <div
-            style={{
-              background: "var(--cream-2)",
-              borderRadius: 8,
-              padding: 10,
-              marginBottom: 12,
-              fontSize: 12.5,
-              color: "var(--ink-soft)",
-            }}
-          >
-            Open {since(activeTab.opened_at)}. Add to it and save, or take payment now.
+          <div style={{ background: "var(--cream-2)", borderRadius: 10, padding: 12, marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span className="tab-status">
+                <span className="dot" />
+                Open · {since(activeTab.opened_at)}
+              </span>
+              <span style={{ fontSize: 12, color: "var(--ink-soft)" }}>Add items and save, or take payment.</span>
+            </div>
             {confirmingClose ? (
-              <div style={{ marginTop: 6 }}>
-                <div style={{ marginBottom: 6 }}>
-                  Close it without taking payment? Anything on it goes back into stock.
+              <div style={{ marginTop: 10 }}>
+                <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginBottom: 8 }}>
+                  Close without taking payment? Anything on it goes back into stock.
                 </div>
-                <div style={{ display: "flex", gap: 10 }}>
-                  <button
-                    className="link-btn"
-                    style={{ color: "var(--rust-dark)" }}
-                    onClick={cancelTab}
-                    disabled={tabBusy}
-                  >
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button className="mini-btn danger" onClick={cancelTab} disabled={tabBusy}>
                     {tabBusy ? "Closing…" : "Yes, close it"}
                   </button>
-                  <button className="link-btn" onClick={() => setConfirmingClose(false)}>
+                  <button className="mini-btn" onClick={() => setConfirmingClose(false)}>
                     Keep it open
                   </button>
                 </div>
               </div>
             ) : (
-              <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
-                <button className="link-btn" onClick={clearOrder}>
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button className="mini-btn" onClick={clearOrder}>
                   Leave it open
                 </button>
-                <button
-                  className="link-btn"
-                  style={{ color: "var(--rust-dark)" }}
-                  onClick={() => setConfirmingClose(true)}
-                  disabled={tabBusy}
-                >
+                <button className="mini-btn danger" onClick={() => setConfirmingClose(true)} disabled={tabBusy}>
                   Close without paying
                 </button>
               </div>

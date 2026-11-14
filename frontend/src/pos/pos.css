@@ -91,6 +91,12 @@
 .pos-app .cart-line .info{flex:1;min-width:0;}
 .pos-app .cart-line .info .n{font-size:13px;font-weight:600;white-space:normal;word-break:break-word;}
 .pos-app .cart-line .info .mods{font-size:12px;color:var(--rust-dark);margin-top:1px;white-space:normal;line-height:1.35;}
+.pos-app .tab-status{display:inline-flex;align-items:center;gap:6px;background:#e7f3e2;color:#3b5b31;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;}
+.pos-app .tab-status .dot{width:7px;height:7px;border-radius:999px;background:#3b5b31;}
+.pos-app .mini-btn{font:inherit;font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:8px;border:1px solid var(--line);background:var(--white);color:var(--ink);cursor:pointer;}
+.pos-app .mini-btn:hover{background:#fff;border-color:#d8c3b4;}
+.pos-app .mini-btn.danger{color:var(--rust-dark);border-color:#e6c4b8;}
+.pos-app .mini-btn:disabled{opacity:.5;cursor:default;}
 .pos-app .cart-line .info .p{font-size:12px;color:var(--ink-soft);cursor:pointer;text-decoration:underline dotted;}
 .pos-app .qty-ctrl{display:flex;align-items:center;gap:6px;}
 .pos-app .qty-ctrl button{
