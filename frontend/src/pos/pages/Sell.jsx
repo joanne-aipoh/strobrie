@@ -735,7 +735,7 @@ export default function Sell() {
                   className={`cat-btn ${activeTab?.id === t.id ? "active" : ""}`}
                   onClick={() => openTab(t)}
                 >
-                  {t.label} &middot; {fmt(tabTotal(t))} &middot; {since(t.opened_at)}
+                  <strong>{t.label}</strong> &middot; {fmt(tabTotal(t))} &middot; {since(t.opened_at)}
                 </button>
               ))}
             </div>
