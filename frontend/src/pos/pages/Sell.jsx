@@ -53,7 +53,7 @@ const CAFE = {
   phones: "0809 070 1995 / 0802 912 5229",
 };
 const VAT_RATE = 7.5; // Nigerian VAT, already included in menu prices.
-const ORDER_TYPE_LABEL = { dine_in: "Dine in", takeaway: "Takeaway" };
+const ORDER_TYPE_LABEL = { dine_in: "Dine in", takeaway: "Takeaway", delivery: "Delivery" };
 // The café's seats/tables, picked from a dropdown to name an order or tab.
 // "Custom" lets staff type anything (a walk-in, a customer's name, takeaway).
 const TABLES = ["Black Table", "Wood Table - Short", "Lovers Corner", "Rustic Table", "Reading Nook", "Blue sofa"];
@@ -974,6 +974,12 @@ export default function Sell() {
             onClick={() => setOrderType("takeaway")}
           >
             Takeaway
+          </button>
+          <button
+            className={`pay-btn ${orderType === "delivery" ? "selected" : ""}`}
+            onClick={() => setOrderType("delivery")}
+          >
+            Delivery
           </button>
         </div>
         {!activeTab && (
