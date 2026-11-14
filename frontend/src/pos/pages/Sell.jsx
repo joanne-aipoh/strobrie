@@ -56,7 +56,7 @@ const VAT_RATE = 7.5; // Nigerian VAT, already included in menu prices.
 const ORDER_TYPE_LABEL = { dine_in: "Dine in", takeaway: "Takeaway", delivery: "Delivery" };
 // The café's seats/tables, picked from a dropdown to name an order or tab.
 // "Custom" lets staff type anything (a walk-in, a customer's name, takeaway).
-const TABLES = ["Black Table", "Wood Table - Short", "Lovers Corner", "Rustic Table", "Reading Nook", "Blue sofa"];
+const TABLES = ["Black Table", "Wood Table - Short", "Lovers Corner", "Rustic Table", "Reading Nook", "Blue sofa", "Delivery"];
 const CUSTOM = "__custom__";
 
 // Auto-printing (receipt on payment, kitchen ticket on order) is OFF until the
