@@ -52,6 +52,10 @@ const CAFE = {
 };
 const VAT_RATE = 7.5; // Nigerian VAT, already included in menu prices.
 const ORDER_TYPE_LABEL = { dine_in: "Dine in", takeaway: "Takeaway" };
+// The café's seats/tables, picked from a dropdown to name an order or tab.
+// "Custom" lets staff type anything (a walk-in, a customer's name, takeaway).
+const TABLES = ["Black Table", "Wood Table - Short", "Lovers Corner", "Rustic Table", "Reading Nook", "Blue sofa"];
+const CUSTOM = "__custom__";
 
 function esc(s) {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -245,8 +249,6 @@ export default function Sell() {
   const [activeTab, setActiveTab] = useState(null);   // the tab loaded into the cart, if any
   const [tabBusy, setTabBusy] = useState(false);
   const [tabError, setTabError] = useState("");
-  const [namingTab, setNamingTab] = useState(false);   // naming a new tab, in-page
-  const [tabLabel, setTabLabel] = useState("");
   const [confirmingClose, setConfirmingClose] = useState(false);
   const [editingPriceIdx, setEditingPriceIdx] = useState(null);  // cart line being repriced
   const [priceDraft, setPriceDraft] = useState("");
@@ -269,10 +271,13 @@ export default function Sell() {
 
   useEffect(() => () => toastTimer.current && clearTimeout(toastTimer.current), []);
   const [lastReceipt, setLastReceipt] = useState(null);
-  // Printed on receipts + kitchen tickets. orderType stays as last used; the
-  // order name clears with each order.
+  // Printed on receipts + kitchen tickets, and used as the tab name. orderType
+  // stays as last used; the table/name clears with each order.
   const [orderType, setOrderType] = useState("dine_in"); // dine_in | takeaway
-  const [orderName, setOrderName] = useState("");
+  const [tableChoice, setTableChoice] = useState(""); // "" (none) | a table | CUSTOM
+  const [customTable, setCustomTable] = useState("");
+  // The one order name — from the table dropdown, or the custom field.
+  const orderName = (tableChoice === CUSTOM ? customTable : tableChoice).trim();
 
   // Live connection state, so the till can switch to offline selling and so we
   // can disable loyalty redemption (balance can't be verified without a server).
@@ -467,10 +472,9 @@ export default function Sell() {
     setCart([]);
     setActiveTab(null);
     setTabError("");
-    setNamingTab(false);
-    setTabLabel("");
     setConfirmingClose(false);
-    setOrderName("");
+    setTableChoice("");
+    setCustomTable("");
     detachCustomer();
   }
 
@@ -486,6 +490,14 @@ export default function Sell() {
       })),
     );
     setActiveTab(tab);
+    // Reflect the tab's name in the dropdown (a preset table, else Custom).
+    if (TABLES.includes(tab.label)) {
+      setTableChoice(tab.label);
+      setCustomTable("");
+    } else {
+      setTableChoice(CUSTOM);
+      setCustomTable(tab.label || "");
+    }
     setTabError("");
     clearToast();
     setAttachedCustomer(tab.customer ?? null);
@@ -494,25 +506,19 @@ export default function Sell() {
     setRedeemPoints("");
   }
 
-  // An existing tab saves straight away; a new one needs a name first, asked
-  // for with a field in the page rather than window.prompt — a till browser in
-  // kiosk mode suppresses those dialogs, and the button did nothing at all.
+  // The order's table/name (from the dropdown) is also the tab name — no
+  // separate "name this tab" step. An existing tab keeps its own label.
   function startSaveTab() {
     if (cart.length === 0) return;
     setTabError("");
-    if (activeTab) {
-      saveTab(activeTab.label);
-      return;
-    }
-    setTabLabel("");
-    setNamingTab(true);
+    saveTab(activeTab ? activeTab.label : orderName);
   }
 
   function saveTab(rawLabel) {
     if (cart.length === 0) return;
     const label = (rawLabel ?? "").trim();
     if (!label) {
-      setTabError("Give the tab a name so it can be found again.");
+      setTabError("Pick a table or enter an order name first.");
       return;
     }
     // Staff can add to a tab freely, but reducing its total needs approval.
@@ -993,20 +999,31 @@ export default function Sell() {
           </button>
         </div>
         {!activeTab && (
-          <input
-            type="text"
-            value={orderName}
-            onChange={(e) => setOrderName(e.target.value)}
-            placeholder="Order name (optional) — e.g. Muna"
-            style={{
-              width: "100%",
-              marginBottom: 8,
-              padding: "0.6rem 0.8rem",
-              borderRadius: 8,
-              border: "1px solid var(--line)",
-              font: "inherit",
-            }}
-          />
+          <div style={{ marginBottom: 8 }}>
+            <select
+              value={tableChoice}
+              onChange={(e) => setTableChoice(e.target.value)}
+              style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: 8, border: "1px solid var(--line)", font: "inherit", background: "#fff" }}
+            >
+              <option value="">Table / order name…</option>
+              {TABLES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+              <option value={CUSTOM}>Custom…</option>
+            </select>
+            {tableChoice === CUSTOM && (
+              <input
+                type="text"
+                autoFocus
+                value={customTable}
+                onChange={(e) => setCustomTable(e.target.value)}
+                placeholder="Name (customer, walk-in…)"
+                style={{ width: "100%", marginTop: 6, padding: "0.6rem 0.8rem", borderRadius: 8, border: "1px solid var(--line)", font: "inherit" }}
+              />
+            )}
+          </div>
         )}
 
         <div className="pay-row">
@@ -1025,41 +1042,14 @@ export default function Sell() {
         <button className="charge-btn" disabled={cart.length === 0 || chargeStatus === "submitting"} onClick={charge}>
           {chargeStatus === "submitting" ? "Charging…" : `Charge ${fmt(finalTotal)}`}
         </button>
-        {namingTab ? (
-          <div style={{ background: "var(--cream-2)", borderRadius: 8, padding: 10, marginTop: 8 }}>
-            <div className="form-field" style={{ marginBottom: 8 }}>
-              <label>Name this tab</label>
-              <input
-                type="text"
-                autoFocus
-                value={tabLabel}
-                placeholder="e.g. Table 4, or the customer's name"
-                onChange={(e) => setTabLabel(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") saveTab(tabLabel);
-                  if (e.key === "Escape") setNamingTab(false);
-                }}
-              />
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button className="log-btn" style={{ flex: 1 }} disabled={tabBusy} onClick={() => saveTab(tabLabel)}>
-                {tabBusy ? "Saving…" : "Save tab"}
-              </button>
-              <button className="link-btn" onClick={() => setNamingTab(false)}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            className="log-btn"
-            style={{ width: "100%", marginTop: 8 }}
-            disabled={cart.length === 0 || tabBusy}
-            onClick={startSaveTab}
-          >
-            {tabBusy ? "Saving…" : activeTab ? "Save changes to tab" : "Save as tab — pay later"}
-          </button>
-        )}
+        <button
+          className="log-btn"
+          style={{ width: "100%", marginTop: 8 }}
+          disabled={cart.length === 0 || tabBusy}
+          onClick={startSaveTab}
+        >
+          {tabBusy ? "Saving…" : activeTab ? "Save changes to tab" : "Save as tab — pay later"}
+        </button>
         {toast && (
           <div className="toast">
             {toast}
