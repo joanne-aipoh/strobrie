@@ -140,6 +140,13 @@
   background:var(--gradient-pos);color:var(--white);font-size:13.5px;font-weight:600;cursor:pointer;
 }
 .pos-app .log-btn:disabled{background:#d8c9b6;cursor:not-allowed;}
+.pos-app .void-btn{
+  width:100%;margin-top:10px;padding:13px;border-radius:12px;
+  background:var(--white);color:var(--danger);border:1.5px solid var(--danger);
+  font-size:14px;font-weight:700;cursor:pointer;transition:background .12s ease;
+}
+.pos-app .void-btn:hover{background:#fdeef0;}
+.pos-app .void-btn:disabled{opacity:.5;cursor:not-allowed;}
 
 .pos-app .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
 .pos-app .metric-card{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:15px 16px;box-shadow:0 1px 3px rgba(43,29,34,.05);}

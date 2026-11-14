@@ -1045,7 +1045,7 @@ export default function Sell() {
           disabled={cart.length === 0 || tabBusy}
           onClick={startSaveTab}
         >
-          {tabBusy ? "Saving…" : activeTab ? "Save changes to ticket" : "Save as ticket — pay later"}
+          {tabBusy ? "Saving…" : activeTab ? "Save Ticket" : "Save as ticket — pay later"}
         </button>
         {activeTab &&
           (confirmingClose ? (
@@ -1063,12 +1063,7 @@ export default function Sell() {
               </div>
             </div>
           ) : (
-            <button
-              className="link-btn"
-              style={{ display: "block", margin: "12px auto 0", color: "var(--rust-dark)" }}
-              onClick={() => setConfirmingClose(true)}
-              disabled={tabBusy}
-            >
+            <button className="void-btn" onClick={() => setConfirmingClose(true)} disabled={tabBusy}>
               Void ticket
             </button>
           ))}
