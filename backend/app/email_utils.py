@@ -223,6 +223,31 @@ def send_pottery_confirmation(name, email, booking_date, time_slot, session_type
     return _send(email, "Your Strobriē pottery session is booked", html, "pottery confirmation")
 
 
+def send_pottery_reschedule(name, email, old_date, old_slot, new_date, new_slot, session_type, seats) -> bool:
+    """Let a customer know their pottery session has been moved to a new time."""
+    def _when(d):
+        return d.strftime("%A, %d %B %Y") if hasattr(d, "strftime") else str(d)
+    old_when, new_when = _when(old_date), _when(new_date)
+    old_t = _POTTERY_TIMES.get(old_slot, old_slot)
+    new_t = _POTTERY_TIMES.get(new_slot, new_slot)
+    kind = "Private session" if session_type == "private" else f"Public session · {seats} {'person' if seats == 1 else 'people'}"
+    html = f"""
+    <div style="font-family:Arial,Helvetica,sans-serif;color:#2b1d22;max-width:520px">
+      <h2 style="color:#b5713e">Your pottery session has moved 🏺</h2>
+      <p>Hi {name.split(' ')[0]}, your Strobriē pottery session has been rescheduled. Here are the new details:</p>
+      <table cellpadding="6" style="border-collapse:collapse;font-size:15px">
+        <tr><td style="color:#6b5763">New date</td><td><strong>{new_when}</strong></td></tr>
+        <tr><td style="color:#6b5763">New time</td><td><strong>{new_t}</strong> (2 hours)</td></tr>
+        <tr><td style="color:#6b5763">Session</td><td>{kind}</td></tr>
+      </table>
+      <p style="color:#6b5763;font-size:13px">Previously: {old_when} at {old_t}. Your payment carries over — nothing more to pay.</p>
+      <p style="color:#6b5763">See you at the studio! Reply to this email if the new time doesn't work for you.</p>
+      <p style="color:#6b5763;font-size:12.5px">Strobriē By Joanne</p>
+    </div>
+    """
+    return _send(email, "Your Strobriē pottery session has been rescheduled", html, "pottery reschedule")
+
+
 def send_space_inquiry_ack(name, email, space, preferred_date) -> bool:
     """Acknowledge a space-rental inquiry to the customer."""
     when = preferred_date.strftime("%A, %d %B %Y") if hasattr(preferred_date, "strftime") else str(preferred_date)

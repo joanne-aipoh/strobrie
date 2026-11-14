@@ -224,7 +224,10 @@ def list_bookings(db: Session = Depends(get_db)):
 
 @admin_router.patch("/bookings/{booking_id}/reschedule", response_model=pottery_schemas.BookingOut)
 def reschedule_booking(
-    booking_id: int, payload: pottery_schemas.RescheduleRequest, db: Session = Depends(get_db)
+    booking_id: int,
+    payload: pottery_schemas.RescheduleRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
 ):
     b = db.get(pottery_models.PotteryBooking, booking_id)
     if b is None:
@@ -255,10 +258,27 @@ def reschedule_booking(
                 detail=f"Not enough room — that slot has {PUBLIC_CAPACITY - seats_taken} of {PUBLIC_CAPACITY} seats left.",
             )
 
+    old_date, old_slot = b.date, b.time_slot
+    changed = (old_date != payload.date) or (old_slot != payload.time_slot)
     b.date = payload.date
     b.time_slot = payload.time_slot
     db.commit()
     db.refresh(b)
+
+    # Let the customer know the new time — only when it actually moved, and
+    # in the background so a slow mail server doesn't hold up the response.
+    if changed and b.customer_email:
+        background_tasks.add_task(
+            email_utils.send_pottery_reschedule,
+            b.customer_name,
+            b.customer_email,
+            old_date,
+            old_slot,
+            b.date,
+            b.time_slot,
+            b.session_type,
+            b.seats,
+        )
     return b
 
 

@@ -219,6 +219,9 @@ export default function PotteryAdmin() {
                       </select>
                       <button className="link-btn" style={{ fontWeight: 700 }} onClick={() => saveReschedule(b.id)}>Save</button>
                       <button className="link-btn" style={{ color: "var(--ink-soft)" }} onClick={() => setRescheduling(null)}>Cancel</button>
+                      <span style={{ fontSize: 11.5, color: "var(--ink-soft)", flexBasis: "100%" }}>
+                        The customer is emailed the new time when you save.
+                      </span>
                     </div>
                   )}
                 </div>
