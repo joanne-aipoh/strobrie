@@ -41,41 +41,157 @@ function fmt(n) {
   return "₦" + Math.round(n).toLocaleString();
 }
 
-function printReceipt(receipt) {
-  const rows = receipt.items
-    .map((it) => `<tr><td>${it.qty} × ${it.name}</td><td style="text-align:right;">${fmt(it.price * it.qty)}</td></tr>`)
+// Café details printed at the top of every receipt.
+const CAFE = {
+  name: "Strobriē",
+  tagline: "by Joanne",
+  address: "HFIA Garden, Off Tafawa Balewa Way, Garki, Abuja",
+  website: "www.strobrie.com",
+  phones: "0809 070 1995 / 0802 912 5229",
+};
+const VAT_RATE = 7.5; // Nigerian VAT, already included in menu prices.
+const ORDER_TYPE_LABEL = { dine_in: "Dine in", takeaway: "Takeaway" };
+
+function esc(s) {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Cart item names carry their modifiers after " · " (e.g. "8\" Cake · Chocolate").
+function splitItem(name) {
+  const parts = String(name).split(" · ");
+  return { base: parts[0], mods: parts.slice(1).join(", ") };
+}
+
+// Items to send to the kitchen on a tab save: the whole cart for a new tab, or
+// only the newly-added quantities when adding to an existing tab (so the kitchen
+// doesn't re-make what it already got).
+function kitchenDelta(cartLines, tab) {
+  if (!tab) return cartLines;
+  const prev = {};
+  tab.items.forEach((i) => {
+    prev[i.name] = (prev[i.name] || 0) + i.qty;
+  });
+  const out = [];
+  cartLines.forEach((c) => {
+    const add = c.qty - (prev[c.name] || 0);
+    if (add > 0) out.push({ ...c, qty: add });
+  });
+  return out;
+}
+
+// Print by writing into a hidden iframe and calling print() on it — works when
+// fired programmatically after an async charge (a popup window would be blocked).
+function printHTML(html) {
+  const frame = document.createElement("iframe");
+  frame.setAttribute("aria-hidden", "true");
+  frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+  document.body.appendChild(frame);
+  const doc = frame.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+  const win = frame.contentWindow;
+  win.onafterprint = () => setTimeout(() => frame.remove(), 300);
+  setTimeout(() => {
+    try {
+      win.focus();
+      win.print();
+    } catch {
+      /* printing unavailable — ignore */
+    }
+  }, 90);
+  // Fallback cleanup in case onafterprint never fires (e.g. dialog dismissed oddly).
+  setTimeout(() => frame.parentNode && frame.remove(), 120000);
+}
+
+const RECEIPT_CSS = `
+  @page { size: 80mm auto; margin: 3mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Courier New", monospace; width: 72mm; margin: 0; color: #000; font-size: 12px; line-height: 1.35; }
+  .c { text-align: center; }
+  .name { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+  .tag { font-size: 11px; margin-bottom: 4px; }
+  .small { font-size: 10.5px; }
+  .hr { border-top: 1px dashed #000; margin: 6px 0; }
+  .row { display: flex; justify-content: space-between; gap: 8px; }
+  .meta { margin: 1px 0; }
+  .item { margin: 5px 0; }
+  .item .sub { font-size: 10.5px; padding-left: 2px; }
+  .item .mod { font-size: 10.5px; padding-left: 10px; }
+  .total { font-size: 16px; font-weight: 700; }
+  .right { text-align: right; }
+`;
+
+function receiptHTML(r) {
+  const tax = Math.round((r.total * VAT_RATE) / (100 + VAT_RATE));
+  const items = r.items
+    .map((it) => {
+      const { base, mods } = splitItem(it.name);
+      return `<div class="item">
+        <div class="row"><span>${esc(base)}</span><span class="right">${fmt(it.price * it.qty)}</span></div>
+        <div class="sub">${it.qty} × ${fmt(it.price)}</div>
+        ${mods ? `<div class="mod">+ ${esc(mods)}</div>` : ""}
+      </div>`;
+    })
     .join("");
-  const win = window.open("", "receipt", "width=380,height=600");
-  if (!win) return;
-  win.document.write(`
-    <html><head><title>Receipt</title>
-    <style>
-      body{font-family:monospace;padding:16px;color:#222;}
-      h2{text-align:center;margin:0 0 2px;}
-      .sub{text-align:center;font-size:12px;margin-bottom:14px;}
-      table{width:100%;border-collapse:collapse;font-size:13px;}
-      td{padding:3px 0;}
-      .line{border-top:1px dashed #999;margin:8px 0;}
-      .total{font-weight:bold;font-size:15px;}
-    </style></head><body>
-      <h2>Strobrie</h2>
-      <div class="sub">${new Date(receipt.timestamp).toLocaleString()}<br/>Served by ${receipt.staffName}</div>
-      <div class="line"></div>
-      <table>${rows}</table>
-      <div class="line"></div>
-      <table>
-        <tr><td>Subtotal</td><td style="text-align:right;">${fmt(receipt.subtotal)}</td></tr>
-        ${receipt.discount > 0 ? `<tr><td>Loyalty discount</td><td style="text-align:right;">-${fmt(receipt.discount)}</td></tr>` : ""}
-        <tr class="total"><td>Total</td><td style="text-align:right;">${fmt(receipt.total)}</td></tr>
-        <tr><td>${receipt.paymentMethod}</td><td></td></tr>
-        ${receipt.customerName ? `<tr><td>${receipt.customerName}</td><td style="text-align:right;">+${receipt.pointsEarned} pts</td></tr>` : ""}
-      </table>
-      <div class="line"></div>
-      <div class="sub">Thank you!</div>
-      <script>window.print();<\/script>
-    </body></html>
-  `);
-  win.document.close();
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Receipt</title><style>${RECEIPT_CSS}</style></head><body>
+    <div class="c name">${CAFE.name}</div>
+    <div class="c tag">${CAFE.tagline}</div>
+    <div class="c small">${esc(CAFE.address)}</div>
+    <div class="c small">${CAFE.website}</div>
+    <div class="c small">${CAFE.phones}</div>
+    <div class="hr"></div>
+    ${r.orderName ? `<div class="meta">Order: ${esc(r.orderName)}</div>` : ""}
+    <div class="meta">Employee: ${esc(r.staffName)}</div>
+    <div class="meta">${ORDER_TYPE_LABEL[r.orderType] || "Dine in"}</div>
+    <div class="meta small">${new Date(r.timestamp).toLocaleString()}</div>
+    <div class="hr"></div>
+    ${items}
+    <div class="hr"></div>
+    ${r.discount > 0 ? `<div class="row"><span>Subtotal</span><span>${fmt(r.subtotal)}</span></div><div class="row"><span>Loyalty discount</span><span>-${fmt(r.discount)}</span></div>` : ""}
+    <div class="row total"><span>Total</span><span>${fmt(r.total)}</span></div>
+    <div class="row small"><span>Tax inc. ${VAT_RATE}%</span><span>${fmt(tax)}</span></div>
+    <div class="row"><span>${esc(r.paymentMethod)}</span><span>${fmt(r.total)}</span></div>
+    ${r.customerName ? `<div class="row small"><span>${esc(r.customerName)}</span><span>+${r.pointsEarned} pts</span></div>` : ""}
+    <div class="hr"></div>
+    <div class="c">Thank you!</div>
+  </body></html>`;
+}
+
+function kitchenHTML(k) {
+  const items = k.items
+    .map((it) => {
+      const { base, mods } = splitItem(it.name);
+      return `<div class="kitem"><div class="krow">${it.qty} × ${esc(base)}</div>${mods ? `<div class="kmod">+ ${esc(mods)}</div>` : ""}</div>`;
+    })
+    .join("");
+  const css = `
+    @page { size: 80mm auto; margin: 3mm; }
+    body { font-family: "Courier New", monospace; width: 72mm; margin: 0; color: #000; }
+    .type { text-align: center; font-size: 22px; font-weight: 700; text-transform: uppercase; }
+    .ord { text-align: center; font-size: 16px; font-weight: 700; margin-top: 2px; }
+    .meta { text-align: center; font-size: 11px; margin-bottom: 4px; }
+    .hr { border-top: 2px solid #000; margin: 6px 0; }
+    .kitem { margin: 8px 0; }
+    .krow { font-size: 16px; font-weight: 700; }
+    .kmod { font-size: 13px; padding-left: 14px; }
+  `;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Kitchen</title><style>${css}</style></head><body>
+    <div class="type">${ORDER_TYPE_LABEL[k.orderType] || "Dine in"}</div>
+    ${k.orderName ? `<div class="ord">${esc(k.orderName)}</div>` : ""}
+    <div class="meta">${new Date(k.timestamp).toLocaleTimeString()} · ${esc(k.staffName)}</div>
+    <div class="hr"></div>
+    ${items}
+    <div class="hr"></div>
+  </body></html>`;
+}
+
+function printReceipt(receipt) {
+  printHTML(receiptHTML(receipt));
+}
+
+function printKitchenTicket(ticket) {
+  printHTML(kitchenHTML(ticket));
 }
 
 export default function Sell() {
@@ -129,6 +245,10 @@ export default function Sell() {
 
   useEffect(() => () => toastTimer.current && clearTimeout(toastTimer.current), []);
   const [lastReceipt, setLastReceipt] = useState(null);
+  // Printed on receipts + kitchen tickets. orderType stays as last used; the
+  // order name clears with each order.
+  const [orderType, setOrderType] = useState("dine_in"); // dine_in | takeaway
+  const [orderName, setOrderName] = useState("");
 
   // Live connection state, so the till can switch to offline selling and so we
   // can disable loyalty redemption (balance can't be verified without a server).
@@ -326,6 +446,7 @@ export default function Sell() {
     setNamingTab(false);
     setTabLabel("");
     setConfirmingClose(false);
+    setOrderName("");
     detachCustomer();
   }
 
@@ -386,6 +507,18 @@ export default function Sell() {
       const saved = activeTab
         ? await posApi.updateTab(activeTab.id, body)
         : await posApi.openTab({ staff_id: currentStaff.id, ...body });
+      // Send the new items to the kitchen (whole order for a new tab, only the
+      // added items when topping up an existing one).
+      const kitchen = kitchenDelta(cart, activeTab);
+      if (kitchen.length) {
+        printKitchenTicket({
+          items: kitchen,
+          orderName: label,
+          orderType,
+          staffName: currentStaff.name,
+          timestamp: new Date().toISOString(),
+        });
+      }
       await loadTabs();
       loadMenu();
       clearOrder();
@@ -487,8 +620,23 @@ export default function Sell() {
         customerName: attachedCustomer?.name ?? null,
         pointsEarned: sale.points_earned,
         timestamp: sale.timestamp,
+        orderType,
+        // A tab carries its own name; a direct sale uses the typed order name.
+        orderName: activeTab ? activeTab.label : orderName.trim(),
       };
       setLastReceipt(receipt);
+      // Receipt prints on payment. For a pay-now direct sale the kitchen hasn't
+      // seen the order yet, so send it a ticket too (a settled tab already got one).
+      printReceipt(receipt);
+      if (!activeTab) {
+        printKitchenTicket({
+          items: cart,
+          orderName: receipt.orderName,
+          orderType,
+          staffName: currentStaff.name,
+          timestamp: receipt.timestamp,
+        });
+      }
       const custNote = attachedCustomer ? ` — ${attachedCustomer.name} earned ${sale.points_earned} pts` : "";
       showToast(
         queued
@@ -802,6 +950,37 @@ export default function Sell() {
               </div>
             )}
           </div>
+        )}
+
+        <div className="pay-row" style={{ marginBottom: 8 }}>
+          <button
+            className={`pay-btn ${orderType === "dine_in" ? "selected" : ""}`}
+            onClick={() => setOrderType("dine_in")}
+          >
+            Dine in
+          </button>
+          <button
+            className={`pay-btn ${orderType === "takeaway" ? "selected" : ""}`}
+            onClick={() => setOrderType("takeaway")}
+          >
+            Takeaway
+          </button>
+        </div>
+        {!activeTab && (
+          <input
+            type="text"
+            value={orderName}
+            onChange={(e) => setOrderName(e.target.value)}
+            placeholder="Order name (optional) — e.g. Muna"
+            style={{
+              width: "100%",
+              marginBottom: 8,
+              padding: "0.6rem 0.8rem",
+              borderRadius: 8,
+              border: "1px solid var(--line)",
+              font: "inherit",
+            }}
+          />
         )}
 
         <div className="pay-row">
