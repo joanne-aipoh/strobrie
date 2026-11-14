@@ -61,7 +61,9 @@ export default function ModifierPicker({ product, onAdd, onCancel }) {
         g.options.forEach((opt, oi) => {
           if (addonSel.has(`${gi}:${oi}`)) {
             p += optAmount(opt, b);
-            parts.push(opt.label);
+            // Prefix extras with "+" so they read as add-ons, distinct from the
+            // included choices (flavour, size, etc.) on receipts and the till.
+            parts.push(`+ ${opt.label}`);
           }
         });
       }

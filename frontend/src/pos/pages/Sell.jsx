@@ -161,7 +161,7 @@ function receiptHTML(r) {
       return `<div class="item">
         <div class="row"><span>${esc(base)}</span><span class="right">${fmt(it.price * it.qty)}</span></div>
         <div class="sub">${it.qty} × ${fmt(it.price)}</div>
-        ${mods ? `<div class="mod">+ ${esc(mods)}</div>` : ""}
+        ${mods ? `<div class="mod">${esc(mods)}</div>` : ""}
       </div>`;
     })
     .join("");
@@ -191,7 +191,7 @@ function kitchenHTML(k) {
   const items = k.items
     .map((it) => {
       const { base, mods } = splitItem(it.name);
-      return `<div class="kitem"><div class="krow">${it.qty} x ${esc(base)}</div>${mods ? `<div class="kmod">+ ${esc(mods)}</div>` : ""}</div>`;
+      return `<div class="kitem"><div class="krow">${it.qty} x ${esc(base)}</div>${mods ? `<div class="kmod">${esc(mods)}</div>` : ""}</div>`;
     })
     .join("");
   const css = `
