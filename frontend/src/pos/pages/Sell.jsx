@@ -5,6 +5,7 @@ import { shopApi } from "../../shop/shopApi.js";
 import { queueSale, cacheMenu, cachedMenu, isNetworkError } from "../offline.js";
 import ApprovalModal from "./ApprovalModal.jsx";
 import ModifierPicker from "./ModifierPicker.jsx";
+import { RECEIPT_LOGO } from "../receiptLogo.js";
 
 const CATEGORY_ORDER = ["Hot Coffee", "Iced Coffee", "Special Brews", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Breakfast", "Lunch", "Brunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer", "Extras"];
 
@@ -92,14 +93,34 @@ function printHTML(html) {
   doc.close();
   const win = frame.contentWindow;
   win.onafterprint = () => setTimeout(() => frame.remove(), 300);
-  setTimeout(() => {
+  let fired = false;
+  const doPrint = () => {
+    if (fired) return;
+    fired = true;
     try {
       win.focus();
       win.print();
     } catch {
       /* printing unavailable — ignore */
     }
-  }, 90);
+  };
+  // Wait for any images (the logo) to finish loading first, so the receipt
+  // isn't printed blank. Fall back to a timer if an image never resolves.
+  const imgs = Array.from(doc.images || []);
+  const pending = imgs.filter((img) => !img.complete);
+  if (pending.length) {
+    let left = pending.length;
+    const one = () => {
+      if (--left <= 0) setTimeout(doPrint, 60);
+    };
+    pending.forEach((img) => {
+      img.onload = one;
+      img.onerror = one;
+    });
+    setTimeout(doPrint, 2000); // safety net
+  } else {
+    setTimeout(doPrint, 90);
+  }
   // Fallback cleanup in case onafterprint never fires (e.g. dialog dismissed oddly).
   setTimeout(() => frame.parentNode && frame.remove(), 120000);
 }
@@ -109,8 +130,7 @@ const RECEIPT_CSS = `
   * { box-sizing: border-box; }
   body { font-family: "Courier New", monospace; width: 72mm; margin: 0; color: #000; font-size: 12px; line-height: 1.35; }
   .c { text-align: center; }
-  .name { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
-  .tag { font-size: 11px; margin-bottom: 4px; }
+  .logo { width: 52mm; max-width: 100%; height: auto; margin: 2px 0 5px; }
   .small { font-size: 10.5px; }
   .hr { border-top: 1px dashed #000; margin: 6px 0; }
   .row { display: flex; justify-content: space-between; gap: 8px; }
@@ -135,8 +155,7 @@ function receiptHTML(r) {
     })
     .join("");
   return `<!doctype html><html><head><meta charset="utf-8"><title>Receipt</title><style>${RECEIPT_CSS}</style></head><body>
-    <div class="c name">${CAFE.name}</div>
-    <div class="c tag">${CAFE.tagline}</div>
+    <div class="c"><img class="logo" src="${RECEIPT_LOGO}" alt="Strobriē"></div>
     <div class="c small">${esc(CAFE.address)}</div>
     <div class="c small">${CAFE.website}</div>
     <div class="c small">${CAFE.phones}</div>
