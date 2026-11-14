@@ -143,8 +143,7 @@ function receiptHTML(r) {
     <div class="hr"></div>
     ${r.orderName ? `<div class="meta">Order: ${esc(r.orderName)}</div>` : ""}
     <div class="meta">Employee: ${esc(r.staffName)}</div>
-    <div class="meta">${ORDER_TYPE_LABEL[r.orderType] || "Dine in"}</div>
-    <div class="meta small">${new Date(r.timestamp).toLocaleString()}</div>
+    <div class="meta row"><span>${ORDER_TYPE_LABEL[r.orderType] || "Dine in"}</span><span class="small">${new Date(r.timestamp).toLocaleString()}</span></div>
     <div class="hr"></div>
     ${items}
     <div class="hr"></div>
