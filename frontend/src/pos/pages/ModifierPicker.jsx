@@ -42,7 +42,10 @@ export default function ModifierPicker({ product, onAdd, onCancel }) {
       if (g.kind === "variant") {
         const opt = g.options[sel[gi] ?? 0];
         if (opt) {
-          if (typeof opt.price === "number") b = opt.price;
+          // Only a priced flavour (e.g. a sandwich at ₦10,500) sets the line
+          // price. A ₦0 option is an included choice (eggs style, "served with"…)
+          // and must NOT wipe the item's base price.
+          if (typeof opt.price === "number" && opt.price > 0) b = opt.price;
           parts.push(opt.label);
         }
       }
@@ -85,7 +88,9 @@ export default function ModifierPicker({ product, onAdd, onCancel }) {
   function optLabel(g, opt, oi) {
     if (g.kind === "addon") return `+${fmt(optAmount(opt, price))}`;
     if (g.kind === "matrix") return fmt(matrixPrice(g, oi));
-    return typeof opt.price === "number" ? fmt(opt.price) : "";
+    // Show a price on a variant chip only when it actually sets the line price;
+    // a ₦0 included choice shows no price.
+    return typeof opt.price === "number" && opt.price > 0 ? fmt(opt.price) : "";
   }
 
   return (
