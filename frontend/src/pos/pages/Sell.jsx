@@ -172,7 +172,8 @@ function kitchenHTML(k) {
     .ord { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 4px; }
     .meta { font-size: 12px; margin: 1px 0; }
     .hr { border-top: 1px dashed #000; margin: 6px 0; }
-    .type { text-align: center; font-size: 18px; font-weight: 700; }
+    .type { display: flex; justify-content: space-between; align-items: baseline; font-size: 18px; font-weight: 700; }
+    .type .dt { font-size: 12px; font-weight: 400; }
     .kitem { margin: 8px 0; }
     .krow { font-size: 16px; font-weight: 700; }
     .kmod { font-size: 13px; padding-left: 14px; }
@@ -181,10 +182,9 @@ function kitchenHTML(k) {
     <div class="hdr">*** Kitchen ***</div>
     ${k.orderNo ? `<div class="no">#${esc(k.orderNo)}</div>` : ""}
     ${k.orderName ? `<div class="ord">${esc(k.orderName)}</div>` : ""}
-    <div class="meta">${new Date(k.timestamp).toLocaleString()}</div>
     <div class="meta">${esc(k.staffName)}</div>
     <div class="hr"></div>
-    <div class="type">${ORDER_TYPE_LABEL[k.orderType] || "Dine in"}</div>
+    <div class="type"><span>${ORDER_TYPE_LABEL[k.orderType] || "Dine in"}</span><span class="dt">${new Date(k.timestamp).toLocaleString()}</span></div>
     <div class="hr"></div>
     ${items}
     <div class="hr"></div>
