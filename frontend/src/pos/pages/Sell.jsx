@@ -222,6 +222,23 @@ function printKitchenTicket(ticket) {
   printHTML(kitchenHTML(ticket));
 }
 
+// A sample receipt to confirm the printer (e.g. RawBT → Bluetooth) is connected.
+function printTestReceipt() {
+  printReceipt({
+    items: [{ name: "Americano · Whole Milk", qty: 1, price: 5200 }],
+    subtotal: 5200,
+    discount: 0,
+    total: 5200,
+    paymentMethod: "Cash",
+    staffName: "Printer test",
+    customerName: null,
+    pointsEarned: 0,
+    timestamp: new Date().toISOString(),
+    orderType: "dine_in",
+    orderName: "PRINTER TEST",
+  });
+}
+
 export default function Sell() {
   const { currentStaff, canManageOps, staffList } = usePosAuth();
   // Staff need a front-desk/manager PIN to close a tab or reduce its total.
@@ -804,7 +821,12 @@ export default function Sell() {
       </div>
 
       <div className="cart">
-        <h3>{activeTab ? `Tab — ${activeTab.label}` : "Current order"}</h3>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+          <h3 style={{ margin: 0 }}>{activeTab ? `Tab — ${activeTab.label}` : "Current order"}</h3>
+          <button className="link-btn" style={{ fontSize: 12.5, color: "var(--ink-soft)" }} onClick={printTestReceipt}>
+            🖨 Test print
+          </button>
+        </div>
         {activeTab && (
           <div
             style={{
