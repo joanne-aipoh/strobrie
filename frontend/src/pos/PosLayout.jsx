@@ -83,8 +83,8 @@ function PosShell() {
         </header>
 
         <nav className="tabs">
-          <NavLink to={posPath("/sell")}>Sell</NavLink>
           <NavLink to={posPath("/customers")}>Loyalty</NavLink>
+          <NavLink to={posPath("/sell")}>Sell</NavLink>
           <NavLink to={posPath("/products")}>Products</NavLink>
           <NavLink to={posPath("/events")}>Events</NavLink>
           {canManageOps && (
