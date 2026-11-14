@@ -57,6 +57,11 @@ const ORDER_TYPE_LABEL = { dine_in: "Dine in", takeaway: "Takeaway" };
 const TABLES = ["Black Table", "Wood Table - Short", "Lovers Corner", "Rustic Table", "Reading Nook", "Blue sofa"];
 const CUSTOM = "__custom__";
 
+// Auto-printing (receipt on payment, kitchen ticket on order) is OFF until the
+// Bluetooth printer is set up and tested. The 🖨 Test print button and the
+// "Print receipt" link still work for testing. Flip to true to enable.
+const AUTO_PRINT = false;
+
 function esc(s) {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
@@ -557,7 +562,7 @@ export default function Sell() {
       // Send the new items to the kitchen (whole order for a new tab, only the
       // added items when topping up an existing one).
       const kitchen = kitchenDelta(cart, activeTab);
-      if (kitchen.length) {
+      if (AUTO_PRINT && kitchen.length) {
         printKitchenTicket({
           items: kitchen,
           orderNo: saved.id,
@@ -569,9 +574,16 @@ export default function Sell() {
       }
       await loadTabs();
       loadMenu();
-      clearOrder();
       setLastReceipt(null);
-      showToast(`Tab saved — ${saved.label}. Charge it when they're ready to pay.`);
+      if (activeTab) {
+        // Keep the tab on screen with its saved items so the change visibly
+        // "reflects" (and staff can keep adding) instead of the order vanishing.
+        openTab(saved);
+        showToast(`Tab updated — ${saved.label}. Items saved.`);
+      } else {
+        clearOrder();
+        showToast(`Tab saved — ${saved.label}. Charge it when they're ready to pay.`);
+      }
     } catch (err) {
       setTabError(err.message);
     } finally {
@@ -675,8 +687,8 @@ export default function Sell() {
       setLastReceipt(receipt);
       // Receipt prints on payment. For a pay-now direct sale the kitchen hasn't
       // seen the order yet, so send it a ticket too (a settled tab already got one).
-      printReceipt(receipt);
-      if (!activeTab) {
+      if (AUTO_PRINT) printReceipt(receipt);
+      if (AUTO_PRINT && !activeTab) {
         printKitchenTicket({
           items: cart,
           orderNo: sale.id,
