@@ -725,9 +725,6 @@ export default function Sell() {
       <div>
         {openTabs.length > 0 && (
           <div className="panel" style={{ padding: 12, marginBottom: 14 }}>
-            <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginBottom: 8 }}>
-              Open tickets ({openTabs.length}) — ordered, not paid for yet. Tap one to add to it or take payment.
-            </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {openTabs.map((t) => (
                 <button
