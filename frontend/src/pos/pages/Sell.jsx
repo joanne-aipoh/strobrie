@@ -56,7 +56,7 @@ const VAT_RATE = 7.5; // Nigerian VAT, already included in menu prices.
 const ORDER_TYPE_LABEL = { dine_in: "Dine in", takeaway: "Takeaway", delivery: "Delivery" };
 // The café's seats/tables, picked from a dropdown to name an order or tab.
 // "Custom" lets staff type anything (a walk-in, a customer's name, takeaway).
-const TABLES = ["Black Table", "Wood Table - Short", "Lovers Corner", "Rustic Table", "Reading Nook", "Blue sofa", "Delivery"];
+const TABLES = ["Black Table", "Wood Table - Short", "Lovers Corner", "Rustic Table", "Reading Nook", "Blue sofa"];
 const CUSTOM = "__custom__";
 
 // Auto-printing (receipt on payment, kitchen ticket on order) is OFF until the
@@ -301,7 +301,8 @@ export default function Sell() {
   const [tableChoice, setTableChoice] = useState(""); // "" (none) | a table | CUSTOM
   const [customTable, setCustomTable] = useState("");
   // The one order name — from the table dropdown, or the custom field.
-  const orderName = (tableChoice === CUSTOM ? customTable : tableChoice).trim();
+  // Delivery has no table — the name comes from the delivery name/address field.
+  const orderName = (tableChoice === CUSTOM || orderType === "delivery" ? customTable : tableChoice).trim();
 
   // Live connection state, so the till can switch to offline selling and so we
   // can disable loyalty redemption (balance can't be verified without a server).
@@ -982,7 +983,7 @@ export default function Sell() {
             Delivery
           </button>
         </div>
-        {!activeTab && (
+        {!activeTab && orderType !== "delivery" && (
           <div style={{ marginBottom: 8 }}>
             <select
               value={tableChoice}
@@ -1008,6 +1009,15 @@ export default function Sell() {
               />
             )}
           </div>
+        )}
+        {!activeTab && orderType === "delivery" && (
+          <input
+            type="text"
+            value={customTable}
+            onChange={(e) => setCustomTable(e.target.value)}
+            placeholder="Delivery name / address"
+            style={{ width: "100%", marginBottom: 8, padding: "0.6rem 0.8rem", borderRadius: 8, border: "1px solid var(--line)", font: "inherit" }}
+          />
         )}
 
         <div className="pay-row">
