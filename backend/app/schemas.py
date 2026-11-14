@@ -56,6 +56,7 @@ class BookingRequestCreate(BaseModel):
     space: Literal["indoor", "green_patio", "front_lawn"]
     guest_count: int = Field(ge=1, le=150)
     preferred_date: date
+    spend: int | None = Field(default=None, ge=0, le=100_000_000)
     notes: str | None = Field(default=None, max_length=2000)
 
 
@@ -70,6 +71,7 @@ class BookingRequestOut(BaseModel):
     space: str
     guest_count: int
     preferred_date: date
+    spend: int | None = None
     notes: str | None
     status: str = "new"
     created_at: datetime

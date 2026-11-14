@@ -61,6 +61,7 @@ def create_booking_request(
         booking.preferred_date,
         booking.notes,
         booking.created_at,
+        booking.spend,
     )
     # Acknowledge to the customer.
     background_tasks.add_task(

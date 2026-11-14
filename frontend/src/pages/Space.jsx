@@ -9,6 +9,7 @@ const SPACES = [
     photo: "/indoor-space.jpg",
     capacity: "Up to 50 people",
     price: "₦350,000",
+    spend: 550000,
     description: "Birthdays, corporate gatherings, brunch parties, & private dinners.",
     offer: "Spend ₦550,000 on your dining experience and enjoy complimentary exclusive venue access.",
   },
@@ -18,6 +19,7 @@ const SPACES = [
     photo: "/green-patio.jpg",
     capacity: "Up to 50–70 people",
     price: "₦150,000",
+    spend: 250000,
     description: "Birthdays, corporate gatherings, brunch parties, private dinners, & sip & paint.",
     offer: "Spend ₦250,000 on your dining experience and enjoy complimentary exclusive venue access.",
   },
@@ -27,6 +29,7 @@ const SPACES = [
     photo: "/front-lawn.jpg",
     capacity: "Up to 100–150 people",
     price: "₦200,000",
+    spend: 300000,
     description: "Birthdays, corporate gatherings, brunch parties, private dinners, & pop ups.",
     offer: "Spend ₦300,000 on your dining experience and enjoy complimentary exclusive venue access.",
   },
@@ -39,10 +42,13 @@ function BookingForm() {
     phone: "",
     event_type: "birthday",
     space: "indoor",
+    spend: SPACES[0].spend,
     guest_count: 10,
     preferred_date: "",
     notes: "",
   });
+  // Distinct dining-spend tiers across the three spaces, for the spend dropdown.
+  const SPEND_TIERS = [...new Set(SPACES.map((s) => s.spend))].sort((a, b) => a - b);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
 
@@ -92,10 +98,27 @@ function BookingForm() {
         value={form.phone}
         onChange={(e) => setForm({ ...form, phone: e.target.value })}
       />
-      <select value={form.space} onChange={(e) => setForm({ ...form, space: e.target.value })}>
+      <select
+        value={form.space}
+        onChange={(e) => {
+          // Default the dining spend to the chosen space's tier (still editable).
+          const picked = SPACES.find((s) => s.id === e.target.value);
+          setForm({ ...form, space: e.target.value, spend: picked ? picked.spend : form.spend });
+        }}
+      >
         {SPACES.map((s) => (
           <option key={s.id} value={s.id}>
             {s.name} — {s.price}
+          </option>
+        ))}
+      </select>
+      <label style={{ fontSize: 13, color: "var(--color-text-soft, #6b6b6b)", marginTop: -4 }}>
+        Minimum dining spend (for complimentary venue access)
+      </label>
+      <select value={form.spend} onChange={(e) => setForm({ ...form, spend: Number(e.target.value) })}>
+        {SPEND_TIERS.map((amt) => (
+          <option key={amt} value={amt}>
+            ₦{amt.toLocaleString("en-NG")}
           </option>
         ))}
       </select>

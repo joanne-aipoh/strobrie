@@ -54,6 +54,9 @@ class BookingRequest(Base):
     space: Mapped[str] = mapped_column(String(30), default="indoor")
     guest_count: Mapped[int] = mapped_column(Integer)
     preferred_date: Mapped[datetime] = mapped_column(Date)
+    # Minimum dining spend the customer is committing to (naira) — defaults to
+    # the chosen space's tier but staff can read whatever they picked.
+    spend: Mapped[int | None] = mapped_column(Integer, default=None)
     notes: Mapped[str | None] = mapped_column(Text, default=None)
     # Pipeline stage: new | contacted | quote_sent | confirmed | declined.
     status: Mapped[str] = mapped_column(String(20), default="new", server_default="new")
