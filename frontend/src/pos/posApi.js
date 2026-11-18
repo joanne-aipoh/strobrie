@@ -79,6 +79,7 @@ export const posApi = {
   potteryRequests: () => request("/api/pos/pottery/requests"),
   potteryHandleRequest: (id) => request(`/api/pos/pottery/requests/${id}/handled`, { method: "POST" }),
   deletePotteryBooking: (id) => request(`/api/pos/pottery/bookings/${id}`, { method: "DELETE" }),
+  addPotteryWalkin: (data) => request("/api/pos/pottery/bookings", { method: "POST", body: JSON.stringify(data) }),
   reschedulePotteryBooking: (id, data) =>
     request(`/api/pos/pottery/bookings/${id}/reschedule`, { method: "PATCH", body: JSON.stringify(data) }),
   deletePotteryRequest: (id) => request(`/api/pos/pottery/requests/${id}`, { method: "DELETE" }),

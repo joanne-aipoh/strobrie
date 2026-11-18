@@ -222,6 +222,45 @@ def list_bookings(db: Session = Depends(get_db)):
     )
 
 
+@admin_router.post("/bookings", response_model=pottery_schemas.BookingOut, status_code=201)
+def add_walkin_booking(payload: pottery_schemas.WalkinBookingCreate, db: Session = Depends(get_db)):
+    """Staff record a pottery session that was booked and paid for in person."""
+    if payload.time_slot not in TIMES:
+        raise HTTPException(status_code=400, detail="Pick a valid time slot (10:00, 12:00 or 14:00).")
+    # No weekday restriction here — a walk-in records something that already
+    # happened, which may be on any date (incl. yesterday or a one-off session).
+
+    state = _slot_state(db, payload.date, payload.time_slot)
+    if payload.session_type == "private":
+        if state["public_seats"] > 0 or state["private"]:
+            raise HTTPException(status_code=400, detail="That slot already has bookings — a private session needs the whole slot.")
+    else:
+        if state["private"]:
+            raise HTTPException(status_code=400, detail="That slot is taken by a private session.")
+        if state["public_seats"] + payload.seats > PUBLIC_CAPACITY:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Only {PUBLIC_CAPACITY - state['public_seats']} of {PUBLIC_CAPACITY} seats left in that slot.",
+            )
+
+    booking = pottery_models.PotteryBooking(
+        date=payload.date,
+        time_slot=payload.time_slot,
+        session_type=payload.session_type,
+        seats=payload.seats if payload.session_type == "public" else 1,
+        customer_name=payload.customer_name,
+        customer_email="",
+        customer_phone=payload.customer_phone,
+        amount=payload.amount,
+        paid=True,
+        payment_reference=f"walkin-{uuid.uuid4().hex[:16]}",
+    )
+    db.add(booking)
+    db.commit()
+    db.refresh(booking)
+    return booking
+
+
 @admin_router.patch("/bookings/{booking_id}/reschedule", response_model=pottery_schemas.BookingOut)
 def reschedule_booking(
     booking_id: int,

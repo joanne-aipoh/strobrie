@@ -33,6 +33,8 @@ export default function PotteryAdmin() {
   const [confirming, setConfirming] = useState(null); // "b<id>" | "r<id>"
   const [rescheduling, setRescheduling] = useState(null); // booking id being moved
   const [rsForm, setRsForm] = useState({ date: "", time: "" });
+  const [showWalkin, setShowWalkin] = useState(false);
+  const [walkin, setWalkin] = useState({ date: "", time: "", session_type: "public", seats: 1, name: "", phone: "", amount: "" });
 
   function load() {
     return Promise.all([posApi.potteryOverview(), posApi.potteryBookings(), posApi.potteryRequests()])
@@ -89,6 +91,47 @@ export default function PotteryAdmin() {
     const inUpcoming = slots.some((x) => x.date === s.date);
     setRsForm({ date: inUpcoming ? s.date : slots[0]?.date || s.date, time: s.time });
     setRescheduling(b.id);
+  }
+
+  const PRICE_PUBLIC = 15000;
+  const PRICE_PRIVATE = 20000;
+  const suggestAmount = (type, seats) => (type === "private" ? PRICE_PRIVATE : PRICE_PUBLIC * (Number(seats) || 1));
+
+  function openWalkin() {
+    setError("");
+    setWalkin({
+      date: new Date().toLocaleDateString("en-CA"), // today; staff can pick a past date
+      time: timeOpts[0]?.time || "10:00",
+      session_type: "public",
+      seats: 1,
+      name: "",
+      phone: "",
+      amount: String(PRICE_PUBLIC),
+    });
+    setShowWalkin(true);
+  }
+
+  async function addWalkin() {
+    const w = walkin;
+    if (!w.date || !w.time || !w.name.trim()) {
+      setError("Fill in date, time and a name for the walk-in booking.");
+      return;
+    }
+    try {
+      await posApi.addPotteryWalkin({
+        date: w.date,
+        time_slot: w.time,
+        session_type: w.session_type,
+        seats: w.session_type === "public" ? Number(w.seats) || 1 : 1,
+        customer_name: w.name.trim(),
+        customer_phone: w.phone.trim(),
+        amount: Number(w.amount) || 0,
+      });
+      setShowWalkin(false);
+      await load();
+    } catch (e) {
+      setError(e.message);
+    }
   }
 
   async function saveReschedule(id) {
@@ -195,7 +238,77 @@ export default function PotteryAdmin() {
       {error && <div className="error-text" style={{ marginBottom: 10 }}>{error}</div>}
 
       <div className="panel">
-        <h3>Pottery bookings ({totalBooked})</h3>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+          <h3 style={{ margin: 0 }}>Pottery bookings ({totalBooked})</h3>
+          <button className="link-btn" onClick={() => (showWalkin ? setShowWalkin(false) : openWalkin())}>
+            {showWalkin ? "Cancel" : "+ Add walk-in"}
+          </button>
+        </div>
+        {showWalkin && (
+          <div style={{ background: "var(--cream-2)", borderRadius: 8, padding: 12, margin: "10px 0" }}>
+            <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginBottom: 8 }}>
+              Record a session booked &amp; paid in person at the café.
+            </div>
+            <div className="form-grid">
+              <div className="form-field">
+                <label>Date</label>
+                <input
+                  type="date"
+                  value={walkin.date}
+                  max={new Date().toLocaleDateString("en-CA")}
+                  onChange={(e) => setWalkin((w) => ({ ...w, date: e.target.value }))}
+                />
+              </div>
+              <div className="form-field">
+                <label>Time</label>
+                <select value={walkin.time} onChange={(e) => setWalkin((w) => ({ ...w, time: e.target.value }))}>
+                  {timeOpts.map((t) => (
+                    <option key={t.time} value={t.time}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-field">
+                <label>Session</label>
+                <select
+                  value={walkin.session_type}
+                  onChange={(e) =>
+                    setWalkin((w) => ({ ...w, session_type: e.target.value, amount: String(suggestAmount(e.target.value, w.seats)) }))
+                  }
+                >
+                  <option value="public">Public (per person)</option>
+                  <option value="private">Private (whole slot)</option>
+                </select>
+              </div>
+              {walkin.session_type === "public" && (
+                <div className="form-field">
+                  <label>People</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="6"
+                    value={walkin.seats}
+                    onChange={(e) => setWalkin((w) => ({ ...w, seats: e.target.value, amount: String(suggestAmount(w.session_type, e.target.value)) }))}
+                  />
+                </div>
+              )}
+              <div className="form-field">
+                <label>Name</label>
+                <input type="text" value={walkin.name} onChange={(e) => setWalkin((w) => ({ ...w, name: e.target.value }))} placeholder="Customer name" />
+              </div>
+              <div className="form-field">
+                <label>Phone (optional)</label>
+                <input type="text" value={walkin.phone} onChange={(e) => setWalkin((w) => ({ ...w, phone: e.target.value }))} placeholder="e.g. 0803..." />
+              </div>
+              <div className="form-field">
+                <label>Amount paid (₦)</label>
+                <input type="number" min="0" value={walkin.amount} onChange={(e) => setWalkin((w) => ({ ...w, amount: e.target.value }))} />
+              </div>
+            </div>
+            <button className="log-btn" style={{ marginTop: 10 }} onClick={addWalkin}>
+              Save walk-in booking
+            </button>
+          </div>
+        )}
         {bookingGroups.length === 0 ? (
           <div className="empty-note">No bookings yet.</div>
         ) : (

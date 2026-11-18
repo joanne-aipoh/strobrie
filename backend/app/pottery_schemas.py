@@ -89,6 +89,18 @@ class RescheduleRequest(BaseModel):
     time_slot: str
 
 
+class WalkinBookingCreate(BaseModel):
+    """Staff record a pottery session paid in person at the café."""
+
+    date: date
+    time_slot: str
+    session_type: Literal["public", "private"]
+    seats: int = Field(default=1, ge=1, le=6)
+    customer_name: str = Field(min_length=1, max_length=120)
+    customer_phone: str = Field(default="", max_length=30)
+    amount: int = Field(ge=0)
+
+
 class AdminSlotOut(BaseModel):
     date: date
     label: str
