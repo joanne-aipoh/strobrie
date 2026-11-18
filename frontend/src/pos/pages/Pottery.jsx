@@ -20,6 +20,11 @@ function dateLabel(iso) {
   return d.toLocaleDateString("en-NG", { weekday: "short", day: "numeric", month: "short" });
 }
 
+function monthLabel(ym) {
+  const [y, m] = ym.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString("en-NG", { month: "long", year: "numeric" });
+}
+
 export default function PotteryAdmin() {
   const [slots, setSlots] = useState(null);
   const [bookings, setBookings] = useState(null);
@@ -166,6 +171,25 @@ export default function PotteryAdmin() {
     });
   const totalBooked = bookingGroups.reduce((n, g) => n + g.bookings.length, 0);
 
+  // Monthly report across ALL paid bookings (grouped by session month).
+  const monthly = {};
+  bookings.forEach((b) => {
+    const key = (b.date || "").slice(0, 7);
+    if (!key) return;
+    const m = monthly[key] || (monthly[key] = { month: key, count: 0, guests: 0, revenue: 0, pub: 0, priv: 0 });
+    m.count += 1;
+    m.guests += b.seats || 0;
+    m.revenue += b.amount || 0;
+    if (b.session_type === "private") m.priv += 1;
+    else m.pub += 1;
+  });
+  const months = Object.values(monthly).sort((a, b) => b.month.localeCompare(a.month));
+  const reportTotal = months.reduce(
+    (t, m) => ({ count: t.count + m.count, guests: t.guests + m.guests, revenue: t.revenue + m.revenue }),
+    { count: 0, guests: 0, revenue: 0 },
+  );
+  const todayKey = new Date().toLocaleDateString("en-CA").slice(0, 7);
+
   return (
     <>
       {error && <div className="error-text" style={{ marginBottom: 10 }}>{error}</div>}
@@ -231,6 +255,48 @@ export default function PotteryAdmin() {
               ))}
             </div>
           ))
+        )}
+      </div>
+
+      <div className="panel">
+        <h3>Monthly report</h3>
+        {months.length === 0 ? (
+          <div className="empty-note">No bookings yet.</div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr style={{ color: "var(--ink-soft)", textAlign: "left" }}>
+                  <th style={{ padding: "6px 8px", borderBottom: "1px solid var(--line)" }}>Month</th>
+                  <th style={{ padding: "6px 8px", borderBottom: "1px solid var(--line)", textAlign: "center" }}>Bookings</th>
+                  <th style={{ padding: "6px 8px", borderBottom: "1px solid var(--line)", textAlign: "center" }}>Guests</th>
+                  <th style={{ padding: "6px 8px", borderBottom: "1px solid var(--line)", textAlign: "right" }}>Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                {months.map((m) => (
+                  <tr key={m.month}>
+                    <td style={{ padding: "7px 8px", borderBottom: "1px solid var(--line)" }}>
+                      {monthLabel(m.month)}
+                      {m.month === todayKey && <span style={{ fontSize: 11, color: "var(--ink-soft)" }}> · so far</span>}
+                    </td>
+                    <td style={{ padding: "7px 8px", borderBottom: "1px solid var(--line)", textAlign: "center" }}>
+                      {m.count}
+                      <span style={{ fontSize: 11, color: "var(--ink-soft)" }}> ({m.pub} pub / {m.priv} priv)</span>
+                    </td>
+                    <td style={{ padding: "7px 8px", borderBottom: "1px solid var(--line)", textAlign: "center" }}>{m.guests}</td>
+                    <td style={{ padding: "7px 8px", borderBottom: "1px solid var(--line)", textAlign: "right", fontWeight: 600 }}>{fmt(m.revenue)}</td>
+                  </tr>
+                ))}
+                <tr style={{ fontWeight: 700 }}>
+                  <td style={{ padding: "8px" }}>Total</td>
+                  <td style={{ padding: "8px", textAlign: "center" }}>{reportTotal.count}</td>
+                  <td style={{ padding: "8px", textAlign: "center" }}>{reportTotal.guests}</td>
+                  <td style={{ padding: "8px", textAlign: "right" }}>{fmt(reportTotal.revenue)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
