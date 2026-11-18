@@ -203,17 +203,28 @@ export default function Pottery() {
             Once it has dried, we glaze and <strong style={{ color: INK }}>fire it in the kiln</strong> for you —
             and your finished pot is <strong style={{ color: INK }}>yours to take home and keep</strong>.
           </p>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
             {[
-              ["1", "Throw it", "Shape your piece on the wheel"],
-              ["2", "We fire it", "Glazed & kiln-fired for you"],
-              ["3", "Keep it", "Your creation, yours to keep"],
-            ].map(([n, t, d]) => (
-              <div key={n} style={{ flex: "1 1 130px", background: CREAM, borderRadius: 12, padding: "11px 13px" }}>
-                <div style={{ color: ACCENT, fontWeight: 700, fontSize: 13 }}>
-                  {n}. {t}
-                </div>
-                <div style={{ color: SOFT, fontSize: 12.5, marginTop: 3 }}>{d}</div>
+              ["🏺", "Throw it", "Shape your piece on the wheel"],
+              ["🔥", "We fire it", "Glazed & kiln-fired for you"],
+              ["🎁", "Keep it", "Your creation, yours to keep"],
+            ].map(([icon, t, d]) => (
+              <div
+                key={t}
+                style={{
+                  background: CREAM,
+                  border: `1px solid ${LINE}`,
+                  borderRadius: 14,
+                  padding: "16px 12px",
+                  textAlign: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <div style={{ fontSize: 24, lineHeight: 1, marginBottom: 8 }}>{icon}</div>
+                <div style={{ color: ACCENT, fontWeight: 700, fontSize: 13.5 }}>{t}</div>
+                <div style={{ color: SOFT, fontSize: 12, marginTop: 4, lineHeight: 1.4 }}>{d}</div>
               </div>
             ))}
           </div>
