@@ -268,7 +268,6 @@ export default function PotteryAdmin() {
               <thead>
                 <tr style={{ color: "var(--ink-soft)", textAlign: "left" }}>
                   <th style={{ padding: "6px 8px", borderBottom: "1px solid var(--line)" }}>Month</th>
-                  <th style={{ padding: "6px 8px", borderBottom: "1px solid var(--line)", textAlign: "center" }}>Bookings</th>
                   <th style={{ padding: "6px 8px", borderBottom: "1px solid var(--line)", textAlign: "center" }}>Guests</th>
                   <th style={{ padding: "6px 8px", borderBottom: "1px solid var(--line)", textAlign: "right" }}>Revenue</th>
                 </tr>
@@ -280,17 +279,12 @@ export default function PotteryAdmin() {
                       {monthLabel(m.month)}
                       {m.month === todayKey && <span style={{ fontSize: 11, color: "var(--ink-soft)" }}> · so far</span>}
                     </td>
-                    <td style={{ padding: "7px 8px", borderBottom: "1px solid var(--line)", textAlign: "center" }}>
-                      {m.count}
-                      <span style={{ fontSize: 11, color: "var(--ink-soft)" }}> ({m.pub} pub / {m.priv} priv)</span>
-                    </td>
                     <td style={{ padding: "7px 8px", borderBottom: "1px solid var(--line)", textAlign: "center" }}>{m.guests}</td>
                     <td style={{ padding: "7px 8px", borderBottom: "1px solid var(--line)", textAlign: "right", fontWeight: 600 }}>{fmt(m.revenue)}</td>
                   </tr>
                 ))}
                 <tr style={{ fontWeight: 700 }}>
                   <td style={{ padding: "8px" }}>Total</td>
-                  <td style={{ padding: "8px", textAlign: "center" }}>{reportTotal.count}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{reportTotal.guests}</td>
                   <td style={{ padding: "8px", textAlign: "right" }}>{fmt(reportTotal.revenue)}</td>
                 </tr>
