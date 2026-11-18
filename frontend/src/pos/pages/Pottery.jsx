@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { posApi } from "../posApi.js";
+import { markPotteryBookingsSeen } from "../usePotteryAlerts.js";
 
 function fmt(n) {
   return "₦" + Math.round(n).toLocaleString();
@@ -34,6 +35,8 @@ export default function PotteryAdmin() {
         setSlots(o);
         setBookings(bk);
         setRequests(r);
+        // Viewing the page clears the "new bookings" badge on the Pottery tab.
+        markPotteryBookingsSeen(bk);
       })
       .catch((e) => setError(e.message));
   }
