@@ -200,13 +200,13 @@ export default function Pottery() {
             fingers, centre it, and shape it into something that's completely yours.
           </p>
           <p style={{ color: SOFT, fontSize: 14.5, lineHeight: 1.6, margin: "0 0 16px" }}>
-            Once it has dried, we glaze and <strong style={{ color: INK }}>fire it in the kiln</strong> for you —
+            Once it has dried, we <strong style={{ color: INK }}>fire it in the kiln</strong> for you —
             and your finished pot is <strong style={{ color: INK }}>yours to take home and keep</strong>.
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
             {[
               ["Throw it", "Shape your piece on the wheel"],
-              ["We fire it", "Glazed & kiln-fired for you"],
+              ["We fire it", "Kiln-fired for you"],
               ["Keep it", "Your creation, yours to keep"],
             ].map(([t, d]) => (
               <div
