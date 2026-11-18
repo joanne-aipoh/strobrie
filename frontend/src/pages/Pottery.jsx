@@ -192,6 +192,36 @@ export default function Pottery() {
           </p>
         </div>
 
+        <div style={{ ...card, marginBottom: 20 }}>
+          <h2 style={{ fontSize: 21, margin: "0 0 10px", color: INK }}>Make something with your own hands 🏺</h2>
+          <p style={{ color: SOFT, fontSize: 14.5, lineHeight: 1.6, margin: "0 0 12px" }}>
+            No experience needed — just bring yourself. In a relaxed 2-hour session you'll sit at the wheel
+            with our guide and throw your very own piece from a lump of clay: a bowl, a mug, a little vase.
+            Feel it spin beneath your fingers, centre it, and shape it into something that's completely yours.
+          </p>
+          <p style={{ color: SOFT, fontSize: 14.5, lineHeight: 1.6, margin: "0 0 16px" }}>
+            Once it has dried, we glaze and <strong style={{ color: INK }}>fire it in the kiln</strong> for you —
+            and your finished pot is <strong style={{ color: INK }}>yours to take home and keep</strong>.
+          </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {[
+              ["1", "Throw it", "Shape your piece on the wheel"],
+              ["2", "We fire it", "Glazed & kiln-fired for you"],
+              ["3", "Keep it", "Your creation, yours to keep"],
+            ].map(([n, t, d]) => (
+              <div key={n} style={{ flex: "1 1 130px", background: CREAM, borderRadius: 12, padding: "11px 13px" }}>
+                <div style={{ color: ACCENT, fontWeight: 700, fontSize: 13 }}>
+                  {n}. {t}
+                </div>
+                <div style={{ color: SOFT, fontSize: 12.5, marginTop: 3 }}>{d}</div>
+              </div>
+            ))}
+          </div>
+          <p style={{ color: INK, fontSize: 15, fontWeight: 600, margin: "16px 0 0" }}>
+            Pick a slot below, bring a friend, and make something you'll actually use. ✨
+          </p>
+        </div>
+
         {loadErr && <div style={{ ...card, color: "#9c2626" }}>Couldn't load slots right now ({loadErr}).</div>}
 
         {days && (
