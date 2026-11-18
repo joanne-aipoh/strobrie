@@ -193,11 +193,11 @@ export default function Pottery() {
         </div>
 
         <div style={{ ...card, marginBottom: 20 }}>
-          <h2 style={{ fontSize: 21, margin: "0 0 10px", color: INK }}>Make something with your own hands 🏺</h2>
+          <h2 style={{ fontSize: 21, margin: "0 0 10px", color: INK }}>Make something with your own hands</h2>
           <p style={{ color: SOFT, fontSize: 14.5, lineHeight: 1.6, margin: "0 0 12px" }}>
             No experience needed — just bring yourself. In a relaxed 2-hour session you'll sit at the wheel
-            with our guide and throw your very own piece from a lump of clay: a bowl, a mug, a little vase.
-            Feel it spin beneath your fingers, centre it, and shape it into something that's completely yours.
+            with our guide and throw your very own piece from a lump of clay. Feel it spin beneath your
+            fingers, centre it, and shape it into something that's completely yours.
           </p>
           <p style={{ color: SOFT, fontSize: 14.5, lineHeight: 1.6, margin: "0 0 16px" }}>
             Once it has dried, we glaze and <strong style={{ color: INK }}>fire it in the kiln</strong> for you —
@@ -205,10 +205,10 @@ export default function Pottery() {
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
             {[
-              ["🏺", "Throw it", "Shape your piece on the wheel"],
-              ["🔥", "We fire it", "Glazed & kiln-fired for you"],
-              ["🎁", "Keep it", "Your creation, yours to keep"],
-            ].map(([icon, t, d]) => (
+              ["Throw it", "Shape your piece on the wheel"],
+              ["We fire it", "Glazed & kiln-fired for you"],
+              ["Keep it", "Your creation, yours to keep"],
+            ].map(([t, d]) => (
               <div
                 key={t}
                 style={{
@@ -222,14 +222,13 @@ export default function Pottery() {
                   alignItems: "center",
                 }}
               >
-                <div style={{ fontSize: 24, lineHeight: 1, marginBottom: 8 }}>{icon}</div>
                 <div style={{ color: ACCENT, fontWeight: 700, fontSize: 13.5 }}>{t}</div>
                 <div style={{ color: SOFT, fontSize: 12, marginTop: 4, lineHeight: 1.4 }}>{d}</div>
               </div>
             ))}
           </div>
           <p style={{ color: INK, fontSize: 15, fontWeight: 600, margin: "16px 0 0" }}>
-            Pick a slot below, bring a friend, and make something you'll actually use. ✨
+            Pick a slot below, bring a friend, and make something you'll actually use.
           </p>
         </div>
 
