@@ -635,7 +635,9 @@ export default function Sell() {
       // Send the new items to the kitchen (whole order for a new tab, only the
       // added items when topping up an existing one).
       const kitchen = kitchenDelta(cart, activeTab);
-      if (AUTO_PRINT && kitchen.length) {
+      // The kitchen + bar tickets print automatically whenever a ticket is saved
+      // (only the newly-added items on a top-up, via kitchenDelta).
+      if (kitchen.length) {
         printKitchenTickets({
           items: kitchen,
           orderNo: saved.id,
@@ -1109,7 +1111,7 @@ export default function Sell() {
         </button>
         <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
           <button className="mini-btn" style={{ flex: 1 }} disabled={cart.length === 0} onClick={printCurrentOrder}>
-            🖨 Print Order
+            🖨 Reprint Order
           </button>
           <button className="mini-btn" style={{ flex: 1 }} disabled={cart.length === 0} onClick={printCurrentReceipt}>
             🖨 Print Receipt
