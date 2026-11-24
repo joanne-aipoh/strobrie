@@ -137,19 +137,20 @@ function printHTML(html) {
 }
 
 const RECEIPT_CSS = `
-  @page { size: 80mm auto; margin: 3mm; }
+  @page { size: 80mm auto; margin: 2mm; }
   * { box-sizing: border-box; }
-  body { font-family: "Courier New", monospace; width: 72mm; margin: 0; color: #000; font-size: 12px; line-height: 1.35; }
+  body { font-family: "Courier New", monospace; width: 100%; margin: 0; color: #000; font-size: 13.5px; line-height: 1.4; }
   .c { text-align: center; }
-  .logo { width: 52mm; max-width: 100%; height: auto; margin: 2px 0 5px; }
-  .small { font-size: 10.5px; }
-  .hr { border-top: 1px dashed #000; margin: 6px 0; }
+  .logo { width: 58mm; max-width: 100%; height: auto; margin: 2px 0 6px; }
+  .small { font-size: 12px; }
+  .hr { border-top: 1px dashed #000; margin: 7px 0; }
   .row { display: flex; justify-content: space-between; gap: 8px; }
-  .meta { margin: 1px 0; }
-  .item { margin: 5px 0; }
-  .item .sub { font-size: 10.5px; padding-left: 2px; }
-  .item .mod { font-size: 10.5px; padding-left: 10px; }
-  .total { font-size: 16px; font-weight: 700; }
+  .meta { font-size: 13.5px; margin: 2px 0; }
+  .item { margin: 7px 0; }
+  .item .row { font-size: 15px; }
+  .item .sub { font-size: 11.5px; padding-left: 2px; }
+  .item .mod { font-size: 12.5px; padding-left: 10px; }
+  .total { font-size: 19px; font-weight: 700; }
   .right { text-align: right; }
 `;
 
