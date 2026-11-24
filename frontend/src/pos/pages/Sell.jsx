@@ -611,11 +611,8 @@ export default function Sell() {
 
   function saveTab(rawLabel) {
     if (cart.length === 0) return;
-    const label = (rawLabel ?? "").trim();
-    if (!label) {
-      setTabError("Pick a table or enter an order name first.");
-      return;
-    }
+    // A name is optional — fall back to the order type so the ticket still saves.
+    const label = (rawLabel ?? "").trim() || ORDER_TYPE_LABEL[orderType] || "Order";
     // Staff can add to a tab freely, but reducing its total needs approval.
     if (activeTab && !canManageOps && subtotal < tabTotal(activeTab)) {
       setPendingApproval({ label: "save this ticket with items removed", run: () => doSaveTab(label) });
@@ -1067,7 +1064,7 @@ export default function Sell() {
           {chargeStatus === "submitting" ? "Charging…" : `Charge ${fmt(finalTotal)}`}
         </button>
         {!activeTab && orderType === "dine_in" && (
-          <div style={{ marginBottom: 8 }}>
+          <div style={{ marginTop: 14, marginBottom: 8 }}>
             <select className="order-input" value={tableChoice} onChange={(e) => setTableChoice(e.target.value)}>
               <option value="">Table / Order Name…</option>
               {TABLES.map((t) => (
@@ -1097,7 +1094,7 @@ export default function Sell() {
             value={customTable}
             onChange={(e) => setCustomTable(e.target.value)}
             placeholder="Name (optional)"
-            style={{ marginBottom: 8 }}
+            style={{ marginTop: 14, marginBottom: 8 }}
           />
         )}
         {!activeTab && orderType === "delivery" && (
@@ -1107,7 +1104,7 @@ export default function Sell() {
             value={customTable}
             onChange={(e) => setCustomTable(e.target.value)}
             placeholder="Delivery name / address"
-            style={{ marginBottom: 8 }}
+            style={{ marginTop: 14, marginBottom: 8 }}
           />
         )}
 
