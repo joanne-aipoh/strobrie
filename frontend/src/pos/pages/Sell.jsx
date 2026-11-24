@@ -1053,11 +1053,11 @@ export default function Sell() {
             </button>
             {!loyaltySkipped && (
               <button
-                className="link-btn"
-                style={{ display: "block", margin: "8px auto 0", fontSize: 12.5 }}
+                className="mini-btn"
+                style={{ width: "100%", marginTop: 8 }}
                 onClick={() => setLoyaltySkipped(true)}
               >
-                Skip — no loyalty
+                Skip loyalty
               </button>
             )}
             {custSearchResult === "notfound" && (
