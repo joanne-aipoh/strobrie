@@ -916,6 +916,62 @@ export default function Sell() {
             </span>
           )}
         </h3>
+
+        <div style={{ marginBottom: 14 }}>
+          <div className="pay-row" style={{ marginBottom: 8 }}>
+            <button className={`pay-btn ${orderType === "dine_in" ? "selected" : ""}`} onClick={() => setOrderType("dine_in")}>
+              Dine in
+            </button>
+            <button className={`pay-btn ${orderType === "takeaway" ? "selected" : ""}`} onClick={() => setOrderType("takeaway")}>
+              Takeaway
+            </button>
+            <button className={`pay-btn ${orderType === "delivery" ? "selected" : ""}`} onClick={() => setOrderType("delivery")}>
+              Delivery
+            </button>
+          </div>
+          {!activeTab && orderType === "dine_in" && (
+            <div>
+              <select className="order-input" value={tableChoice} onChange={(e) => setTableChoice(e.target.value)}>
+                <option value="">Table / Order Name…</option>
+                {TABLES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+                <option value={CUSTOM}>Custom…</option>
+              </select>
+              {tableChoice === CUSTOM && (
+                <input
+                  className="order-input"
+                  type="text"
+                  autoFocus
+                  value={customTable}
+                  onChange={(e) => setCustomTable(e.target.value)}
+                  placeholder="Name (customer, walk-in…)"
+                  style={{ marginTop: 6 }}
+                />
+              )}
+            </div>
+          )}
+          {!activeTab && orderType === "takeaway" && (
+            <input
+              className="order-input"
+              type="text"
+              value={customTable}
+              onChange={(e) => setCustomTable(e.target.value)}
+              placeholder="Name (optional)"
+            />
+          )}
+          {!activeTab && orderType === "delivery" && (
+            <input
+              className="order-input"
+              type="text"
+              value={customTable}
+              onChange={(e) => setCustomTable(e.target.value)}
+              placeholder="Delivery name / address"
+            />
+          )}
+        </div>
         {attachedCustomer ? (
           <div style={{ background: "var(--cream-2)", borderRadius: 8, padding: 10, marginBottom: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
@@ -1032,26 +1088,6 @@ export default function Sell() {
           </div>
         )}
 
-        <div className="pay-row" style={{ marginBottom: 8 }}>
-          <button
-            className={`pay-btn ${orderType === "dine_in" ? "selected" : ""}`}
-            onClick={() => setOrderType("dine_in")}
-          >
-            Dine in
-          </button>
-          <button
-            className={`pay-btn ${orderType === "takeaway" ? "selected" : ""}`}
-            onClick={() => setOrderType("takeaway")}
-          >
-            Takeaway
-          </button>
-          <button
-            className={`pay-btn ${orderType === "delivery" ? "selected" : ""}`}
-            onClick={() => setOrderType("delivery")}
-          >
-            Delivery
-          </button>
-        </div>
         <div className="pay-row">
           {PAYMENT_METHODS.map((method) => (
             <button
@@ -1068,50 +1104,6 @@ export default function Sell() {
         <button className="charge-btn" disabled={cart.length === 0 || chargeStatus === "submitting"} onClick={charge}>
           {chargeStatus === "submitting" ? "Charging…" : `Charge ${fmt(finalTotal)}`}
         </button>
-        {!activeTab && orderType === "dine_in" && (
-          <div style={{ marginTop: 14, marginBottom: 8 }}>
-            <select className="order-input" value={tableChoice} onChange={(e) => setTableChoice(e.target.value)}>
-              <option value="">Table / Order Name…</option>
-              {TABLES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-              <option value={CUSTOM}>Custom…</option>
-            </select>
-            {tableChoice === CUSTOM && (
-              <input
-                className="order-input"
-                type="text"
-                autoFocus
-                value={customTable}
-                onChange={(e) => setCustomTable(e.target.value)}
-                placeholder="Name (customer, walk-in…)"
-                style={{ marginTop: 6 }}
-              />
-            )}
-          </div>
-        )}
-        {!activeTab && orderType === "takeaway" && (
-          <input
-            className="order-input"
-            type="text"
-            value={customTable}
-            onChange={(e) => setCustomTable(e.target.value)}
-            placeholder="Name (optional)"
-            style={{ marginTop: 14, marginBottom: 8 }}
-          />
-        )}
-        {!activeTab && orderType === "delivery" && (
-          <input
-            className="order-input"
-            type="text"
-            value={customTable}
-            onChange={(e) => setCustomTable(e.target.value)}
-            placeholder="Delivery name / address"
-            style={{ marginTop: 14, marginBottom: 8 }}
-          />
-        )}
 
         <button
           className="log-btn"
