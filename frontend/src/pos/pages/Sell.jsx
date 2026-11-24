@@ -1088,6 +1088,14 @@ export default function Sell() {
           </div>
         )}
 
+        <button
+          className="log-btn"
+          style={{ width: "100%", marginTop: 0, marginBottom: 10 }}
+          disabled={cart.length === 0 || tabBusy}
+          onClick={startSaveTab}
+        >
+          {tabBusy ? "Saving…" : "Save Ticket"}
+        </button>
         <div className="pay-row">
           {PAYMENT_METHODS.map((method) => (
             <button
@@ -1105,14 +1113,6 @@ export default function Sell() {
           {chargeStatus === "submitting" ? "Charging…" : `Charge ${fmt(finalTotal)}`}
         </button>
 
-        <button
-          className="log-btn"
-          style={{ width: "100%", marginTop: 8 }}
-          disabled={cart.length === 0 || tabBusy}
-          onClick={startSaveTab}
-        >
-          {tabBusy ? "Saving…" : "Save Ticket"}
-        </button>
         <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
           <button className="mini-btn" style={{ flex: 1 }} disabled={cart.length === 0} onClick={printCurrentOrder}>
             🖨 Reprint Order
