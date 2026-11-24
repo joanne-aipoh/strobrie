@@ -1006,7 +1006,7 @@ export default function Sell() {
             />
           )}
         </div>
-        {showLoyaltyStep && (attachedCustomer ? (
+        {showLoyaltyStep && (attachedCustomer || !loyaltySkipped) && (attachedCustomer ? (
           <div style={{ background: "var(--cream-2)", borderRadius: 8, padding: 10, marginBottom: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
               <div>
