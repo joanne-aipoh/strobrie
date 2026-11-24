@@ -56,7 +56,7 @@ const VAT_RATE = 7.5; // Nigerian VAT, already included in menu prices.
 const ORDER_TYPE_LABEL = { dine_in: "Dine in", takeaway: "Takeaway", delivery: "Delivery" };
 // The café's seats/tables, picked from a dropdown to name an order or tab.
 // "Custom" lets staff type anything (a walk-in, a customer's name, takeaway).
-const TABLES = ["Black Table", "Wood Table - Short", "Lovers Corner", "Rustic Table", "Reading Nook", "Blue sofa", "Takeaway", "Delivery"];
+const TABLES = ["Black Table", "Wood Table - Short", "Lovers Corner", "Rustic Table", "Reading Nook", "Blue sofa", "Outside"];
 const CUSTOM = "__custom__";
 
 // Auto-printing (receipt on payment, kitchen ticket on order) is OFF until the
@@ -342,8 +342,8 @@ export default function Sell() {
   const [tableChoice, setTableChoice] = useState(""); // "" (none) | a table | CUSTOM
   const [customTable, setCustomTable] = useState("");
   // The one order name — from the table dropdown, or the custom field.
-  // Delivery has no table — the name comes from the delivery name/address field.
-  const orderName = (tableChoice === CUSTOM || orderType === "delivery" ? customTable : tableChoice).trim();
+  // Only dine-in picks a table from the dropdown; takeaway/delivery type a name.
+  const orderName = (orderType === "dine_in" ? (tableChoice === CUSTOM ? customTable : tableChoice) : customTable).trim();
 
   // Live connection state, so the till can switch to offline selling and so we
   // can disable loyalty redemption (balance can't be verified without a server).
@@ -1066,7 +1066,7 @@ export default function Sell() {
         <button className="charge-btn" disabled={cart.length === 0 || chargeStatus === "submitting"} onClick={charge}>
           {chargeStatus === "submitting" ? "Charging…" : `Charge ${fmt(finalTotal)}`}
         </button>
-        {!activeTab && orderType !== "delivery" && (
+        {!activeTab && orderType === "dine_in" && (
           <div style={{ marginBottom: 8 }}>
             <select className="order-input" value={tableChoice} onChange={(e) => setTableChoice(e.target.value)}>
               <option value="">Table / Order Name…</option>
@@ -1089,6 +1089,16 @@ export default function Sell() {
               />
             )}
           </div>
+        )}
+        {!activeTab && orderType === "takeaway" && (
+          <input
+            className="order-input"
+            type="text"
+            value={customTable}
+            onChange={(e) => setCustomTable(e.target.value)}
+            placeholder="Name (optional)"
+            style={{ marginBottom: 8 }}
+          />
         )}
         {!activeTab && orderType === "delivery" && (
           <input
