@@ -186,16 +186,30 @@ function receiptHTML(r) {
   </body></html>`;
 }
 
+// On the bar ticket a drink can be named by flavour alone (e.g. a milkshake
+// just called "Vanilla"), so prefix the drink type to keep it unambiguous for
+// the bar — but only when the name doesn't already say it. Till tile + receipt
+// keep the short name.
+const DRINK_TYPE_LABEL = {
+  Juices: "Juice", Smoothies: "Smoothie", Milkshakes: "Milkshake", Lemonades: "Lemonade",
+};
+function barBaseName(base, category) {
+  const label = DRINK_TYPE_LABEL[category];
+  if (label && !base.toLowerCase().includes(label.toLowerCase())) return `${label} – ${base}`;
+  return base;
+}
+
 function kitchenHTML(k) {
   const items = k.items
     .map((it) => {
       const { base, mods } = splitItem(it.name);
+      const shown = barBaseName(base, it.category);
       const parts = mods ? mods.split(", ") : [];
       const choices = parts.filter((m) => !m.startsWith("+ "));
       const extras = parts.filter((m) => m.startsWith("+ ")).map((m) => m.slice(2));
       const choiceLine = choices.length ? `<div class="kmod">${esc(choices.join(", "))}</div>` : "";
       const extraLines = extras.map((e) => `<div class="kextra">ADD: ${esc(e)}</div>`).join("");
-      return `<div class="kitem"><div class="krow">${it.qty} x ${esc(base)}</div>${choiceLine}${extraLines}</div>`;
+      return `<div class="kitem"><div class="krow">${it.qty} x ${esc(shown)}</div>${choiceLine}${extraLines}</div>`;
     })
     .join("");
   const css = `
