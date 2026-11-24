@@ -195,18 +195,19 @@ function kitchenHTML(k) {
     })
     .join("");
   const css = `
-    @page { size: 80mm auto; margin: 3mm; }
-    body { font-family: "Courier New", monospace; width: 72mm; margin: 0; color: #000; font-size: 12px; }
-    .hdr { text-align: center; font-size: 12px; }
-    .no { text-align: center; font-size: 22px; font-weight: 700; margin-top: 2px; }
-    .ord { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-    .meta { font-size: 12px; margin: 1px 0; }
-    .hr { border-top: 1px dashed #000; margin: 6px 0; }
-    .type { display: flex; justify-content: space-between; align-items: baseline; font-size: 18px; font-weight: 700; }
-    .type .dt { font-size: 12px; font-weight: 400; }
-    .kitem { margin: 8px 0; }
-    .krow { font-size: 16px; font-weight: 700; }
-    .kmod { font-size: 13px; padding-left: 14px; }
+    @page { size: 80mm auto; margin: 2mm; }
+    * { box-sizing: border-box; }
+    body { font-family: "Courier New", monospace; width: 100%; margin: 0; color: #000; font-size: 15px; }
+    .hdr { text-align: center; font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+    .no { text-align: center; font-size: 30px; font-weight: 700; margin-top: 3px; }
+    .ord { text-align: center; font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+    .meta { font-size: 15px; margin: 2px 0; }
+    .hr { border-top: 2px dashed #000; margin: 8px 0; }
+    .type { display: flex; justify-content: space-between; align-items: baseline; font-size: 22px; font-weight: 700; }
+    .type .dt { font-size: 13px; font-weight: 400; }
+    .kitem { margin: 11px 0; }
+    .krow { font-size: 21px; font-weight: 700; }
+    .kmod { font-size: 16px; padding-left: 16px; }
   `;
   return `<!doctype html><html><head><meta charset="utf-8"><title>Kitchen</title><style>${css}</style></head><body>
     <div class="hdr">*** Kitchen ***</div>
