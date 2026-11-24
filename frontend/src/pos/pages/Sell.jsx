@@ -237,18 +237,21 @@ function printKitchenTicket(ticket) {
   printHTML(kitchenHTML(ticket));
 }
 
-// Drinks are made at the bar, food in the kitchen — different stations, so an
-// order with both prints two tickets. (Coffee is one DB category.)
-const DRINK_CATEGORIES = new Set([
+// The bar makes drinks and plates the bakery; the kitchen makes food — different
+// stations, so an order can print two tickets. (Coffee is one DB category.)
+const BAR_CATEGORIES = new Set([
   "Coffee", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Mocktails", "Cocktails", "Schweppes", "Beer",
+  "Bakery",
 ]);
+// Whole cakes / cheesecakes are pre-made — no prep ticket, so they don't print.
+const NO_PRINT_CATEGORIES = new Set(["Cakes", "Cheesecakes"]);
 // The Brunch category mixes food and drinks, so its drinks are listed by name.
 const BRUNCH_DRINKS = new Set([
   "Blueberry Lemosas", "Virgin Orange Mimosa", "Virgin Sunrise Mimosa",
   "Mermaids Kiss", "Ginger Lemon Spritz", "Orange Mimosas", "Whiskey Lemonade",
 ]);
-const isDrink = (item) => {
-  if (DRINK_CATEGORIES.has(item.category)) return true;
+const isBar = (item) => {
+  if (BAR_CATEGORIES.has(item.category)) return true;
   if (item.category === "Brunch") {
     const base = splitItem(item.name).base;
     return BRUNCH_DRINKS.has(base) || /mimosa|lemosa|spritz|mocktail/i.test(base);
@@ -256,17 +259,19 @@ const isDrink = (item) => {
   return false;
 };
 
-// Print the kitchen ticket(s) for a set of items: a FOOD ticket and/or a DRINKS
-// ticket, only for the stations that actually have items.
+// Print the kitchen ticket(s): a FOOD ticket (kitchen) and/or a BAR ticket
+// (drinks + bakery). Whole cakes/cheesecakes are skipped. Only stations with
+// items print.
 function printKitchenTickets({ items, ...common }) {
-  const food = items.filter((i) => !isDrink(i));
-  const drinks = items.filter((i) => isDrink(i));
+  const printable = items.filter((i) => !NO_PRINT_CATEGORIES.has(i.category));
+  const food = printable.filter((i) => !isBar(i));
+  const bar = printable.filter((i) => isBar(i));
   if (food.length) printKitchenTicket({ ...common, items: food, station: "FOOD" });
-  if (drinks.length) {
-    const printDrinks = () => printKitchenTicket({ ...common, items: drinks, station: "DRINKS" });
+  if (bar.length) {
+    const printBar = () => printKitchenTicket({ ...common, items: bar, station: "BAR" });
     // Stagger the second ticket so the two print jobs queue in order.
-    if (food.length) setTimeout(printDrinks, 700);
-    else printDrinks();
+    if (food.length) setTimeout(printBar, 700);
+    else printBar();
   }
 }
 
