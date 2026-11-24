@@ -59,11 +59,6 @@ const ORDER_TYPE_LABEL = { dine_in: "Dine in", takeaway: "Takeaway", delivery: "
 const TABLES = ["Black Table", "Wood Table - Short", "Lovers Corner", "Rustic Table", "Reading Nook", "Blue sofa", "Outside"];
 const CUSTOM = "__custom__";
 
-// Auto-printing (receipt on payment, kitchen ticket on order) is OFF until the
-// Bluetooth printer is set up and tested. The 🖨 Test print button and the
-// "Print receipt" link still work for testing. Flip to true to enable.
-const AUTO_PRINT = false;
-
 function esc(s) {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
@@ -762,10 +757,11 @@ export default function Sell() {
         orderName: activeTab ? activeTab.label : orderName.trim(),
       };
       setLastReceipt(receipt);
-      // Receipt prints on payment. For a pay-now direct sale the kitchen hasn't
-      // seen the order yet, so send it a ticket too (a settled tab already got one).
-      if (AUTO_PRINT) printReceipt(receipt);
-      if (AUTO_PRINT && !activeTab) {
+      // Receipt prints automatically on payment. For a pay-now direct sale the
+      // kitchen hasn't seen the order yet, so send it a ticket too (a settled tab
+      // already got one at save).
+      printReceipt(receipt);
+      if (!activeTab) {
         printKitchenTickets({
           items: cart,
           orderNo: sale.id,
