@@ -204,7 +204,7 @@ function kitchenHTML(k) {
     @page { size: 80mm auto; margin: 2mm; }
     * { box-sizing: border-box; }
     body { font-family: "Courier New", monospace; width: 100%; margin: 0; color: #000; font-size: 15px; }
-    .hdr { text-align: center; font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+    .hdr { text-align: center; font-size: 20px; font-weight: 700; letter-spacing: 2px; }
     .no { text-align: center; font-size: 30px; font-weight: 700; margin-top: 3px; }
     .ord { text-align: center; font-size: 28px; font-weight: 700; margin-bottom: 6px; }
     .meta { font-size: 15px; margin: 2px 0; }
@@ -217,7 +217,7 @@ function kitchenHTML(k) {
     .kextra { font-size: 18px; font-weight: 700; padding-left: 16px; margin-top: 3px; }
   `;
   return `<!doctype html><html><head><meta charset="utf-8"><title>Kitchen</title><style>${css}</style></head><body>
-    <div class="hdr">*** Kitchen ***</div>
+    <div class="hdr">*** ${esc(k.station || "KITCHEN")} ***</div>
     ${k.orderNo ? `<div class="no">#${esc(k.orderNo)}</div>` : ""}
     ${k.orderName ? `<div class="ord">${esc(k.orderName)}</div>` : ""}
     <div class="meta">${esc(k.staffName)}</div>
@@ -235,6 +235,27 @@ function printReceipt(receipt) {
 
 function printKitchenTicket(ticket) {
   printHTML(kitchenHTML(ticket));
+}
+
+// Drinks are made at the bar, food in the kitchen — different stations, so an
+// order with both prints two tickets. (Coffee is one DB category.)
+const DRINK_CATEGORIES = new Set([
+  "Coffee", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Mocktails", "Cocktails", "Schweppes", "Beer",
+]);
+const isDrink = (item) => DRINK_CATEGORIES.has(item.category);
+
+// Print the kitchen ticket(s) for a set of items: a FOOD ticket and/or a DRINKS
+// ticket, only for the stations that actually have items.
+function printKitchenTickets({ items, ...common }) {
+  const food = items.filter((i) => !isDrink(i));
+  const drinks = items.filter((i) => isDrink(i));
+  if (food.length) printKitchenTicket({ ...common, items: food, station: "FOOD" });
+  if (drinks.length) {
+    const printDrinks = () => printKitchenTicket({ ...common, items: drinks, station: "DRINKS" });
+    // Stagger the second ticket so the two print jobs queue in order.
+    if (food.length) setTimeout(printDrinks, 700);
+    else printDrinks();
+  }
 }
 
 // A sample receipt to confirm the printer (e.g. RawBT → Bluetooth) is connected.
@@ -454,7 +475,7 @@ export default function Sell() {
   // Print the current (in-progress) order: kitchen ticket or customer receipt.
   function printCurrentOrder() {
     if (cart.length === 0) return;
-    printKitchenTicket({
+    printKitchenTickets({
       items: cart,
       orderNo: activeTab ? activeTab.id : undefined,
       orderName: activeTab ? activeTab.label : orderName,
@@ -603,7 +624,7 @@ export default function Sell() {
       // added items when topping up an existing one).
       const kitchen = kitchenDelta(cart, activeTab);
       if (AUTO_PRINT && kitchen.length) {
-        printKitchenTicket({
+        printKitchenTickets({
           items: kitchen,
           orderNo: saved.id,
           orderName: label,
@@ -729,7 +750,7 @@ export default function Sell() {
       // seen the order yet, so send it a ticket too (a settled tab already got one).
       if (AUTO_PRINT) printReceipt(receipt);
       if (AUTO_PRINT && !activeTab) {
-        printKitchenTicket({
+        printKitchenTickets({
           items: cart,
           orderNo: sale.id,
           orderName: receipt.orderName,
