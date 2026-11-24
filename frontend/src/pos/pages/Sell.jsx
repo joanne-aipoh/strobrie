@@ -1033,9 +1033,7 @@ export default function Sell() {
           </div>
         )}
 
-        {cart.length === 0 ? (
-          <div className="cart-empty">No items yet — tap a menu item to add it.</div>
-        ) : (
+        {cart.length > 0 &&
           cart.map((c, idx) => {
             const { base, mods } = splitItem(c.name);
             const parts = mods ? mods.split(", ") : [];
@@ -1063,8 +1061,7 @@ export default function Sell() {
               </button>
             </div>
             );
-          })
-        )}
+          })}
 
         {discount > 0 ? (
           <>
