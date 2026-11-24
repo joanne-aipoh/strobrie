@@ -166,6 +166,7 @@ function receiptHTML(r) {
     <div class="c small">${esc(CAFE.address)}</div>
     <div class="c small">${CAFE.website}</div>
     <div class="c small">${CAFE.phones}</div>
+    ${r.bill ? `<div class="c" style="font-weight:700;font-size:17px;margin-top:5px">*** BILL — NOT PAID ***</div>` : ""}
     <div class="hr"></div>
     ${r.orderName ? `<div class="meta">Order: ${esc(r.orderName)}</div>` : ""}
     <div class="meta">Employee: ${esc(r.staffName)}</div>
@@ -176,10 +177,12 @@ function receiptHTML(r) {
     ${r.discount > 0 ? `<div class="row"><span>Subtotal</span><span>${fmt(r.subtotal)}</span></div><div class="row"><span>Loyalty discount</span><span>-${fmt(r.discount)}</span></div>` : ""}
     <div class="row total"><span>Total</span><span>${fmt(r.total)}</span></div>
     <div class="row small"><span>Tax inc. ${VAT_RATE}%</span><span>${fmt(tax)}</span></div>
-    <div class="row"><span>${esc(r.paymentMethod)}</span><span>${fmt(r.total)}</span></div>
-    ${r.customerName ? `<div class="row small"><span>${esc(r.customerName)}</span><span>+${r.pointsEarned} pts</span></div>` : ""}
+    ${r.bill
+      ? `<div class="row total"><span>Amount due</span><span>${fmt(r.total)}</span></div>`
+      : `<div class="row"><span>${esc(r.paymentMethod)}</span><span>${fmt(r.total)}</span></div>`}
+    ${!r.bill && r.customerName ? `<div class="row small"><span>${esc(r.customerName)}</span><span>+${r.pointsEarned} pts</span></div>` : ""}
     <div class="hr"></div>
-    <div class="c">Thank you!</div>
+    <div class="c">${r.bill ? "Not paid yet — please pay at the counter." : "Thank you!"}</div>
   </body></html>`;
 }
 
@@ -496,7 +499,7 @@ export default function Sell() {
       timestamp: new Date().toISOString(),
     });
   }
-  function printCurrentReceipt() {
+  function printCurrentBill() {
     if (cart.length === 0) return;
     printReceipt({
       items: cart,
@@ -510,6 +513,7 @@ export default function Sell() {
       timestamp: new Date().toISOString(),
       orderType,
       orderName: activeTab ? activeTab.label : orderName,
+      bill: true,
     });
   }
 
@@ -1121,8 +1125,8 @@ export default function Sell() {
           <button className="mini-btn" style={{ flex: 1 }} disabled={cart.length === 0} onClick={printCurrentOrder}>
             🖨 Reprint Order
           </button>
-          <button className="mini-btn" style={{ flex: 1 }} disabled={cart.length === 0} onClick={printCurrentReceipt}>
-            🖨 Print Receipt
+          <button className="mini-btn" style={{ flex: 1 }} disabled={cart.length === 0} onClick={printCurrentBill}>
+            🖨 Print Bill
           </button>
         </div>
         {activeTab &&
