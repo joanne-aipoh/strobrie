@@ -355,12 +355,15 @@ export default function Sell() {
   const [lastReceipt, setLastReceipt] = useState(null);
   // Printed on receipts + kitchen tickets, and used as the tab name. orderType
   // stays as last used; the table/name clears with each order.
-  const [orderType, setOrderType] = useState("dine_in"); // dine_in | takeaway
+  const [orderType, setOrderType] = useState(""); // "" (none yet) | dine_in | takeaway | delivery
   const [tableChoice, setTableChoice] = useState(""); // "" (none) | a table | CUSTOM
   const [customTable, setCustomTable] = useState("");
   // The one order name — from the table dropdown, or the custom field.
   // Only dine-in picks a table from the dropdown; takeaway/delivery type a name.
   const orderName = (orderType === "dine_in" ? (tableChoice === CUSTOM ? customTable : tableChoice) : customTable).trim();
+  // An order only "starts" once a type is picked (or a saved ticket is open);
+  // until then the rest of the panel stays hidden to force the choice.
+  const orderStarted = !!activeTab || orderType !== "";
 
   // Live connection state, so the till can switch to offline selling and so we
   // can disable loyalty redemption (balance can't be verified without a server).
@@ -590,6 +593,7 @@ export default function Sell() {
     setActiveTab(null);
     setTabError("");
     setConfirmingClose(false);
+    setOrderType("");
     setTableChoice("");
     setCustomTable("");
     detachCustomer();
@@ -607,6 +611,7 @@ export default function Sell() {
       })),
     );
     setActiveTab(tab);
+    setOrderType((prev) => prev || "dine_in"); // tabs don't store a type; show Dine in
     // Reflect the tab's name in the dropdown (a preset table, else Custom).
     if (TABLES.includes(tab.label)) {
       setTableChoice(tab.label);
@@ -990,6 +995,8 @@ export default function Sell() {
             />
           )}
         </div>
+        {orderStarted && (
+          <>
         {attachedCustomer ? (
           <div style={{ background: "var(--cream-2)", borderRadius: 8, padding: 10, marginBottom: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
@@ -1156,6 +1163,8 @@ export default function Sell() {
               Void ticket
             </button>
           ))}
+          </>
+        )}
         {toast && (
           <div className="toast">
             {toast}
