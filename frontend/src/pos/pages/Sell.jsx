@@ -318,7 +318,7 @@ export default function Sell() {
   const [customName, setCustomName] = useState("");
   const [customPrice, setCustomPrice] = useState("");
   const [customError, setCustomError] = useState("");
-  const [payMethod, setPayMethod] = useState("Cash");
+  const [payMethod, setPayMethod] = useState(""); // "" (none yet) until staff pick one
 
   const [custSearchPhone, setCustSearchPhone] = useState("");
   const [custSearchResult, setCustSearchResult] = useState("idle");
@@ -607,6 +607,7 @@ export default function Sell() {
     setTableChoice("");
     setCustomTable("");
     setLoyaltySkipped(false);
+    setPayMethod("");
     detachCustomer();
   }
 
@@ -1151,7 +1152,7 @@ export default function Sell() {
         </div>
         {chargeError && <div className="error-text" style={{ marginBottom: 8 }}>{chargeError}</div>}
         {tabError && <div className="error-text" style={{ marginBottom: 8 }}>{tabError}</div>}
-        <button className="charge-btn" disabled={cart.length === 0 || chargeStatus === "submitting"} onClick={charge}>
+        <button className="charge-btn" disabled={cart.length === 0 || !payMethod || chargeStatus === "submitting"} onClick={charge}>
           {chargeStatus === "submitting" ? "Charging…" : `Charge ${fmt(finalTotal)}`}
         </button>
 
