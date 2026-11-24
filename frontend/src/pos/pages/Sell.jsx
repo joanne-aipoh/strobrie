@@ -191,7 +191,12 @@ function kitchenHTML(k) {
   const items = k.items
     .map((it) => {
       const { base, mods } = splitItem(it.name);
-      return `<div class="kitem"><div class="krow">${it.qty} x ${esc(base)}</div>${mods ? `<div class="kmod">${esc(mods)}</div>` : ""}</div>`;
+      const parts = mods ? mods.split(", ") : [];
+      const choices = parts.filter((m) => !m.startsWith("+ "));
+      const extras = parts.filter((m) => m.startsWith("+ ")).map((m) => m.slice(2));
+      const choiceLine = choices.length ? `<div class="kmod">${esc(choices.join(", "))}</div>` : "";
+      const extraLines = extras.map((e) => `<div class="kextra">ADD: ${esc(e)}</div>`).join("");
+      return `<div class="kitem"><div class="krow">${it.qty} x ${esc(base)}</div>${choiceLine}${extraLines}</div>`;
     })
     .join("");
   const css = `
@@ -208,6 +213,7 @@ function kitchenHTML(k) {
     .kitem { margin: 11px 0; }
     .krow { font-size: 21px; font-weight: 700; }
     .kmod { font-size: 16px; padding-left: 16px; }
+    .kextra { font-size: 18px; font-weight: 700; padding-left: 16px; margin-top: 3px; }
   `;
   return `<!doctype html><html><head><meta charset="utf-8"><title>Kitchen</title><style>${css}</style></head><body>
     <div class="hdr">*** Kitchen ***</div>
