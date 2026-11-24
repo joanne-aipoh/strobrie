@@ -377,9 +377,13 @@ export default function Sell() {
   }, []);
 
   function pickMenu(items) {
-    setMenu(items);
-    setActiveCat((prev) => prev || CATEGORY_ORDER.find((c) => items.some((i) => tabOf(i) === c)) || items[0]?.category);
-    return items;
+    // Only sell active products — a retired tile (e.g. an old merged flavour
+    // picker that was split into individual tiles) stays in the DB for the
+    // Products tab but must not show on the till.
+    const active = items.filter((i) => i.is_active !== false);
+    setMenu(active);
+    setActiveCat((prev) => prev || CATEGORY_ORDER.find((c) => active.some((i) => tabOf(i) === c)) || active[0]?.category);
+    return active;
   }
 
   function loadMenu() {
