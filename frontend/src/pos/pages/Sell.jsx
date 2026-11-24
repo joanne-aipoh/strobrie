@@ -1048,6 +1048,22 @@ export default function Sell() {
             Delivery
           </button>
         </div>
+        <div className="pay-row">
+          {PAYMENT_METHODS.map((method) => (
+            <button
+              key={method}
+              className={`pay-btn ${payMethod === method ? "selected" : ""}`}
+              onClick={() => setPayMethod(method)}
+            >
+              {method}
+            </button>
+          ))}
+        </div>
+        {chargeError && <div className="error-text" style={{ marginBottom: 8 }}>{chargeError}</div>}
+        {tabError && <div className="error-text" style={{ marginBottom: 8 }}>{tabError}</div>}
+        <button className="charge-btn" disabled={cart.length === 0 || chargeStatus === "submitting"} onClick={charge}>
+          {chargeStatus === "submitting" ? "Charging…" : `Charge ${fmt(finalTotal)}`}
+        </button>
         {!activeTab && orderType !== "delivery" && (
           <div style={{ marginBottom: 8 }}>
             <select
@@ -1085,22 +1101,6 @@ export default function Sell() {
           />
         )}
 
-        <div className="pay-row">
-          {PAYMENT_METHODS.map((method) => (
-            <button
-              key={method}
-              className={`pay-btn ${payMethod === method ? "selected" : ""}`}
-              onClick={() => setPayMethod(method)}
-            >
-              {method}
-            </button>
-          ))}
-        </div>
-        {chargeError && <div className="error-text" style={{ marginBottom: 8 }}>{chargeError}</div>}
-        {tabError && <div className="error-text" style={{ marginBottom: 8 }}>{tabError}</div>}
-        <button className="charge-btn" disabled={cart.length === 0 || chargeStatus === "submitting"} onClick={charge}>
-          {chargeStatus === "submitting" ? "Charging…" : `Charge ${fmt(finalTotal)}`}
-        </button>
         <button
           className="log-btn"
           style={{ width: "100%", marginTop: 8 }}
