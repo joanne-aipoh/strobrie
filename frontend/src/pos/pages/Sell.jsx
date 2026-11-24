@@ -450,6 +450,35 @@ export default function Sell() {
   const discount = attachedCustomer ? Math.min(cappedRedeem * NAIRA_PER_POINT_REDEEM, subtotal) : 0;
   const finalTotal = subtotal - discount;
 
+  // Print the current (in-progress) order: kitchen ticket or customer receipt.
+  function printCurrentOrder() {
+    if (cart.length === 0) return;
+    printKitchenTicket({
+      items: cart,
+      orderNo: activeTab ? activeTab.id : undefined,
+      orderName: activeTab ? activeTab.label : orderName,
+      orderType,
+      staffName: currentStaff.name,
+      timestamp: new Date().toISOString(),
+    });
+  }
+  function printCurrentReceipt() {
+    if (cart.length === 0) return;
+    printReceipt({
+      items: cart,
+      subtotal,
+      discount,
+      total: finalTotal,
+      paymentMethod: payMethod,
+      staffName: currentStaff.name,
+      customerName: attachedCustomer?.name ?? null,
+      pointsEarned: 0,
+      timestamp: new Date().toISOString(),
+      orderType,
+      orderName: activeTab ? activeTab.label : orderName,
+    });
+  }
+
   async function searchCustomer() {
     const phone = custSearchPhone.trim();
     if (!phone) {
@@ -1051,6 +1080,14 @@ export default function Sell() {
         >
           {tabBusy ? "Saving…" : activeTab ? "Save Ticket" : "Save as ticket — pay later"}
         </button>
+        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+          <button className="mini-btn" style={{ flex: 1 }} disabled={cart.length === 0} onClick={printCurrentOrder}>
+            🖨 Print Order
+          </button>
+          <button className="mini-btn" style={{ flex: 1 }} disabled={cart.length === 0} onClick={printCurrentReceipt}>
+            🖨 Print Receipt
+          </button>
+        </div>
         {activeTab &&
           (confirmingClose ? (
             <div style={{ marginTop: 10, background: "var(--cream-2)", borderRadius: 10, padding: 12 }}>
