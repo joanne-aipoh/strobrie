@@ -242,7 +242,19 @@ function printKitchenTicket(ticket) {
 const DRINK_CATEGORIES = new Set([
   "Coffee", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Mocktails", "Cocktails", "Schweppes", "Beer",
 ]);
-const isDrink = (item) => DRINK_CATEGORIES.has(item.category);
+// The Brunch category mixes food and drinks, so its drinks are listed by name.
+const BRUNCH_DRINKS = new Set([
+  "Blueberry Lemosas", "Virgin Orange Mimosa", "Virgin Sunrise Mimosa",
+  "Mermaids Kiss", "Ginger Lemon Spritz", "Orange Mimosas", "Whiskey Lemonade",
+]);
+const isDrink = (item) => {
+  if (DRINK_CATEGORIES.has(item.category)) return true;
+  if (item.category === "Brunch") {
+    const base = splitItem(item.name).base;
+    return BRUNCH_DRINKS.has(base) || /mimosa|lemosa|spritz|mocktail/i.test(base);
+  }
+  return false;
+};
 
 // Print the kitchen ticket(s) for a set of items: a FOOD ticket and/or a DRINKS
 // ticket, only for the stations that actually have items.
