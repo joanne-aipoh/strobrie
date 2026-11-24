@@ -1107,7 +1107,7 @@ export default function Sell() {
           disabled={cart.length === 0 || tabBusy}
           onClick={startSaveTab}
         >
-          {tabBusy ? "Saving…" : activeTab ? "Save Ticket" : "Save as ticket — pay later"}
+          {tabBusy ? "Saving…" : "Save Ticket"}
         </button>
         <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
           <button className="mini-btn" style={{ flex: 1 }} disabled={cart.length === 0} onClick={printCurrentOrder}>
