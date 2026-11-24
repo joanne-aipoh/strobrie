@@ -186,14 +186,14 @@ function receiptHTML(r) {
   </body></html>`;
 }
 
-// On the bar ticket a drink can be named by flavour alone (e.g. a milkshake
-// just called "Vanilla"), so prefix the drink type to keep it unambiguous for
-// the bar — but only when the name doesn't already say it. Till tile + receipt
-// keep the short name.
+// Some drinks are named by flavour alone (e.g. a milkshake just called
+// "Vanilla", a lemonade called "Blueberry"), so prefix the drink type to keep
+// it unambiguous on the order panel and bar ticket — but only when the name
+// doesn't already say it. The menu tile itself keeps the short name.
 const DRINK_TYPE_LABEL = {
   Juices: "Juice", Smoothies: "Smoothie", Milkshakes: "Milkshake", Lemonades: "Lemonade",
 };
-function barBaseName(base, category) {
+function drinkFullName(base, category) {
   const label = DRINK_TYPE_LABEL[category];
   if (label && !base.toLowerCase().includes(label.toLowerCase())) return `${label} – ${base}`;
   return base;
@@ -203,7 +203,7 @@ function kitchenHTML(k) {
   const items = k.items
     .map((it) => {
       const { base, mods } = splitItem(it.name);
-      const shown = barBaseName(base, it.category);
+      const shown = drinkFullName(base, it.category);
       const parts = mods ? mods.split(", ") : [];
       const choices = parts.filter((m) => !m.startsWith("+ "));
       const extras = parts.filter((m) => m.startsWith("+ ")).map((m) => m.slice(2));
@@ -1060,7 +1060,7 @@ export default function Sell() {
             return (
             <div className="cart-line" key={idx}>
               <div className="info">
-                <div className="n">{base}</div>
+                <div className="n">{drinkFullName(base, c.category)}</div>
                 {choices.length > 0 && <div className="mods">{choices.join(", ")}</div>}
                 {extras.map((e, i) => (
                   <div className="mods extra" key={i}>{e}</div>
