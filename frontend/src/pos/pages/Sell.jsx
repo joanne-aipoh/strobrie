@@ -358,12 +358,22 @@ export default function Sell() {
   const [orderType, setOrderType] = useState(""); // "" (none yet) | dine_in | takeaway | delivery
   const [tableChoice, setTableChoice] = useState(""); // "" (none) | a table | CUSTOM
   const [customTable, setCustomTable] = useState("");
+  const [loyaltySkipped, setLoyaltySkipped] = useState(false); // "no loyalty for this order"
   // The one order name — from the table dropdown, or the custom field.
   // Only dine-in picks a table from the dropdown; takeaway/delivery type a name.
   const orderName = (orderType === "dine_in" ? (tableChoice === CUSTOM ? customTable : tableChoice) : customTable).trim();
-  // An order only "starts" once a type is picked (or a saved ticket is open);
-  // until then the rest of the panel stays hidden to force the choice.
-  const orderStarted = !!activeTab || orderType !== "";
+  // A new order is set up in three steps, each revealing the next: pick a type,
+  // then a table/name, then handle loyalty (find a customer or skip). Only when
+  // all three are answered does the rest of the panel (items, totals, charge)
+  // appear. A saved ticket skips straight to the full panel.
+  const typeAnswered = orderType !== "";
+  const nameAnswered =
+    orderType === "dine_in"
+      ? tableChoice !== "" && (tableChoice !== CUSTOM || customTable.trim() !== "")
+      : customTable.trim() !== "";
+  const loyaltyAnswered = !!attachedCustomer || loyaltySkipped;
+  const showLoyaltyStep = !!activeTab || (typeAnswered && nameAnswered);
+  const setupDone = !!activeTab || (typeAnswered && nameAnswered && loyaltyAnswered);
 
   // Live connection state, so the till can switch to offline selling and so we
   // can disable loyalty redemption (balance can't be verified without a server).
@@ -596,6 +606,7 @@ export default function Sell() {
     setOrderType("");
     setTableChoice("");
     setCustomTable("");
+    setLoyaltySkipped(false);
     detachCustomer();
   }
 
@@ -982,7 +993,7 @@ export default function Sell() {
               type="text"
               value={customTable}
               onChange={(e) => setCustomTable(e.target.value)}
-              placeholder="Name (optional)"
+              placeholder="Name"
             />
           )}
           {!activeTab && orderType === "delivery" && (
@@ -995,9 +1006,7 @@ export default function Sell() {
             />
           )}
         </div>
-        {orderStarted && (
-          <>
-        {attachedCustomer ? (
+        {showLoyaltyStep && (attachedCustomer ? (
           <div style={{ background: "var(--cream-2)", borderRadius: 8, padding: 10, marginBottom: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
               <div>
@@ -1042,6 +1051,15 @@ export default function Sell() {
             <button className="log-btn" style={{ width: "100%", padding: 7, fontSize: 12.5, marginTop: 0 }} onClick={searchCustomer}>
               Find customer
             </button>
+            {!loyaltySkipped && (
+              <button
+                className="link-btn"
+                style={{ display: "block", margin: "8px auto 0", fontSize: 12.5 }}
+                onClick={() => setLoyaltySkipped(true)}
+              >
+                Skip — no loyalty
+              </button>
+            )}
             {custSearchResult === "notfound" && (
               <div style={{ marginTop: 10 }}>
                 <div className="error-text" style={{ marginBottom: 6 }}>No customer with that number yet.</div>
@@ -1056,8 +1074,10 @@ export default function Sell() {
               </div>
             )}
           </div>
-        )}
+        ))}
 
+        {setupDone && (
+          <>
         {cart.length > 0 &&
           cart.map((c, idx) => {
             const { base, mods } = splitItem(c.name);
