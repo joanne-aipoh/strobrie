@@ -869,20 +869,15 @@ export default function Sell() {
       </div>
 
       <div className="cart">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-          <h3 style={{ margin: 0 }}>
-            {activeTab ? `Ticket — ${activeTab.label}` : "Current order"}
-            {activeTab && (
-              <span className="tab-status" style={{ marginLeft: 8, verticalAlign: "middle" }}>
-                <span className="dot" />
-                Open · {since(activeTab.opened_at)}
-              </span>
-            )}
-          </h3>
-          <button className="link-btn" style={{ fontSize: 12.5, color: "var(--ink-soft)" }} onClick={printTestReceipt}>
-            🖨 Test print
-          </button>
-        </div>
+        <h3 style={{ margin: "0 0 12px" }}>
+          {activeTab ? `Ticket — ${activeTab.label}` : "Current order"}
+          {activeTab && (
+            <span className="tab-status" style={{ marginLeft: 8, verticalAlign: "middle" }}>
+              <span className="dot" />
+              Open · {since(activeTab.opened_at)}
+            </span>
+          )}
+        </h3>
         {attachedCustomer ? (
           <div style={{ background: "var(--cream-2)", borderRadius: 8, padding: 10, marginBottom: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
