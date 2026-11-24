@@ -1066,11 +1066,7 @@ export default function Sell() {
         </button>
         {!activeTab && orderType !== "delivery" && (
           <div style={{ marginBottom: 8 }}>
-            <select
-              value={tableChoice}
-              onChange={(e) => setTableChoice(e.target.value)}
-              style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: 8, border: "1px solid var(--line)", font: "inherit", background: "#fff" }}
-            >
+            <select className="order-input" value={tableChoice} onChange={(e) => setTableChoice(e.target.value)}>
               <option value="">Table / Order Name…</option>
               {TABLES.map((t) => (
                 <option key={t} value={t}>
@@ -1081,23 +1077,25 @@ export default function Sell() {
             </select>
             {tableChoice === CUSTOM && (
               <input
+                className="order-input"
                 type="text"
                 autoFocus
                 value={customTable}
                 onChange={(e) => setCustomTable(e.target.value)}
                 placeholder="Name (customer, walk-in…)"
-                style={{ width: "100%", marginTop: 6, padding: "0.6rem 0.8rem", borderRadius: 8, border: "1px solid var(--line)", font: "inherit" }}
+                style={{ marginTop: 6 }}
               />
             )}
           </div>
         )}
         {!activeTab && orderType === "delivery" && (
           <input
+            className="order-input"
             type="text"
             value={customTable}
             onChange={(e) => setCustomTable(e.target.value)}
             placeholder="Delivery name / address"
-            style={{ width: "100%", marginBottom: 8, padding: "0.6rem 0.8rem", borderRadius: 8, border: "1px solid var(--line)", font: "inherit" }}
+            style={{ marginBottom: 8 }}
           />
         )}
 
