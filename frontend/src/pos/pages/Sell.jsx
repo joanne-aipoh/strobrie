@@ -1074,21 +1074,25 @@ export default function Sell() {
       </div>
 
       <div className="cart">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <h3 style={{ margin: 0 }}>
-            {activeTab ? `Ticket — ${activeTab.label}` : "New Order"}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 12 }}>
+          <div>
+            <h3 style={{ margin: 0 }}>
+              {activeTab ? `Ticket — ${activeTab.label}` : "New Order"}
+              {savedFlash && (
+                <span style={{ marginLeft: 8, fontSize: 12.5, fontWeight: 700, color: "var(--sage)", verticalAlign: "middle" }}>
+                  ✓ {savedFlash}
+                </span>
+              )}
+            </h3>
             {activeTab && (
-              <span className="tab-status" style={{ marginLeft: 8, verticalAlign: "middle" }}>
-                <span className="dot" />
-                Open · {since(activeTab.opened_at)}
-              </span>
+              <div style={{ marginTop: 5 }}>
+                <span className="tab-status">
+                  <span className="dot" />
+                  Open · {since(activeTab.opened_at)}
+                </span>
+              </div>
             )}
-            {savedFlash && (
-              <span style={{ marginLeft: 8, fontSize: 12.5, fontWeight: 700, color: "var(--sage)", verticalAlign: "middle" }}>
-                ✓ {savedFlash}
-              </span>
-            )}
-          </h3>
+          </div>
           {activeTab && (
             <button className="mini-btn" style={{ whiteSpace: "nowrap" }} onClick={clearOrder}>
               + New Order
