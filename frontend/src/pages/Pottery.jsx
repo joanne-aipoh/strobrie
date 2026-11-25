@@ -110,6 +110,110 @@ function Calendar({ availableSet, selected, onSelect, minMonth, maxMonth }) {
   );
 }
 
+// --- Video hero ------------------------------------------------------------
+// Full-bleed autoplay/muted/looping clip. Drop a web-optimised file at
+// public/pottery-hero.mp4 (and an optional first-frame poster at
+// public/pottery-hero-poster.jpg). Until then the clay-toned gradient shows,
+// so the hero still looks intentional with no video present.
+function VideoHero() {
+  return (
+    <section
+      style={{
+        position: "relative",
+        width: "100%",
+        minHeight: "clamp(360px, 60vh, 560px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden",
+        background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT_DARK} 55%, ${INK} 100%)`,
+      }}
+    >
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        poster="/pottery-hero-poster.jpg"
+        aria-hidden="true"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+      >
+        <source src="/pottery-hero.mp4" type="video/mp4" />
+      </video>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(180deg, rgba(30,22,14,0.30) 0%, rgba(30,22,14,0.22) 42%, rgba(30,22,14,0.68) 100%)",
+        }}
+      />
+      <div style={{ position: "relative", textAlign: "center", color: "#fff", padding: "52px 20px", maxWidth: 660 }}>
+        <div style={{ fontSize: 13, letterSpacing: 2, fontWeight: 700, textTransform: "uppercase", opacity: 0.92 }}>
+          Pottery at Strobriē
+        </div>
+        <h1
+          style={{
+            fontSize: "clamp(30px, 6vw, 52px)",
+            lineHeight: 1.05,
+            margin: "10px 0 14px",
+            textWrap: "balance",
+            textShadow: "0 2px 20px rgba(0,0,0,0.4)",
+          }}
+        >
+          Sit at the wheel. Make something that's yours.
+        </h1>
+        <p
+          style={{
+            fontSize: "clamp(15px, 2.4vw, 18px)",
+            lineHeight: 1.5,
+            margin: "0 auto 26px",
+            maxWidth: 540,
+            opacity: 0.95,
+            textShadow: "0 1px 12px rgba(0,0,0,0.35)",
+          }}
+        >
+          Hands-on pottery in Abuja — from a relaxed 2-hour taster to a full multi-week course.
+          No experience needed; your finished piece is yours to keep.
+        </p>
+        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+          <a
+            href="#book"
+            style={{
+              background: "#fff",
+              color: ACCENT_DARK,
+              fontWeight: 700,
+              fontSize: 15,
+              padding: "13px 22px",
+              borderRadius: 12,
+              textDecoration: "none",
+              boxShadow: "0 6px 18px rgba(0,0,0,0.22)",
+            }}
+          >
+            Book a session — {fmt(PRICE)}
+          </a>
+          <a
+            href="#courses"
+            style={{
+              background: "rgba(255,255,255,0.14)",
+              color: "#fff",
+              fontWeight: 700,
+              fontSize: 15,
+              padding: "13px 22px",
+              borderRadius: 12,
+              textDecoration: "none",
+              border: "1.5px solid rgba(255,255,255,0.75)",
+            }}
+          >
+            Explore the courses
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Pottery() {
   const [days, setDays] = useState(null);
   const [loadErr, setLoadErr] = useState("");
@@ -182,14 +286,11 @@ export default function Pottery() {
   }
 
   return (
-    <div style={{ background: CREAM, minHeight: "70vh", padding: "32px 16px 56px" }}>
-      <div style={{ maxWidth: 560, margin: "0 auto" }}>
+    <div style={{ background: CREAM, minHeight: "70vh" }}>
+      <VideoHero />
+      <div style={{ maxWidth: 560, margin: "0 auto", padding: "28px 16px 56px" }}>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <div style={{ fontSize: 13, letterSpacing: 1, color: ACCENT, fontWeight: 700, textTransform: "uppercase" }}>
-            Pottery at Strobriē
-          </div>
-          <h1 style={{ fontSize: 34, margin: "6px 0 8px", color: INK }}>Book a Pottery Session</h1>
-          <p style={{ color: SOFT, fontSize: "clamp(10px, 3vw, 15px)", margin: 0, whiteSpace: "nowrap" }}>
+          <p style={{ color: SOFT, fontSize: "clamp(11px, 3vw, 15px)", margin: 0 }}>
             Tuesdays, Fridays &amp; Saturdays · 2-hour slots · ₦15,000 per person · limited seats
           </p>
         </div>
@@ -234,6 +335,7 @@ export default function Pottery() {
           </p>
         </div>
 
+        <div id="book" style={{ scrollMarginTop: 72 }} />
         {loadErr && <div style={{ ...card, color: "#9c2626" }}>Couldn't load slots right now ({loadErr}).</div>}
 
         {days && (
@@ -386,6 +488,7 @@ export default function Pottery() {
           )}
         </div>
 
+        <div id="courses" style={{ scrollMarginTop: 72 }} />
         <CourseBooking />
       </div>
     </div>
