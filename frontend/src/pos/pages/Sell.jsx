@@ -81,6 +81,27 @@ function markTabLoyaltySkipped(id) {
   }
 }
 
+// Remember each saved ticket's order type (tabs don't store it server-side), so
+// reopening a ticket shows its own type instead of the last-used one.
+const TAB_TYPE_KEY = "flow_tab_types";
+function readTabTypes() {
+  try {
+    return JSON.parse(localStorage.getItem(TAB_TYPE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+function markTabType(id, type) {
+  if (id == null) return;
+  try {
+    const m = readTabTypes();
+    m[id] = type;
+    localStorage.setItem(TAB_TYPE_KEY, JSON.stringify(m));
+  } catch {
+    /* storage unavailable — fall back to the label heuristic on reopen */
+  }
+}
+
 function esc(s) {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
@@ -729,7 +750,9 @@ export default function Sell() {
       })),
     );
     setActiveTab(tab);
-    setOrderType((prev) => prev || "dine_in"); // tabs don't store a type; show Dine in
+    // Restore this ticket's own order type — from memory, else inferred from the
+    // label (a preset table → dine in, otherwise takeaway/delivery).
+    setOrderType(readTabTypes()[tab.id] || (TABLES.includes(tab.label) ? "dine_in" : "takeaway"));
     setLoyaltySkipped(readSkippedTabs().has(tab.id)); // keep loyalty hidden if it was skipped before
     // Reflect the tab's name in the dropdown (a preset table, else Custom).
     if (TABLES.includes(tab.label)) {
@@ -795,7 +818,8 @@ export default function Sell() {
       loadMenu();
       setLastReceipt(null);
       const wasUpdate = !!activeTab;
-      // Remember a skip so it stays skipped when this ticket is reopened.
+      // Remember this ticket's order type + any loyalty skip for when it reopens.
+      markTabType(saved.id, orderType || "dine_in");
       if (loyaltySkipped && !attachedCustomer) markTabLoyaltySkipped(saved.id);
       // Keep the saved ticket on screen (don't clear) — staff start a fresh one
       // with the "New Order" button when they're ready.
