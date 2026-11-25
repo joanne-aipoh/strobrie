@@ -1006,7 +1006,7 @@ export default function Sell() {
               type="text"
               value={customTable}
               onChange={(e) => setCustomTable(e.target.value)}
-              placeholder="Name / address"
+              placeholder="Name / Address"
             />
           )}
         </div>
