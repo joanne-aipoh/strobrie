@@ -388,6 +388,14 @@ export default function Sell() {
   const [chargeError, setChargeError] = useState("");
   const [toast, setToast] = useState("");
   const toastTimer = useRef(null);
+  const [savedFlash, setSavedFlash] = useState(""); // brief "saved" note beside the heading
+  const savedTimer = useRef(null);
+
+  function flashSaved(message, ms = 6000) {
+    if (savedTimer.current) clearTimeout(savedTimer.current);
+    setSavedFlash(message);
+    savedTimer.current = setTimeout(() => setSavedFlash(""), ms);
+  }
 
   function showToast(message, ms = 8000) {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -666,6 +674,7 @@ export default function Sell() {
     setLoyaltySkipped(false);
     setPayMethod("");
     setOrderNote("");
+    setSavedFlash("");
     detachCustomer();
   }
 
@@ -760,11 +769,7 @@ export default function Sell() {
       // Keep the saved ticket on screen (don't clear) — staff start a fresh one
       // with the "New Order" button when they're ready.
       openTab(saved);
-      showToast(
-        wasUpdate
-          ? `Ticket updated — ${saved.label}. Items saved.`
-          : `Ticket saved — ${saved.label}. Charge it when they're ready to pay.`,
-      );
+      flashSaved(wasUpdate ? "Items saved" : "Ticket saved");
     } catch (err) {
       setTabError(err.message);
     } finally {
@@ -1021,6 +1026,11 @@ export default function Sell() {
               <span className="tab-status" style={{ marginLeft: 8, verticalAlign: "middle" }}>
                 <span className="dot" />
                 Open · {since(activeTab.opened_at)}
+              </span>
+            )}
+            {savedFlash && (
+              <span style={{ marginLeft: 8, fontSize: 12.5, fontWeight: 700, color: "var(--sage)", verticalAlign: "middle" }}>
+                ✓ {savedFlash}
               </span>
             )}
           </h3>
