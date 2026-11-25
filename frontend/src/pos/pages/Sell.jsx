@@ -385,6 +385,9 @@ export default function Sell() {
   // The one order name — from the table dropdown, or the custom field.
   // Only dine-in picks a table from the dropdown; takeaway/delivery type a name.
   const orderName = (orderType === "dine_in" ? (tableChoice === CUSTOM ? customTable : tableChoice) : customTable).trim();
+  // Tables with an open ticket are occupied — hide them from the dropdown so a
+  // new order can't be started on a table that's already in use.
+  const occupiedTables = new Set(openTabs.map((t) => t.label));
   // A new order is set up in three steps, each revealing the next: pick a type,
   // then a table/name, then handle loyalty (find a customer or skip). Only when
   // all three are answered does the rest of the panel (items, totals, charge)
@@ -972,7 +975,7 @@ export default function Sell() {
 
       <div className="cart">
         <h3 style={{ margin: "0 0 12px" }}>
-          {activeTab ? `Ticket — ${activeTab.label}` : "New order"}
+          {activeTab ? `Ticket — ${activeTab.label}` : "New Order"}
           {activeTab && (
             <span className="tab-status" style={{ marginLeft: 8, verticalAlign: "middle" }}>
               <span className="dot" />
@@ -1003,7 +1006,7 @@ export default function Sell() {
             <div>
               <select className="order-input" value={tableChoice} onChange={(e) => setTableChoice(e.target.value)}>
                 <option value="">Table / Order Name…</option>
-                {TABLES.map((t) => (
+                {TABLES.filter((t) => !occupiedTables.has(t)).map((t) => (
                   <option key={t} value={t}>
                     {t}
                   </option>
