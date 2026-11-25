@@ -1158,14 +1158,6 @@ export default function Sell() {
 
         {setupDone && (
           <>
-        <textarea
-          className="order-input"
-          value={orderNote}
-          onChange={(e) => setOrderNote(e.target.value)}
-          placeholder="Note / special request (e.g. no lettuce)"
-          rows={2}
-          style={{ width: "100%", resize: "vertical", marginBottom: 12 }}
-        />
         {cart.length > 0 &&
           cart.map((c, idx) => {
             const { base, mods } = splitItem(c.name);
@@ -1195,6 +1187,17 @@ export default function Sell() {
             </div>
             );
           })}
+
+        {cart.length > 0 && (
+          <textarea
+            className="order-input"
+            value={orderNote}
+            onChange={(e) => setOrderNote(e.target.value)}
+            placeholder="Note / special request (e.g. no lettuce)"
+            rows={2}
+            style={{ width: "100%", resize: "vertical", marginTop: 10, marginBottom: 4 }}
+          />
+        )}
 
         {discount > 0 ? (
           <>
