@@ -60,6 +60,27 @@ const ORDER_TYPE_LABEL = { dine_in: "Dine in", takeaway: "Takeaway/Delivery", de
 const TABLES = ["Black Table", "Wood Table - Short", "Lovers Corner", "Rustic Table", "Reading Nook", "Blue sofa", "Outside"];
 const CUSTOM = "__custom__";
 
+// Remember which saved tickets had loyalty skipped, so the loyalty box doesn't
+// pop back up each time that ticket is reopened.
+const LOYALTY_SKIP_KEY = "flow_loyalty_skipped_tabs";
+function readSkippedTabs() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(LOYALTY_SKIP_KEY) || "[]"));
+  } catch {
+    return new Set();
+  }
+}
+function markTabLoyaltySkipped(id) {
+  if (id == null) return;
+  try {
+    const s = readSkippedTabs();
+    s.add(id);
+    localStorage.setItem(LOYALTY_SKIP_KEY, JSON.stringify([...s]));
+  } catch {
+    /* storage unavailable — skip just won't persist across reopen */
+  }
+}
+
 function esc(s) {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
@@ -669,6 +690,7 @@ export default function Sell() {
     );
     setActiveTab(tab);
     setOrderType((prev) => prev || "dine_in"); // tabs don't store a type; show Dine in
+    setLoyaltySkipped(readSkippedTabs().has(tab.id)); // keep loyalty hidden if it was skipped before
     // Reflect the tab's name in the dropdown (a preset table, else Custom).
     if (TABLES.includes(tab.label)) {
       setTableChoice(tab.label);
@@ -733,6 +755,8 @@ export default function Sell() {
       loadMenu();
       setLastReceipt(null);
       const wasUpdate = !!activeTab;
+      // Remember a skip so it stays skipped when this ticket is reopened.
+      if (loyaltySkipped && !attachedCustomer) markTabLoyaltySkipped(saved.id);
       // Keep the saved ticket on screen (don't clear) — staff start a fresh one
       // with the "New Order" button when they're ready.
       openTab(saved);
@@ -1108,7 +1132,10 @@ export default function Sell() {
               <button
                 className="mini-btn"
                 style={{ width: "100%", marginTop: 8 }}
-                onClick={() => setLoyaltySkipped(true)}
+                onClick={() => {
+                  setLoyaltySkipped(true);
+                  if (activeTab) markTabLoyaltySkipped(activeTab.id);
+                }}
               >
                 Skip loyalty
               </button>
