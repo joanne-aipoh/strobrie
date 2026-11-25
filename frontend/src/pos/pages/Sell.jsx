@@ -1000,9 +1000,11 @@ export default function Sell() {
               </span>
             )}
           </h3>
-          <button className="mini-btn" style={{ whiteSpace: "nowrap" }} onClick={clearOrder}>
-            + New Order
-          </button>
+          {activeTab && (
+            <button className="mini-btn" style={{ whiteSpace: "nowrap" }} onClick={clearOrder}>
+              + New Order
+            </button>
+          )}
         </div>
 
         <div style={{ marginBottom: 14 }}>
