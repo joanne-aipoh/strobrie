@@ -53,7 +53,7 @@ const CAFE = {
   phones: "0809 070 1995 / 0802 912 5229",
 };
 const VAT_RATE = 7.5; // Nigerian VAT, already included in menu prices.
-const ORDER_TYPE_LABEL = { dine_in: "Dine in", takeaway: "Takeaway", delivery: "Delivery" };
+const ORDER_TYPE_LABEL = { dine_in: "Dine in", takeaway: "Takeaway/Delivery", delivery: "Takeaway/Delivery" };
 // The café's seats/tables, picked from a dropdown to name an order or tab.
 // "Custom" lets staff type anything (a walk-in, a customer's name, takeaway).
 const TABLES = ["Black Table", "Wood Table - Short", "Lovers Corner", "Rustic Table", "Reading Nook", "Blue sofa", "Outside"];
@@ -611,6 +611,14 @@ export default function Sell() {
     detachCustomer();
   }
 
+  // "Change" the order type after picking the wrong one: clear the type and the
+  // table/name so both options show again. Cart and loyalty are left as-is.
+  function resetOrderType() {
+    setOrderType("");
+    setTableChoice("");
+    setCustomTable("");
+  }
+
   // Put a saved tab back on screen so it can be added to or paid off.
   function openTab(tab) {
     setCart(
@@ -687,9 +695,7 @@ export default function Sell() {
       loadMenu();
       setLastReceipt(null);
       if (activeTab) {
-        // Keep the tab on screen with its saved items so the change visibly
-        // "reflects" (and staff can keep adding) instead of the order vanishing.
-        openTab(saved);
+        clearOrder();
         showToast(`Ticket updated — ${saved.label}. Items saved.`);
       } else {
         clearOrder();
@@ -943,7 +949,7 @@ export default function Sell() {
 
       <div className="cart">
         <h3 style={{ margin: "0 0 12px" }}>
-          {activeTab ? `Ticket — ${activeTab.label}` : "Current order"}
+          {activeTab ? `Ticket — ${activeTab.label}` : "New order"}
           {activeTab && (
             <span className="tab-status" style={{ marginLeft: 8, verticalAlign: "middle" }}>
               <span className="dot" />
@@ -954,15 +960,21 @@ export default function Sell() {
 
         <div style={{ marginBottom: 14 }}>
           <div className="pay-row" style={{ marginBottom: 8 }}>
-            <button className={`pay-btn ${orderType === "dine_in" ? "selected" : ""}`} onClick={() => setOrderType("dine_in")}>
-              Dine in
-            </button>
-            <button className={`pay-btn ${orderType === "takeaway" ? "selected" : ""}`} onClick={() => setOrderType("takeaway")}>
-              Takeaway
-            </button>
-            <button className={`pay-btn ${orderType === "delivery" ? "selected" : ""}`} onClick={() => setOrderType("delivery")}>
-              Delivery
-            </button>
+            {(orderType === "" || orderType === "dine_in") && (
+              <button className={`pay-btn ${orderType === "dine_in" ? "selected" : ""}`} onClick={() => setOrderType("dine_in")}>
+                Dine in
+              </button>
+            )}
+            {(orderType === "" || orderType === "takeaway") && (
+              <button className={`pay-btn ${orderType === "takeaway" ? "selected" : ""}`} onClick={() => setOrderType("takeaway")}>
+                Takeaway/Delivery
+              </button>
+            )}
+            {!activeTab && orderType !== "" && (
+              <button className="mini-btn" style={{ whiteSpace: "nowrap" }} onClick={resetOrderType}>
+                Change
+              </button>
+            )}
           </div>
           {!activeTab && orderType === "dine_in" && (
             <div>
@@ -994,16 +1006,7 @@ export default function Sell() {
               type="text"
               value={customTable}
               onChange={(e) => setCustomTable(e.target.value)}
-              placeholder="Name"
-            />
-          )}
-          {!activeTab && orderType === "delivery" && (
-            <input
-              className="order-input"
-              type="text"
-              value={customTable}
-              onChange={(e) => setCustomTable(e.target.value)}
-              placeholder="Delivery name / address"
+              placeholder="Name / address"
             />
           )}
         </div>
@@ -1158,10 +1161,10 @@ export default function Sell() {
 
         <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
           <button className="mini-btn" style={{ flex: 1 }} disabled={cart.length === 0} onClick={printCurrentOrder}>
-            🖨 Reprint Order
+            Reprint Order
           </button>
           <button className="mini-btn" style={{ flex: 1 }} disabled={cart.length === 0} onClick={printCurrentBill}>
-            🖨 Print Bill
+            Print Bill
           </button>
         </div>
         {activeTab &&
