@@ -228,6 +228,7 @@ function kitchenHTML(k) {
     .krow { font-size: 21px; font-weight: 700; }
     .kmod { font-size: 16px; padding-left: 16px; }
     .kextra { font-size: 18px; font-weight: 700; padding-left: 16px; margin-top: 3px; }
+    .knote { font-size: 21px; font-weight: 700; text-align: center; border: 2px solid #000; padding: 6px; margin-top: 4px; }
     .topgap { height: 32mm; }
   `;
   return `<!doctype html><html><head><meta charset="utf-8"><title>Kitchen</title><style>${css}</style></head><body>
@@ -241,6 +242,7 @@ function kitchenHTML(k) {
     <div class="hr"></div>
     ${items}
     <div class="hr"></div>
+    ${k.note && k.note.trim() ? `<div class="knote">NOTE: ${esc(k.note.trim())}</div>` : ""}
   </body></html>`;
 }
 
@@ -384,6 +386,7 @@ export default function Sell() {
   const [tableChoice, setTableChoice] = useState(""); // "" (none) | a table | CUSTOM
   const [customTable, setCustomTable] = useState("");
   const [loyaltySkipped, setLoyaltySkipped] = useState(false); // "no loyalty for this order"
+  const [orderNote, setOrderNote] = useState(""); // special request, printed on the kitchen/bar ticket
   // The one order name — from the table dropdown, or the custom field.
   // Only dine-in picks a table from the dropdown; takeaway/delivery type a name.
   const orderName = (orderType === "dine_in" ? (tableChoice === CUSTOM ? customTable : tableChoice) : customTable).trim();
@@ -558,6 +561,7 @@ export default function Sell() {
       orderType,
       staffName: currentStaff.name,
       timestamp: new Date().toISOString(),
+      note: orderNote,
     });
   }
   function printCurrentBill() {
@@ -638,6 +642,7 @@ export default function Sell() {
     setCustomTable("");
     setLoyaltySkipped(false);
     setPayMethod("");
+    setOrderNote("");
     detachCustomer();
   }
 
@@ -719,6 +724,7 @@ export default function Sell() {
           orderType,
           staffName: currentStaff.name,
           timestamp: new Date().toISOString(),
+          note: orderNote,
         });
       }
       await loadTabs();
@@ -844,6 +850,7 @@ export default function Sell() {
           orderType,
           staffName: currentStaff.name,
           timestamp: receipt.timestamp,
+          note: orderNote,
         });
       }
       const custNote = attachedCustomer ? ` — ${attachedCustomer.name} earned ${sale.points_earned} pts` : "";
@@ -1164,6 +1171,14 @@ export default function Sell() {
           </div>
         )}
 
+        <textarea
+          className="order-input"
+          value={orderNote}
+          onChange={(e) => setOrderNote(e.target.value)}
+          placeholder="Note / special request (e.g. no lettuce)"
+          rows={2}
+          style={{ width: "100%", resize: "vertical", marginTop: 10, marginBottom: 10 }}
+        />
         <button
           className="log-btn"
           style={{ width: "100%", marginTop: 0, marginBottom: 10 }}

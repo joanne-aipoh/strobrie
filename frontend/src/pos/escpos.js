@@ -280,6 +280,16 @@ export function encodeKitchen(k) {
     });
   });
   b.line(RULE);
+  if (k.note && k.note.trim()) {
+    b.align(1);
+    b.size(SIZE_2H);
+    b.bold(true);
+    b.line("NOTE: " + k.note.trim());
+    b.bold(false);
+    b.size(SIZE_NORMAL);
+    b.align(0);
+    b.line(RULE);
+  }
   b.cut();
   return b.bytes();
 }
