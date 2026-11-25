@@ -114,7 +114,7 @@
 }
 .pos-app .qty-ctrl span{font-size:13px;min-width:16px;text-align:center;}
 .pos-app .remove-btn{background:none;border:none;color:var(--rust-dark);font-size:12px;cursor:pointer;padding:0 0 0 6px;}
-.pos-app .cart-total{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0 14px;font-size:17px;font-weight:800;color:var(--ink);}
+.pos-app .cart-total{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0 14px;font-size:17px;font-weight:800;color:var(--ink);}
 .pos-app .pay-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
 .pos-app .pay-btn{
   flex:1 1 calc(33.333% - 6px);padding:9px 6px;border-radius:8px;border:1px solid var(--line);

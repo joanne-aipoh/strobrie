@@ -371,6 +371,7 @@ export default function Sell() {
   const [custSearchPhone, setCustSearchPhone] = useState("");
   const [custSearchResult, setCustSearchResult] = useState("idle");
   const [attachedCustomer, setAttachedCustomer] = useState(null);
+  const [custSuggestions, setCustSuggestions] = useState([]); // live matches as the waitress types
   const [redeemPoints, setRedeemPoints] = useState("");
   const [newCustName, setNewCustName] = useState("");
   const [custFormError, setCustFormError] = useState("");
@@ -485,6 +486,30 @@ export default function Sell() {
     prepareLogo(RECEIPT_LOGO); // render the logo to an ESC/POS bitmap for direct prints
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Live customer suggestions as the waitress types a name or part of a number.
+  useEffect(() => {
+    const q = custSearchPhone.trim();
+    if (attachedCustomer || q.length < 2) {
+      setCustSuggestions([]);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      posApi
+        .listCustomers(q)
+        .then((list) => {
+          if (!cancelled) setCustSuggestions((list || []).slice(0, 6));
+        })
+        .catch(() => {
+          if (!cancelled) setCustSuggestions([]);
+        });
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [custSearchPhone, attachedCustomer]);
 
   const categories = menu ? CATEGORY_ORDER.filter((c) => menu.some((i) => tabOf(i) === c)) : [];
   const searchQuery = search.trim().toLowerCase();
@@ -632,6 +657,13 @@ export default function Sell() {
     setCustSearchPhone("");
     setRedeemPoints("");
     setCustSearchResult("idle");
+    setCustSuggestions([]);
+  }
+
+  function attachSuggestion(c) {
+    setAttachedCustomer(c);
+    setCustSearchResult("found");
+    setCustSuggestions([]);
   }
 
   async function quickAddCustomer() {
@@ -1131,9 +1163,23 @@ export default function Sell() {
         ) : (
           <div style={{ background: "var(--cream-2)", borderRadius: 8, padding: 10, marginBottom: 12 }}>
             <div className="form-field" style={{ marginBottom: 6 }}>
-              <label>Customer phone (loyalty)</label>
-              <input type="text" value={custSearchPhone} onChange={(e) => setCustSearchPhone(e.target.value)} placeholder="e.g. 0803..." />
+              <label>Customer name or phone (loyalty)</label>
+              <input type="text" value={custSearchPhone} onChange={(e) => setCustSearchPhone(e.target.value)} placeholder="Name or 0803…" />
             </div>
+            {custSuggestions.length > 0 && (
+              <div style={{ background: "#fff", border: "1px solid var(--line)", borderRadius: 8, marginBottom: 6, overflow: "hidden" }}>
+                {custSuggestions.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => attachSuggestion(c)}
+                    style={{ display: "block", width: "100%", textAlign: "left", padding: "8px 10px", background: "none", border: "none", borderTop: "1px solid var(--line)", cursor: "pointer", fontSize: 13 }}
+                  >
+                    <strong>{c.name}</strong>
+                    <span style={{ color: "var(--ink-soft)" }}> · {c.phone} · {c.points} pts</span>
+                  </button>
+                ))}
+              </div>
+            )}
             <button className="log-btn" style={{ width: "100%", padding: 7, fontSize: 12.5, marginTop: 0 }} onClick={searchCustomer}>
               Find customer
             </button>
@@ -1204,7 +1250,7 @@ export default function Sell() {
             onChange={(e) => setOrderNote(e.target.value)}
             placeholder="Note / special request (e.g. no lettuce)"
             rows={2}
-            style={{ width: "100%", resize: "vertical", marginTop: 10, marginBottom: 4 }}
+            style={{ width: "100%", resize: "vertical", marginTop: 8, marginBottom: 0 }}
           />
         )}
 
