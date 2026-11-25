@@ -185,7 +185,7 @@ export function encodeReceipt(r, cafe, vatRate) {
 export function encodeKitchen(k) {
   const b = Builder();
   b.init();
-  b.feed(4); // top gap so the header clears a receipt-holder clip/spike
+  b.feed(8); // top gap so the header clears a receipt-holder clip/spike
 
   b.align(1);
   b.size(SIZE_2X);

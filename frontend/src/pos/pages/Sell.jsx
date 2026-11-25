@@ -228,7 +228,7 @@ function kitchenHTML(k) {
     .krow { font-size: 21px; font-weight: 700; }
     .kmod { font-size: 16px; padding-left: 16px; }
     .kextra { font-size: 18px; font-weight: 700; padding-left: 16px; margin-top: 3px; }
-    .topgap { height: 16mm; }
+    .topgap { height: 32mm; }
   `;
   return `<!doctype html><html><head><meta charset="utf-8"><title>Kitchen</title><style>${css}</style></head><body>
     <div class="topgap"></div>
