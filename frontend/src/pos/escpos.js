@@ -233,13 +233,6 @@ export function encodeReceipt(r, cafe, vatRate) {
   }
   b.line(RULE);
 
-  if (r.note && r.note.trim()) {
-    b.bold(true);
-    b.line("Note: " + r.note.trim());
-    b.bold(false);
-    b.line(RULE);
-  }
-
   b.align(1);
   b.line(r.bill ? "Not paid yet - please pay at the counter." : "Thank you!");
   b.cut();

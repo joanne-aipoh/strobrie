@@ -204,7 +204,6 @@ function receiptHTML(r) {
       : `<div class="row"><span>${esc(r.paymentMethod)}</span><span>${fmt(r.total)}</span></div>`}
     ${!r.bill && r.customerName ? `<div class="row small"><span>${esc(r.customerName)}</span><span>+${r.pointsEarned} pts</span></div>` : ""}
     <div class="hr"></div>
-    ${r.note && r.note.trim() ? `<div class="meta" style="font-weight:700">Note: ${esc(r.note.trim())}</div><div class="hr"></div>` : ""}
     <div class="c">${r.bill ? "Not paid yet — please pay at the counter." : "Thank you!"}</div>
   </body></html>`;
 }
