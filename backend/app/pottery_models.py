@@ -19,6 +19,8 @@ class PotteryBooking(Base):
     customer_email: Mapped[str] = mapped_column(String(255))
     customer_phone: Mapped[str] = mapped_column(String(30))
     amount: Mapped[int] = mapped_column(Integer)
+    # Customer added the glaze-firing option (+₦10,000/item) — bisque is included.
+    glaze: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     paid: Mapped[bool] = mapped_column(Boolean, default=False)
     payment_reference: Mapped[str] = mapped_column(String(64), unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

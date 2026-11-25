@@ -117,6 +117,7 @@ export default function Pottery() {
   const [dateStr, setDateStr] = useState("");
   const [time, setTime] = useState("");
   const [seats, setSeats] = useState(1);
+  const [glaze, setGlaze] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -151,7 +152,7 @@ export default function Pottery() {
   const selectedDay = availableDays.find((d) => d.date === dateStr) || null;
   const selectedSlot = selectedDay?.slots.find((s) => s.time === time) || null;
   const maxSeats = selectedSlot ? selectedSlot.public_remaining : 6;
-  const total = PRICE * seats;
+  const total = PRICE * seats + (glaze ? 10000 * seats : 0);
   const canBook = dateStr && time && name.trim() && email.trim() && phone.trim();
 
   async function book() {
@@ -167,6 +168,7 @@ export default function Pottery() {
         time_slot: time,
         session_type: "public",
         seats: Math.min(seats, maxSeats),
+        glaze,
         customer_name: name.trim(),
         customer_email: email.trim(),
         customer_phone: phone.trim(),
@@ -316,6 +318,31 @@ export default function Pottery() {
                 <input style={field} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0801…" />
               </div>
             </div>
+
+            {selectedSlot && (
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  border: `1px solid ${glaze ? ACCENT : LINE}`,
+                  background: glaze ? "#fff7ef" : CREAM,
+                  borderRadius: 12,
+                  padding: "12px 14px",
+                  marginBottom: 14,
+                  cursor: "pointer",
+                }}
+              >
+                <input type="checkbox" checked={glaze} onChange={(e) => setGlaze(e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, accentColor: ACCENT }} />
+                <span style={{ flex: 1 }}>
+                  <span style={{ fontWeight: 600, fontSize: 14.5 }}>Glaze my pot ✨</span>
+                  <span style={{ display: "block", fontSize: 12.5, color: SOFT }}>
+                    Take home a finished, glazed piece — not just the plain (bisque) firing. We glaze &amp; fire it for you.
+                  </span>
+                </span>
+                <span style={{ fontWeight: 700, color: ACCENT_DARK, whiteSpace: "nowrap" }}>+{fmt(10000)}{seats > 1 ? " ea" : ""}</span>
+              </label>
+            )}
 
             {error && <div style={{ color: "#9c2626", fontSize: 13, marginBottom: 10 }}>{error}</div>}
 

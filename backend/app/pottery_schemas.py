@@ -28,6 +28,7 @@ class BookRequest(BaseModel):
     customer_name: str = Field(min_length=1, max_length=120)
     customer_email: EmailStr
     customer_phone: str = Field(min_length=3, max_length=30)
+    glaze: bool = False
     callback_url: str | None = None
 
 
@@ -48,6 +49,7 @@ class BookingOut(BaseModel):
     customer_email: str
     customer_phone: str
     amount: int
+    glaze: bool = False
     paid: bool
     created_at: datetime
 
@@ -99,6 +101,7 @@ class WalkinBookingCreate(BaseModel):
     customer_name: str = Field(min_length=1, max_length=120)
     customer_phone: str = Field(default="", max_length=30)
     amount: int = Field(ge=0)
+    glaze: bool = False
 
 
 class AdminSlotOut(BaseModel):

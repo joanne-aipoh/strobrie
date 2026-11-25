@@ -95,7 +95,11 @@ export default function PotteryAdmin() {
 
   const PRICE_PUBLIC = 15000;
   const PRICE_PRIVATE = 20000;
-  const suggestAmount = (type, seats) => (type === "private" ? PRICE_PRIVATE : PRICE_PUBLIC * (Number(seats) || 1));
+  const PRICE_GLAZE = 10000;
+  const suggestAmount = (type, seats, glaze) => {
+    const n = type === "private" ? 1 : Number(seats) || 1;
+    return (type === "private" ? PRICE_PRIVATE : PRICE_PUBLIC * n) + (glaze ? PRICE_GLAZE * n : 0);
+  };
 
   function openWalkin() {
     setError("");
@@ -104,6 +108,7 @@ export default function PotteryAdmin() {
       time: timeOpts[0]?.time || "10:00",
       session_type: "public",
       seats: 1,
+      glaze: false,
       name: "",
       phone: "",
       amount: String(PRICE_PUBLIC),
@@ -126,6 +131,7 @@ export default function PotteryAdmin() {
         customer_name: w.name.trim(),
         customer_phone: w.phone.trim(),
         amount: Number(w.amount) || 0,
+        glaze: !!w.glaze,
       });
       setShowWalkin(false);
       await load();
@@ -272,7 +278,7 @@ export default function PotteryAdmin() {
                 <select
                   value={walkin.session_type}
                   onChange={(e) =>
-                    setWalkin((w) => ({ ...w, session_type: e.target.value, amount: String(suggestAmount(e.target.value, w.seats)) }))
+                    setWalkin((w) => ({ ...w, session_type: e.target.value, amount: String(suggestAmount(e.target.value, w.seats, w.glaze)) }))
                   }
                 >
                   <option value="public">Public (per person)</option>
@@ -287,10 +293,22 @@ export default function PotteryAdmin() {
                     min="1"
                     max="6"
                     value={walkin.seats}
-                    onChange={(e) => setWalkin((w) => ({ ...w, seats: e.target.value, amount: String(suggestAmount(w.session_type, e.target.value)) }))}
+                    onChange={(e) => setWalkin((w) => ({ ...w, seats: e.target.value, amount: String(suggestAmount(w.session_type, e.target.value, w.glaze)) }))}
                   />
                 </div>
               )}
+              <div className="form-field">
+                <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={!!walkin.glaze}
+                    onChange={(e) =>
+                      setWalkin((w) => ({ ...w, glaze: e.target.checked, amount: String(suggestAmount(w.session_type, w.seats, e.target.checked)) }))
+                    }
+                  />
+                  Glaze firing (+₦10,000/item)
+                </label>
+              </div>
               <div className="form-field">
                 <label>Name</label>
                 <input type="text" value={walkin.name} onChange={(e) => setWalkin((w) => ({ ...w, name: e.target.value }))} placeholder="Customer name" />
@@ -321,6 +339,11 @@ export default function PotteryAdmin() {
                     <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>
                       {b.customer_name} — {b.session_type === "private" ? "private" : `${b.seats} ${b.seats === 1 ? "person" : "people"}`}
                       {b.customer_phone ? ` · ${b.customer_phone}` : ""}
+                      {b.glaze ? (
+                        <span style={{ marginLeft: 6, background: "#fff2e0", color: "#8a5428", fontWeight: 700, fontSize: 11, padding: "2px 7px", borderRadius: 999 }}>
+                          🎨 Glaze
+                        </span>
+                      ) : null}
                     </span>
                     {confirming === `b${b.id}` ? (
                       <span style={{ fontSize: 12.5, whiteSpace: "nowrap" }}>

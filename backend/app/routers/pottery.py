@@ -17,6 +17,7 @@ TIME_LABELS = {"10:00": "10:00 AM", "12:00": "12:00 PM", "14:00": "2:00 PM"}
 PUBLIC_CAPACITY = 6
 PRICE_PUBLIC = 15000
 PRICE_PRIVATE = 20000
+PRICE_GLAZE = 10000  # optional glaze-firing add-on, per seat/item (bisque is included)
 WEEKS_AHEAD = 6
 
 public_router = APIRouter(prefix="/api/pottery", tags=["pottery"])
@@ -97,6 +98,10 @@ def book(payload: pottery_schemas.BookRequest, db: Session = Depends(get_db)):
             raise HTTPException(status_code=409, detail=f"Only {s['public_remaining']} seat(s) left in that slot.")
         amount, seats = PRICE_PUBLIC * payload.seats, payload.seats
 
+    # Optional glaze firing: +₦10,000 per seat (one glazed piece each).
+    if payload.glaze:
+        amount += PRICE_GLAZE * seats
+
     reference = f"strobrie-pottery-{uuid.uuid4().hex[:16]}"
     booking = pottery_models.PotteryBooking(
         date=d,
@@ -107,6 +112,7 @@ def book(payload: pottery_schemas.BookRequest, db: Session = Depends(get_db)):
         customer_email=payload.customer_email,
         customer_phone=payload.customer_phone.strip(),
         amount=amount,
+        glaze=payload.glaze,
         paid=False,
         payment_reference=reference,
     )
@@ -252,6 +258,7 @@ def add_walkin_booking(payload: pottery_schemas.WalkinBookingCreate, db: Session
         customer_email="",
         customer_phone=payload.customer_phone,
         amount=payload.amount,
+        glaze=payload.glaze,
         paid=True,
         payment_reference=f"walkin-{uuid.uuid4().hex[:16]}",
     )
