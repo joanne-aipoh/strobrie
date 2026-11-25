@@ -1084,12 +1084,12 @@ export default function Sell() {
           )}
         </div>
         {showLoyaltyStep && (attachedCustomer || !loyaltySkipped) && (attachedCustomer ? (
-          <div style={{ background: "var(--cream-2)", borderRadius: 8, padding: 10, marginBottom: 12 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-              <div>
-                <strong style={{ fontSize: 13 }}>{attachedCustomer.name}</strong>
-                <div style={{ fontSize: 11.5, color: "var(--ink-soft)" }}>{attachedCustomer.points} points available</div>
-              </div>
+          <div style={{ background: "var(--cream-2)", borderRadius: 8, padding: 8, marginBottom: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <strong style={{ fontSize: 13 }}>
+                {attachedCustomer.name}
+                <span style={{ fontWeight: 400, color: "var(--ink-soft)" }}> · {attachedCustomer.points} pts</span>
+              </strong>
               <button className="link-btn" onClick={detachCustomer}>
                 Remove
               </button>
