@@ -183,6 +183,7 @@ function receiptHTML(r) {
       : `<div class="row"><span>${esc(r.paymentMethod)}</span><span>${fmt(r.total)}</span></div>`}
     ${!r.bill && r.customerName ? `<div class="row small"><span>${esc(r.customerName)}</span><span>+${r.pointsEarned} pts</span></div>` : ""}
     <div class="hr"></div>
+    ${r.note && r.note.trim() ? `<div class="meta" style="font-weight:700">Note: ${esc(r.note.trim())}</div><div class="hr"></div>` : ""}
     <div class="c">${r.bill ? "Not paid yet — please pay at the counter." : "Thank you!"}</div>
   </body></html>`;
 }
@@ -578,6 +579,7 @@ export default function Sell() {
       timestamp: new Date().toISOString(),
       orderType,
       orderName: activeTab ? activeTab.label : orderName,
+      note: orderNote,
       bill: true,
     });
   }
@@ -834,6 +836,7 @@ export default function Sell() {
         pointsEarned: sale.points_earned,
         timestamp: sale.timestamp,
         orderType,
+        note: orderNote,
         // A tab carries its own name; a direct sale uses the typed order name.
         orderName: activeTab ? activeTab.label : orderName.trim(),
       };
@@ -1119,6 +1122,14 @@ export default function Sell() {
 
         {setupDone && (
           <>
+        <textarea
+          className="order-input"
+          value={orderNote}
+          onChange={(e) => setOrderNote(e.target.value)}
+          placeholder="Note / special request (e.g. no lettuce)"
+          rows={2}
+          style={{ width: "100%", resize: "vertical", marginBottom: 12 }}
+        />
         {cart.length > 0 &&
           cart.map((c, idx) => {
             const { base, mods } = splitItem(c.name);
@@ -1171,14 +1182,6 @@ export default function Sell() {
           </div>
         )}
 
-        <textarea
-          className="order-input"
-          value={orderNote}
-          onChange={(e) => setOrderNote(e.target.value)}
-          placeholder="Note / special request (e.g. no lettuce)"
-          rows={2}
-          style={{ width: "100%", resize: "vertical", marginTop: 10, marginBottom: 10 }}
-        />
         <button
           className="log-btn"
           style={{ width: "100%", marginTop: 0, marginBottom: 10 }}
