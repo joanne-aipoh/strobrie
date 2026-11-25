@@ -4,7 +4,6 @@ import { photoUrl, shopApi } from "../shopApi.js";
 import { useCart } from "../CartContext.jsx";
 import { shopPath } from "../shopBase.js";
 import { groupProducts, cardPhotos, productsInCard } from "../productGrouping.js";
-import { groupCoffeeSeparate } from "../coffeeGrouping.js";
 import { CAKE_CATEGORIES } from "../cakeCategories.js";
 import { inscriptionLimitForLabel } from "../inscriptionLimit.js";
 import BoxBuilder from "../BoxBuilder.jsx";
@@ -19,11 +18,28 @@ const NON_COFFEE_NAMES = new Set(["Chai Latte", "Chocolate Latte", "Oreo Latte"]
 // The teas served hot (the rest of the Tea category is iced).
 const HOT_TEA_NAMES = new Set(["Tea Bag Selection", "Honey Ginger Lemon Tea"]);
 
+// Mirror the Flow till's category organisation so the shop reads the same way.
+// Coffee is one DB category but splits into three sections by drink name, and
+// the section order below matches CATEGORY_ORDER in pos/pages/Sell.jsx.
+const SPECIAL_COFFEE = new Set(["Maple Cream Brew", "Spanish Latte", "Oreo Latte", "Chai Latte", "Chocolate Latte"]);
+function coffeeTab(nm) {
+  if (/^(Iced|Ice Blended)/i.test(nm) || nm === "Dalgona Whipped Coffee") return "Iced Coffee";
+  if (/matcha/i.test(nm) || SPECIAL_COFFEE.has(nm)) return "Special Brews";
+  return "Hot Coffee";
+}
+const SECTION_ORDER = [
+  "Hot Coffee", "Iced Coffee", "Special Brews", "Tea",
+  "Juices", "Smoothies", "Milkshakes", "Lemonades",
+  "Breakfast", "Lunch", "Brunch",
+  "Bakery", "Cakes", "Cheesecakes",
+  "Mocktails", "Cocktails", "Schweppes", "Beer", "Extras",
+];
+
 // A line of context under a section heading, where the products alone don't
 // tell the whole story.
 const SECTION_NOTES = {
   Brunch: "Sundays only.",
-  "Whole Cakes":
+  Cakes:
     "We also make custom cakes — please contact us directly on Instagram or call us for customized designs.",
 };
 
@@ -435,20 +451,10 @@ export default function Catalog() {
   if (error) return <p className="form-error container" style={{ padding: "3rem 1.5rem" }}>Couldn't load products ({error}).</p>;
   if (!products || !settings) return <p className="container" style={{ padding: "3rem 1.5rem" }}>Loading products&hellip;</p>;
 
-  // Several backend categories share one grid section. Cakes/Cheesecakes →
-  // "Whole Cakes"; Coffee + add-on Extras → "Coffee"; Tea splits by item into
-  // "Hot Tea" and "Iced Tea"; the cold drink categories plus Mocktails →
-  // "Drinks".
-  const DRINKS_CATEGORIES = ["Juices", "Milkshakes", "Lemonades", "Smoothies"];
+  // One section per till category: Coffee splits into Hot/Iced/Special Brews
+  // (by drink name, like the till); every other category is its own section.
   function sectionFor(p) {
-    // Cakes and Cheesecakes sit under one "Whole Cakes" heading, each as its
-    // own card.
-    if (CAKE_CATEGORIES.includes(p.category)) return "Whole Cakes";
-    // Coffee, add-on Extras and all teas (hot and iced) share one "Coffee &
-    // Tea" heading.
-    if (p.category === "Coffee" || p.category === "Extras" || p.category === "Tea") return "Coffee & Tea";
-    if (DRINKS_CATEGORIES.includes(p.category) || p.category === "Mocktails") return "Drinks";
-    return p.category;
+    return p.category === "Coffee" ? coffeeTab(p.name) : p.category;
   }
 
   // hidden_now = manually-hidden categories plus time-gated ones (Brunch only
@@ -461,15 +467,8 @@ export default function Catalog() {
     return groups;
   }, {});
 
-  // Sections are grouped Food, then Dessert/Cakes, then Drinks — rather than
-  // the alphabetical-by-category order the API returns them in, which
-  // interleaved food and drink sections in a confusing way. Anything not
-  // listed here falls to the end, in whatever order it was encountered.
-  const SECTION_ORDER = [
-    "Breakfast", "Brunch", "Lunch",
-    "Bakery", "Whole Cakes",
-    "Coffee & Tea", "Drinks", "Cocktails",
-  ];
+  // Ordered by the till's CATEGORY_ORDER (module-scope SECTION_ORDER above);
+  // anything not listed falls to the end.
   const orderedSections = Object.entries(byCategory).sort(([a], [b]) => {
     const ia = SECTION_ORDER.indexOf(a);
     const ib = SECTION_ORDER.indexOf(b);
@@ -488,59 +487,10 @@ export default function Catalog() {
       return next;
     });
 
-  // One card with a single dropdown, from a flat list of products — used to
-  // collapse a long list (mocktails, sandwiches, pastas) into one tidy item.
-  function mergeOne(name, items, labelFn = (p) => p.name) {
-    if (!items.length) return null;
-    return { type: "grouped", name, variants: items.map((p) => ({ label: labelFn(p), product: p })) };
-  }
-
-  // A shared section can bundle several original categories, each becoming its
-  // own card(s) — or, for the collapsible groups below, one merged card.
-  function cardsForSection(section, items) {
-    if (section === "Coffee & Tea") {
-      const coffee = items.filter((p) => p.category === "Coffee");
-      const teas = items.filter((p) => p.category === "Tea");
-      const coffeeCards = groupCoffeeSeparate(coffee.filter((p) => !NON_COFFEE_NAMES.has(p.name)));
-      const byName = (n) => coffeeCards.find((c) => c.name === n);
-      // Order: Hot Coffee, Iced Coffee, Iced Tea, hot teas, Matcha, Non Coffee,
-      // then add-ons.
-      return [
-        byName("Hot Coffee"),
-        byName("Iced Coffee"),
-        mergeOne("Iced Tea", teas.filter((p) => !HOT_TEA_NAMES.has(p.name)), (p) => p.name.replace(/^Iced Tea – /, "")),
-        ...groupProducts(teas.filter((p) => HOT_TEA_NAMES.has(p.name))),
-        byName("Matcha"),
-        mergeOne("Non Coffee", coffee.filter((p) => NON_COFFEE_NAMES.has(p.name))),
-        ...groupProducts(items.filter((p) => p.category === "Extras")),
-      ].filter(Boolean);
-    }
-    if (section === "Drinks") {
-      return [
-        ...DRINKS_CATEGORIES.flatMap((cat) => groupProducts(items.filter((p) => p.category === cat))),
-        mergeOne("Mocktails", items.filter((p) => p.category === "Mocktails")),
-      ].filter(Boolean);
-    }
-    if (section === "Whole Cakes") {
-      // Keep the "Whole Cakes" heading; title the two cards "Cakes" and
-      // "Cheesecakes".
-      const RENAME = { "Whole Cake": "Cakes", Cheesecake: "Cheesecakes" };
-      return groupProducts(items).map((card) =>
-        RENAME[card.name] ? { ...card, name: RENAME[card.name] } : card
-      );
-    }
-    if (section === "Lunch") {
-      const isSandwich = (p) => /sandwich|grilled cheese|torzo/i.test(p.name);
-      const isPasta = (p) => /pasta|penne/i.test(p.name);
-      const sandwiches = items.filter(isSandwich);
-      const pastas = items.filter(isPasta);
-      const rest = items.filter((p) => !isSandwich(p) && !isPasta(p));
-      return [
-        mergeOne("Sandwiches", sandwiches, (p) => p.name.replace(/^Sandwich – /, "")),
-        mergeOne("Pasta", pastas),
-        ...groupProducts(rest),
-      ].filter(Boolean);
-    }
+  // Within a section, collapse only the DB's own size/flavour variants into one
+  // card each (same products the till shows as tiles) — no extra cross-product
+  // merging, so the shop lists the same items as the till.
+  function cardsForSection(items) {
     return groupProducts(items);
   }
 
@@ -554,7 +504,7 @@ export default function Catalog() {
 
         {orderedSections.map(([category, items]) => {
           const open = isOpen(category);
-          const cards = cardsForSection(category, items);
+          const cards = cardsForSection(items);
           return (
             <div key={category} style={{ marginBottom: open ? "2.5rem" : "0.75rem" }}>
               <button
