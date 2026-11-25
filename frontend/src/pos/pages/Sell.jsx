@@ -732,13 +732,15 @@ export default function Sell() {
       await loadTabs();
       loadMenu();
       setLastReceipt(null);
-      if (activeTab) {
-        clearOrder();
-        showToast(`Ticket updated — ${saved.label}. Items saved.`);
-      } else {
-        clearOrder();
-        showToast(`Ticket saved — ${saved.label}. Charge it when they're ready to pay.`);
-      }
+      const wasUpdate = !!activeTab;
+      // Keep the saved ticket on screen (don't clear) — staff start a fresh one
+      // with the "New Order" button when they're ready.
+      openTab(saved);
+      showToast(
+        wasUpdate
+          ? `Ticket updated — ${saved.label}. Items saved.`
+          : `Ticket saved — ${saved.label}. Charge it when they're ready to pay.`,
+      );
     } catch (err) {
       setTabError(err.message);
     } finally {
@@ -988,15 +990,20 @@ export default function Sell() {
       </div>
 
       <div className="cart">
-        <h3 style={{ margin: "0 0 12px" }}>
-          {activeTab ? `Ticket — ${activeTab.label}` : "New Order"}
-          {activeTab && (
-            <span className="tab-status" style={{ marginLeft: 8, verticalAlign: "middle" }}>
-              <span className="dot" />
-              Open · {since(activeTab.opened_at)}
-            </span>
-          )}
-        </h3>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <h3 style={{ margin: 0 }}>
+            {activeTab ? `Ticket — ${activeTab.label}` : "New Order"}
+            {activeTab && (
+              <span className="tab-status" style={{ marginLeft: 8, verticalAlign: "middle" }}>
+                <span className="dot" />
+                Open · {since(activeTab.opened_at)}
+              </span>
+            )}
+          </h3>
+          <button className="mini-btn" style={{ whiteSpace: "nowrap" }} onClick={clearOrder}>
+            + New Order
+          </button>
+        </div>
 
         <div style={{ marginBottom: 14 }}>
           <div className="pay-row" style={{ marginBottom: 8 }}>
