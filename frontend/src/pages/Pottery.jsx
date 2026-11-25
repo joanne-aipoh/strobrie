@@ -186,7 +186,7 @@ export default function Pottery() {
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 13, letterSpacing: 1, color: ACCENT, fontWeight: 700, textTransform: "uppercase" }}>
-            Strobriē Café
+            Pottery at Strobriē
           </div>
           <h1 style={{ fontSize: 34, margin: "6px 0 8px", color: INK }}>Book a Pottery Session</h1>
           <p style={{ color: SOFT, fontSize: "clamp(10px, 3vw, 15px)", margin: 0, whiteSpace: "nowrap" }}>
