@@ -6,7 +6,7 @@ import { queueSale, cacheMenu, cachedMenu, isNetworkError } from "../offline.js"
 import ApprovalModal from "./ApprovalModal.jsx";
 import ModifierPicker from "./ModifierPicker.jsx";
 import { RECEIPT_LOGO } from "../receiptLogo.js";
-import { directPrintOn, setDirectPrint, sendRaw, encodeReceipt, encodeKitchen } from "../escpos.js";
+import { directPrintOn, setDirectPrint, sendRaw, encodeReceipt, encodeKitchen, prepareLogo } from "../escpos.js";
 
 const CATEGORY_ORDER = ["Hot Coffee", "Iced Coffee", "Special Brews", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Breakfast", "Lunch", "Brunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer", "Extras"];
 
@@ -274,7 +274,7 @@ const BAR_CATEGORIES = new Set([
   "Coffee", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Mocktails", "Cocktails", "Schweppes", "Beer",
   "Bakery",
 ]);
-// Whole cakes / cheesecakes are pre-made — no prep ticket, so they don't print.
+// Whole cakes / cheesecakes are pre-made and logged in a book — no prep ticket.
 const NO_PRINT_CATEGORIES = new Set(["Cakes", "Cheesecakes"]);
 // The Brunch category mixes food and drinks, so its drinks are listed by name.
 const BRUNCH_DRINKS = new Set([
@@ -450,6 +450,7 @@ export default function Sell() {
   useEffect(() => {
     loadMenu();
     loadTabs();
+    prepareLogo(RECEIPT_LOGO); // render the logo to an ESC/POS bitmap for direct prints
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

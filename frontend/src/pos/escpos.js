@@ -40,6 +40,9 @@ function Builder() {
   };
   return {
     raw: (...b) => bytes.push(...b),
+    rawArr: (arr) => {
+      for (let i = 0; i < arr.length; i++) bytes.push(arr[i]);
+    },
     init: () => bytes.push(0x1b, 0x40),
     align: (n) => bytes.push(0x1b, 0x61, n), // 0 left, 1 center, 2 right
     bold: (on) => bytes.push(0x1b, 0x45, on ? 1 : 0),
@@ -115,6 +118,56 @@ function drinkFullName(base, category) {
 
 const ORDER_TYPE_LABEL = { dine_in: "Dine in", takeaway: "Takeaway/Delivery", delivery: "Takeaway/Delivery" };
 
+// ---- logo raster ---------------------------------------------------------
+// The printer can't use the PNG logo directly, so once at startup we render it
+// to a 1-bit bitmap and keep the ESC/POS "GS v 0" raster command bytes. If it
+// isn't ready (or rendering fails), the receipt falls back to a text header.
+let logoBytes = null;
+const LOGO_WIDTH = 384; // dots (must be a multiple of 8); ~48mm, centered
+
+export function prepareLogo(dataUrl) {
+  return new Promise((resolve) => {
+    try {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const w = LOGO_WIDTH;
+          const h = Math.max(1, Math.round((img.height / img.width) * w));
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          const px = ctx.getImageData(0, 0, w, h).data;
+          const bytesPerRow = w / 8;
+          const out = [0x1d, 0x76, 0x30, 0x00, bytesPerRow & 0xff, (bytesPerRow >> 8) & 0xff, h & 0xff, (h >> 8) & 0xff];
+          for (let y = 0; y < h; y++) {
+            for (let xb = 0; xb < bytesPerRow; xb++) {
+              let byte = 0;
+              for (let bit = 0; bit < 8; bit++) {
+                const i = (y * w + (xb * 8 + bit)) * 4;
+                const dark = px[i + 3] > 128 && (px[i] + px[i + 1] + px[i + 2]) / 3 < 128;
+                if (dark) byte |= 0x80 >> bit;
+              }
+              out.push(byte);
+            }
+          }
+          logoBytes = out;
+        } catch {
+          logoBytes = null;
+        }
+        resolve(logoBytes);
+      };
+      img.onerror = () => resolve(null);
+      img.src = dataUrl;
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
 // ---- receipt / bill ------------------------------------------------------
 export function encodeReceipt(r, cafe, vatRate) {
   const b = Builder();
@@ -122,11 +175,16 @@ export function encodeReceipt(r, cafe, vatRate) {
   b.init();
 
   b.align(1);
-  b.size(SIZE_2X);
-  b.bold(true);
-  b.line(cafe.name.toUpperCase());
-  b.bold(false);
-  b.size(SIZE_NORMAL);
+  if (logoBytes) {
+    b.rawArr(logoBytes);
+    b.line();
+  } else {
+    b.size(SIZE_2X);
+    b.bold(true);
+    b.line(cafe.name.toUpperCase());
+    b.bold(false);
+    b.size(SIZE_NORMAL);
+  }
   b.line(cafe.tagline);
   b.line(cafe.address);
   b.line(cafe.website);
