@@ -385,7 +385,229 @@ export default function Pottery() {
             <PrivateRequestForm onClose={() => setShowRequest(false)} />
           )}
         </div>
+
+        <CourseBooking />
       </div>
+    </div>
+  );
+}
+
+// --- Multi-week courses ----------------------------------------------------
+const COURSE_TIMES = [
+  { time: "10:00", label: "10:00 AM" },
+  { time: "12:00", label: "12:00 PM" },
+  { time: "14:00", label: "2:00 PM" },
+];
+const COURSE_DETAILS = {
+  "4week": {
+    name: "Pottery Fundamentals",
+    tag: "4 weeks · 12 sessions",
+    price: 180000,
+    blurb: "A complete starter course — from clay and hand-building to the wheel, finishing and firing.",
+    weeks: [
+      "Introduction to pottery, tools, clay preparation & basic hand-building",
+      "Hand-building — pinch pots, coil building & slab building",
+      "Functional pieces (bowls, cups, plates) + introduction to the wheel",
+      "Wheel throwing, shaping, trimming, decoration, finishing & prep for bisque firing",
+    ],
+  },
+  "8week": {
+    name: "Extended Pottery Experience",
+    tag: "8 weeks · 24 sessions",
+    price: 350000,
+    blurb: "The full journey, in depth — more time to practise the wheel, refine technique and explore glazing.",
+    weeks: [
+      "Introduction to pottery, tools, clay preparation & wedging",
+      "Hand-building — pinch pots, coil & slab",
+      "Functional pottery (bowls, cups, plates, trays), shaping & refining",
+      "Introduction to wheel throwing — centering, opening & basic forms",
+      "Developing wheel skills — consistent shapes & different forms",
+      "Trimming, refining, handles, attachments, surface decoration & textures",
+      "Individual projects, drying process, kiln safety & intro to bisque firing",
+      "Glazing — types, colours & application; final review & prep for firing",
+    ],
+  },
+};
+
+function upcomingClassDays(weeksAhead = 10) {
+  const out = [];
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 1); // from tomorrow
+  const end = new Date();
+  end.setDate(end.getDate() + weeksAhead * 7);
+  while (d <= end) {
+    const wd = d.getDay(); // 2 Tue, 5 Fri, 6 Sat
+    if (wd === 2 || wd === 5 || wd === 6) {
+      out.push({
+        iso: iso(d.getFullYear(), d.getMonth(), d.getDate()),
+        label: d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }),
+      });
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return out;
+}
+
+function CourseBooking() {
+  const [selected, setSelected] = useState("");
+  const [time, setTime] = useState("");
+  const [start, setStart] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [showWeeks, setShowWeeks] = useState("");
+
+  const starts = useMemo(() => upcomingClassDays(10), []);
+  const info = selected ? COURSE_DETAILS[selected] : null;
+  const canBook = selected && time && start && name.trim() && email.trim() && phone.trim();
+
+  async function bookCourse() {
+    if (!canBook) {
+      setError("Pick a course, a time, a start date and fill in your details.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      const res = await api.bookPotteryCourse({
+        course_type: selected,
+        time_slot: time,
+        start_date: start,
+        customer_name: name.trim(),
+        customer_email: email.trim(),
+        customer_phone: phone.trim(),
+        callback_url: `${window.location.origin}/pottery/confirmation`,
+      });
+      window.location.href = res.authorization_url;
+    } catch (e) {
+      setError(e.message);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div style={{ marginTop: 40 }}>
+      <h2 style={{ fontSize: 24, margin: "0 0 4px", color: INK, textAlign: "center" }}>Pottery Courses</h2>
+      <p style={{ color: SOFT, fontSize: 14.5, textAlign: "center", margin: "0 0 18px" }}>
+        Private, one-on-one training — Tuesday, Friday &amp; Saturday, 1½ hours each. Pick your time and start date.
+      </p>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14, marginBottom: 16 }}>
+        {Object.entries(COURSE_DETAILS).map(([key, c]) => {
+          const on = selected === key;
+          return (
+            <div
+              key={key}
+              onClick={() => setSelected(key)}
+              style={{
+                ...card,
+                cursor: "pointer",
+                border: `1.5px solid ${on ? ACCENT : LINE}`,
+                boxShadow: on ? "0 0 0 3px rgba(181,113,62,.18)" : card.boxShadow,
+              }}
+            >
+              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: ACCENT }}>{c.tag}</div>
+              <h3 style={{ margin: "6px 0 2px", fontSize: 18, color: INK }}>{c.name}</h3>
+              <div style={{ fontSize: 13, color: SOFT, marginBottom: 8 }}>{c.blurb}</div>
+              <div style={{ fontSize: 23, fontWeight: 700, color: INK }}>{fmt(c.price)}</div>
+              <div style={{ display: "inline-block", background: "#edf5e8", color: "#4f7a3d", fontSize: 11.5, fontWeight: 700, padding: "3px 10px", borderRadius: 999, marginTop: 10 }}>
+                Private · 1 student
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowWeeks(showWeeks === key ? "" : key); }}
+                style={{ display: "block", marginTop: 10, background: "none", border: "none", color: ACCENT_DARK, fontWeight: 600, fontSize: 13, cursor: "pointer", padding: 0 }}
+              >
+                {showWeeks === key ? "Hide curriculum ▲" : "See week-by-week ▼"}
+              </button>
+              {showWeeks === key && (
+                <ol style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 12.5, color: INK }}>
+                  {c.weeks.map((w, i) => (
+                    <li key={i} style={{ marginBottom: 4 }}>{w}</li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {info && (
+        <div style={card}>
+          <p style={{ margin: "0 0 14px", fontWeight: 700, color: INK }}>
+            Book the {info.name} · {fmt(info.price)}
+          </p>
+
+          <label style={label}>Class time — same every session</label>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+            {COURSE_TIMES.map((t) => (
+              <button
+                key={t.time}
+                onClick={() => setTime(t.time)}
+                style={{
+                  flex: "1 1 28%",
+                  border: `1.5px solid ${time === t.time ? ACCENT : LINE}`,
+                  background: time === t.time ? ACCENT : "#fff",
+                  color: time === t.time ? "#fff" : INK,
+                  borderRadius: 10,
+                  padding: "10px 6px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          <label style={label}>Start date (Tue / Fri / Sat)</label>
+          <select value={start} onChange={(e) => setStart(e.target.value)} style={{ ...field, marginBottom: 16 }}>
+            <option value="">Choose a start date…</option>
+            {starts.map((s) => (
+              <option key={s.iso} value={s.iso}>{s.label}</option>
+            ))}
+          </select>
+
+          <label style={label}>Your name</label>
+          <input style={{ ...field, marginBottom: 12 }} value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" />
+          <div style={{ display: "flex", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
+            <div style={{ flex: "1 1 200px" }}>
+              <label style={label}>Email</label>
+              <input style={field} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" />
+            </div>
+            <div style={{ flex: "1 1 160px" }}>
+              <label style={label}>Phone</label>
+              <input style={field} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0801…" />
+            </div>
+          </div>
+
+          <p style={{ fontSize: 12.5, color: SOFT, margin: "0 0 12px" }}>
+            Your {COURSE_TIMES.find((t) => t.time === time)?.label || "chosen"} slot on Tue/Fri/Sat is reserved just for you for the full programme. Bisque firing is included; glaze firing is ₦10,000 per item.
+          </p>
+
+          {error && <div style={{ color: "#9c2626", fontSize: 13, marginBottom: 10 }}>{error}</div>}
+
+          <button
+            onClick={bookCourse}
+            disabled={busy || !canBook}
+            style={{
+              width: "100%",
+              border: "none",
+              borderRadius: 12,
+              padding: 15,
+              fontSize: 16,
+              fontWeight: 700,
+              color: "#fff",
+              background: busy || !canBook ? "#d8c3ac" : ACCENT,
+              cursor: busy || !canBook ? "not-allowed" : "pointer",
+            }}
+          >
+            {busy ? "Taking you to payment…" : `Book & Pay ${fmt(info.price)}`}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -49,4 +49,8 @@ export const api = {
   verifyPottery: (reference) => request(`/api/pottery/verify/${reference}`),
   requestPrivatePottery: (data) =>
     request("/api/pottery/private-request", { method: "POST", body: JSON.stringify(data) }),
+  // Multi-week pottery courses (also paid via Paystack)
+  getPotteryCourses: () => request("/api/pottery/courses"),
+  bookPotteryCourse: (data) => request("/api/pottery/courses/book", { method: "POST", body: JSON.stringify(data) }),
+  verifyPotteryCourse: (reference) => request(`/api/pottery/courses/verify/${reference}`),
 };

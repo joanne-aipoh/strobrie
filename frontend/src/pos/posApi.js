@@ -75,6 +75,7 @@ export const posApi = {
   // pottery self-booking
   potteryOverview: () => request("/api/pos/pottery/overview"),
   potteryBookings: () => request("/api/pos/pottery/bookings"),
+  potteryCourses: () => request("/api/pos/pottery/courses"),
   potterySetBlock: (data) => request("/api/pos/pottery/block", { method: "POST", body: JSON.stringify(data) }),
   potteryRequests: () => request("/api/pos/pottery/requests"),
   potteryHandleRequest: (id) => request(`/api/pos/pottery/requests/${id}/handled`, { method: "POST" }),

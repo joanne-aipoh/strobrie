@@ -54,6 +54,45 @@ class BookingOut(BaseModel):
     created_at: datetime
 
 
+# --- courses (multi-week) --------------------------------------------------
+class CourseBookRequest(BaseModel):
+    course_type: Literal["4week", "8week"]
+    time_slot: str
+    start_date: date
+    customer_name: str = Field(min_length=1, max_length=120)
+    customer_email: EmailStr
+    customer_phone: str = Field(min_length=3, max_length=30)
+    callback_url: str | None = None
+
+
+class CourseOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    course_type: str
+    weeks: int
+    sessions: int
+    time_slot: str
+    start_date: date
+    customer_name: str
+    customer_email: str
+    customer_phone: str
+    amount: int
+    paid: bool
+    created_at: datetime
+
+
+class CourseInfoOut(BaseModel):
+    """Static course details for the public page."""
+
+    course_type: str
+    name: str
+    weeks: int
+    sessions: int
+    price: int
+    time_slots: list[str]
+
+
 # --- private "different time" request --------------------------------------
 class PrivateRequestCreate(BaseModel):
     customer_name: str = Field(min_length=1, max_length=120)

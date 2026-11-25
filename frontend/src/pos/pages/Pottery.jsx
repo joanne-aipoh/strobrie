@@ -29,6 +29,7 @@ export default function PotteryAdmin() {
   const [slots, setSlots] = useState(null);
   const [bookings, setBookings] = useState(null);
   const [requests, setRequests] = useState(null);
+  const [courses, setCourses] = useState([]);
   const [error, setError] = useState("");
   const [confirming, setConfirming] = useState(null); // "b<id>" | "r<id>"
   const [rescheduling, setRescheduling] = useState(null); // booking id being moved
@@ -37,11 +38,12 @@ export default function PotteryAdmin() {
   const [walkin, setWalkin] = useState({ date: "", time: "", session_type: "public", seats: 1, name: "", phone: "", amount: "" });
 
   function load() {
-    return Promise.all([posApi.potteryOverview(), posApi.potteryBookings(), posApi.potteryRequests()])
-      .then(([o, bk, r]) => {
+    return Promise.all([posApi.potteryOverview(), posApi.potteryBookings(), posApi.potteryRequests(), posApi.potteryCourses()])
+      .then(([o, bk, r, cs]) => {
         setSlots(o);
         setBookings(bk);
         setRequests(r);
+        setCourses(cs || []);
         // Viewing the page clears the "new bookings" badge on the Pottery tab.
         markPotteryBookingsSeen(bk);
       })
@@ -389,6 +391,27 @@ export default function PotteryAdmin() {
                   )}
                 </div>
               ))}
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="panel">
+        <h3>Course enrolments{courses.length > 0 ? ` (${courses.length})` : ""}</h3>
+        {courses.length === 0 ? (
+          <div className="empty-note">No course enrolments yet.</div>
+        ) : (
+          courses.map((c) => (
+            <div key={c.id} style={{ padding: "8px 0", borderBottom: "1px solid var(--line)" }}>
+              <strong>{c.customer_name}</strong>{" "}
+              <span style={{ background: "#efe6fb", color: "#5a37a8", fontWeight: 700, fontSize: 11.5, padding: "2px 8px", borderRadius: 999 }}>
+                {c.weeks}-week · {c.sessions} sessions
+              </span>
+              <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 3 }}>
+                Starts {new Date(c.start_date).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })} ·{" "}
+                {TIME_LABELS[c.time_slot] || c.time_slot} · Tue/Fri/Sat
+                {c.customer_phone ? ` · ${c.customer_phone}` : ""} · {fmt(c.amount)}
+              </div>
             </div>
           ))
         )}

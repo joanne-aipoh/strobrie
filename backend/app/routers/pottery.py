@@ -20,6 +20,13 @@ PRICE_PRIVATE = 20000
 PRICE_GLAZE = 10000  # optional glaze-firing add-on, per seat/item (bisque is included)
 WEEKS_AHEAD = 6
 
+# Multi-week private courses. Sessions run on the same Tue/Fri/Sat schedule.
+COURSES = {
+    "4week": {"name": "Pottery Fundamentals", "weeks": 4, "sessions": 12, "price": 180000},
+    "8week": {"name": "Extended Pottery Experience", "weeks": 8, "sessions": 24, "price": 350000},
+}
+COURSE_START_WEEKS_AHEAD = 10  # how far out a student may start a course
+
 public_router = APIRouter(prefix="/api/pottery", tags=["pottery"])
 # Staff-only; lives under /api/pos so nginx keeps it off the public hostnames.
 admin_router = APIRouter(prefix="/api/pos/pottery", tags=["pottery-admin"])
@@ -34,15 +41,37 @@ def _day_label(d: date) -> str:
     return f"{d.strftime('%a')} {d.day} {d.strftime('%b')}"
 
 
+def _course_session_dates(start: date, sessions: int) -> list[date]:
+    """The consecutive class days (Tue/Fri/Sat) a course runs, from start_date."""
+    out: list[date] = []
+    d = start
+    while len(out) < sessions:
+        if d.weekday() in DAYS:
+            out.append(d)
+        d += timedelta(days=1)
+    return out
+
+
+def _course_blocked(db: Session, d: date, t: str) -> bool:
+    """True if a paid course occupies this slot (it reserves the whole slot)."""
+    for c in db.query(pottery_models.PotteryCourse).filter_by(time_slot=t, paid=True).all():
+        if d < c.start_date:
+            continue
+        if d in _course_session_dates(c.start_date, c.sessions):
+            return True
+    return False
+
+
 def _slot_state(db: Session, d: date, t: str) -> dict:
     blocked = (
         db.query(pottery_models.PotteryBlock).filter_by(date=d, time_slot=t).first() is not None
     )
+    course_blocked = _course_blocked(db, d, t)
     paid = db.query(pottery_models.PotteryBooking).filter_by(date=d, time_slot=t, paid=True).all()
     private = any(b.session_type == "private" for b in paid)
     public_seats = sum(b.seats for b in paid if b.session_type == "public")
     remaining = max(0, PUBLIC_CAPACITY - public_seats)
-    open_ = (not blocked) and (not private)
+    open_ = (not blocked) and (not course_blocked) and (not private)
     return {
         "blocked": blocked,
         "private": private,
@@ -177,6 +206,87 @@ def private_request(payload: pottery_schemas.PrivateRequestCreate, db: Session =
     return {"ok": True}
 
 
+# --- courses (public) ------------------------------------------------------
+@public_router.get("/courses", response_model=list[pottery_schemas.CourseInfoOut])
+def course_info():
+    return [
+        pottery_schemas.CourseInfoOut(
+            course_type=k, name=v["name"], weeks=v["weeks"], sessions=v["sessions"],
+            price=v["price"], time_slots=TIMES,
+        )
+        for k, v in COURSES.items()
+    ]
+
+
+@public_router.post("/courses/book", response_model=pottery_schemas.CheckoutResponse, status_code=201)
+def book_course(payload: pottery_schemas.CourseBookRequest, db: Session = Depends(get_db)):
+    info = COURSES.get(payload.course_type)
+    if not info or payload.time_slot not in TIMES:
+        raise HTTPException(status_code=400, detail="That isn't a valid course or time.")
+    start = payload.start_date
+    if start.weekday() not in DAYS:
+        raise HTTPException(status_code=400, detail="Start date must be a Tuesday, Friday or Saturday.")
+    if start <= date.today():
+        raise HTTPException(status_code=400, detail="Please pick an upcoming start date.")
+
+    session_dates = _course_session_dates(start, info["sessions"])
+    clashes = [d for d in session_dates if not _slot_state(db, d, payload.time_slot)["private_available"]]
+    if clashes:
+        shown = ", ".join(_day_label(d) for d in clashes[:4])
+        more = "…" if len(clashes) > 4 else ""
+        raise HTTPException(
+            status_code=409,
+            detail=f"Some dates at {TIME_LABELS[payload.time_slot]} are already booked ({shown}{more}). Try another time or start date.",
+        )
+
+    amount = info["price"]
+    reference = f"strobrie-course-{uuid.uuid4().hex[:16]}"
+    course = pottery_models.PotteryCourse(
+        course_type=payload.course_type,
+        weeks=info["weeks"],
+        sessions=info["sessions"],
+        time_slot=payload.time_slot,
+        start_date=start,
+        customer_name=payload.customer_name.strip(),
+        customer_email=payload.customer_email,
+        customer_phone=payload.customer_phone.strip(),
+        amount=amount,
+        paid=False,
+        payment_reference=reference,
+    )
+    db.add(course)
+    db.commit()
+
+    callback_url = payload.callback_url or f"{FRONTEND_URL}/pottery/confirmation"
+    try:
+        data = paystack.initialize_transaction(
+            email=payload.customer_email, amount_naira=amount, reference=reference, callback_url=callback_url
+        )
+    except paystack.PaystackNotConfigured as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except paystack.PaystackError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    return pottery_schemas.CheckoutResponse(reference=reference, authorization_url=data["authorization_url"])
+
+
+@public_router.get("/courses/verify/{reference}", response_model=pottery_schemas.CourseOut)
+def verify_course(reference: str, db: Session = Depends(get_db)):
+    course = db.query(pottery_models.PotteryCourse).filter_by(payment_reference=reference).first()
+    if course is None:
+        raise HTTPException(status_code=404, detail="Course booking not found.")
+    if course.paid:
+        return course
+    try:
+        data = paystack.verify_transaction(reference)
+    except paystack.PaystackError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    if data.get("status") == "success":
+        course.paid = True
+        db.commit()
+        db.refresh(course)
+    return course
+
+
 # --- admin (Flow) ---------------------------------------------------------
 @admin_router.get("/overview", response_model=list[pottery_schemas.AdminSlotOut])
 def overview(db: Session = Depends(get_db)):
@@ -224,6 +334,16 @@ def list_bookings(db: Session = Depends(get_db)):
         db.query(pottery_models.PotteryBooking)
         .filter_by(paid=True)
         .order_by(pottery_models.PotteryBooking.created_at.desc())
+        .all()
+    )
+
+
+@admin_router.get("/courses", response_model=list[pottery_schemas.CourseOut])
+def list_courses(db: Session = Depends(get_db)):
+    return (
+        db.query(pottery_models.PotteryCourse)
+        .filter_by(paid=True)
+        .order_by(pottery_models.PotteryCourse.start_date.desc())
         .all()
     )
 

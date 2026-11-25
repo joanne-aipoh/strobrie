@@ -26,6 +26,28 @@ class PotteryBooking(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class PotteryCourse(Base):
+    """A multi-week private course enrolment (4-week / 8-week). The individual
+    session dates are computed from start_date + the Tue/Fri/Sat schedule, not
+    stored. A paid course reserves its time slot (private) on each session date."""
+
+    __tablename__ = "pottery_courses"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    course_type: Mapped[str] = mapped_column(String(10))  # "4week" | "8week"
+    weeks: Mapped[int] = mapped_column(Integer)
+    sessions: Mapped[int] = mapped_column(Integer)
+    time_slot: Mapped[str] = mapped_column(String(5))  # "10:00" — same every session
+    start_date: Mapped[date] = mapped_column(Date)
+    customer_name: Mapped[str] = mapped_column(String(120))
+    customer_email: Mapped[str] = mapped_column(String(255))
+    customer_phone: Mapped[str] = mapped_column(String(30))
+    amount: Mapped[int] = mapped_column(Integer)
+    paid: Mapped[bool] = mapped_column(Boolean, default=False)
+    payment_reference: Mapped[str] = mapped_column(String(64), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class PotteryBlock(Base):
     """A slot staff have taken off the booker (e.g. the space has an event)."""
 
