@@ -12,7 +12,7 @@ function Header() {
       <div className="container header-inner">
         <NavLink to="/" className="logo">
           <span className="logo-name">
-            Strobri<span className="logo-e">ē</span>
+            Strobri<span className="logo-e">e</span>
           </span>
           <span className="logo-sub">by Joanne</span>
         </NavLink>

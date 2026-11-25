@@ -137,7 +137,7 @@ function VideoHero() {
         preload="auto"
         poster="/pottery-hero-poster.jpg"
         aria-hidden="true"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%" }}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 45%" }}
       >
         <source src="/pottery-hero.mp4" type="video/mp4" />
       </video>
@@ -151,7 +151,7 @@ function VideoHero() {
       />
       <div style={{ position: "relative", textAlign: "center", color: "#fff", padding: "52px 20px", maxWidth: 660 }}>
         <div style={{ fontSize: 13, letterSpacing: 2, fontWeight: 700, textTransform: "uppercase", opacity: 0.92 }}>
-          Pottery at Strobriē
+          Pottery at Strobrie
         </div>
         <h1
           style={{

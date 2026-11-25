@@ -5,7 +5,7 @@ import { whatsappLink } from "../whatsapp.js";
 export default function WhatsAppButton() {
   return (
     <a
-      href={whatsappLink("Hi Strobriē! I'd like to ask about...")}
+      href={whatsappLink("Hi Strobrie! I'd like to ask about...")}
       target="_blank"
       rel="noopener noreferrer"
       className="whatsapp-float-btn"

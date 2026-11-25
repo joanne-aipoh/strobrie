@@ -1,4 +1,4 @@
-// Strobriē has no street frontage — it's set back inside HFIA Garden — so the
+// Strobrie has no street frontage — it's set back inside HFIA Garden — so the
 // job of this page is to help someone actually find the door: an exact map
 // pin, one-tap directions, and a WhatsApp button for "I'm outside, where?".
 const MAPS_PIN = "https://www.google.com/maps?cid=9023339216612327777";
@@ -6,7 +6,7 @@ const MAP_EMBED =
   "https://maps.google.com/maps?q=9.0329,7.4839(Strobri%C4%93%20By%20Joanne)&z=16&output=embed";
 const WHATSAPP =
   "https://wa.me/2348090701995?text=" +
-  encodeURIComponent("Hi Strobriē! Please help me with directions to the cafe — I'm on my way.");
+  encodeURIComponent("Hi Strobrie! Please help me with directions to the cafe — I'm on my way.");
 
 export default function Visit() {
   return (
@@ -29,7 +29,7 @@ export default function Visit() {
             }}
           >
             <iframe
-              title="Map to Strobriē By Joanne, HFIA Garden, Garki"
+              title="Map to Strobrie By Joanne, HFIA Garden, Garki"
               src={MAP_EMBED}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
@@ -105,7 +105,7 @@ export default function Visit() {
               >
                 <img
                   src="/google-review-qr.png"
-                  alt="Scan to leave Strobriē a Google review"
+                  alt="Scan to leave Strobrie a Google review"
                   style={{ width: 140, height: 140, borderRadius: 12, border: "1px solid rgba(0,0,0,0.1)" }}
                 />
               </a>

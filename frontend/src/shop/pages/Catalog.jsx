@@ -547,7 +547,7 @@ export default function Catalog() {
   return (
     <section className="section">
       <div className="container">
-        <h1 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>Shop Strobriē</h1>
+        <h1 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>Shop Strobrie</h1>
         <p style={{ marginBottom: "2rem" }}>Cakes, drinks, and bakes — order online for pickup or delivery.</p>
 
         {products.length === 0 && <p className="empty-note">Nothing's in the shop yet — check back soon.</p>}

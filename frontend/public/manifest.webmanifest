@@ -1,7 +1,7 @@
 {
-  "name": "Strobriē By Joanne",
-  "short_name": "Strobriē",
-  "description": "Order coffee, bakes and more from Strobriē By Joanne.",
+  "name": "Strobrie By Joanne",
+  "short_name": "Strobrie",
+  "description": "Order coffee, bakes and more from Strobrie By Joanne.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -28,7 +28,7 @@ export default function SiteFooter() {
           </p>
         </div>
         <p className="site-footer-copyright">
-          &copy; {new Date().getFullYear()} Strobriē By Joanne. All rights reserved.
+          &copy; {new Date().getFullYear()} Strobrie By Joanne. All rights reserved.
         </p>
       </div>
     </footer>

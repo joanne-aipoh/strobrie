@@ -36,7 +36,7 @@ export default function Home() {
         <div className="container">
           <img
             src="/cafe-table-spread.jpg"
-            alt="A table spread of brunch, pasta, cakes, and fresh drinks at Strobriē"
+            alt="A table spread of brunch, pasta, cakes, and fresh drinks at Strobrie"
             loading="lazy"
             style={{
               width: "100%",
@@ -59,7 +59,7 @@ export default function Home() {
           <div>
             <h2>Our Space</h2>
             <p>
-              Strobriē By Joanne is a cafe and bakery built around warm wood,
+              Strobrie By Joanne is a cafe and bakery built around warm wood,
               greenery, and natural light. It's the kind of place to slow down
               over a Ube Latte, catch up with friends, or get a little work
               done &mdash; and on weekends, it doubles as a gathering spot for

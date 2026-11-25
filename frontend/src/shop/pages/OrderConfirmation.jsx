@@ -161,7 +161,7 @@ export default function OrderConfirmation() {
         <p style={{ marginTop: "1.5rem", fontSize: "0.9rem" }}>
           Questions about your order?{" "}
           <a
-            href={whatsappLink(`Hi Strobriē! I have a question about my order #${order.id}.`)}
+            href={whatsappLink(`Hi Strobrie! I have a question about my order #${order.id}.`)}
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: "var(--color-hot-pink-dark)", fontWeight: 600 }}

@@ -1,13 +1,13 @@
 import { SHOW_SHOP_LINKS } from "../shopVisibility.js";
 
 const MENUS = [
-  { src: "/menu-breakfast.jpg", alt: "Strobriē all-day breakfast menu" },
-  { src: "/menu-lunch.jpg", alt: "Strobriē lunch menu" },
-  { src: "/menu-bakery.jpg", alt: "Strobriē bakery menu" },
-  { src: "/menu-whole-cakes.jpg", alt: "Strobriē whole cakes menu" },
-  { src: "/menu-drinks.jpg", alt: "Strobriē drinks menu" },
-  { src: "/menu-coffee.jpg", alt: "Strobriē coffee menu" },
-  { src: "/menu-bar.jpg", alt: "Strobriē bar menu" },
+  { src: "/menu-breakfast.jpg", alt: "Strobrie all-day breakfast menu" },
+  { src: "/menu-lunch.jpg", alt: "Strobrie lunch menu" },
+  { src: "/menu-bakery.jpg", alt: "Strobrie bakery menu" },
+  { src: "/menu-whole-cakes.jpg", alt: "Strobrie whole cakes menu" },
+  { src: "/menu-drinks.jpg", alt: "Strobrie drinks menu" },
+  { src: "/menu-coffee.jpg", alt: "Strobrie coffee menu" },
+  { src: "/menu-bar.jpg", alt: "Strobrie bar menu" },
 ];
 
 export default function Menu() {

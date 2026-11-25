@@ -18,14 +18,14 @@ function ShopHeader() {
         {isShopHost ? (
           <a href={MAIN_SITE_URL} className="logo">
             <span className="logo-name">
-              Strobri<span className="logo-e">ē</span>
+              Strobri<span className="logo-e">e</span>
             </span>
             <span className="logo-sub">shop</span>
           </a>
         ) : (
           <NavLink to="/" className="logo">
             <span className="logo-name">
-              Strobri<span className="logo-e">ē</span>
+              Strobri<span className="logo-e">e</span>
             </span>
             <span className="logo-sub">shop</span>
           </NavLink>

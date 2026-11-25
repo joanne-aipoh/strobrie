@@ -55,7 +55,7 @@ export default function PotteryConfirmation() {
               <div><strong>Sessions:</strong> {booking.sessions} over {booking.weeks} weeks</div>
               <div><strong>Paid:</strong> {fmt(booking.amount)}</div>
             </div>
-            <p style={{ color: SOFT, fontSize: 14 }}>Your {TIME_LABELS[booking.time_slot] || booking.time_slot} slot is reserved for the whole course. See you at Strobriē!</p>
+            <p style={{ color: SOFT, fontSize: 14 }}>Your {TIME_LABELS[booking.time_slot] || booking.time_slot} slot is reserved for the whole course. See you at Strobrie!</p>
             <Link to="/" style={{ color: ACCENT, fontWeight: 700 }}>Back to home</Link>
           </>
         )}
@@ -74,7 +74,7 @@ export default function PotteryConfirmation() {
               {booking.glaze && <div><strong>Glaze firing:</strong> included ✨</div>}
               <div><strong>Paid:</strong> {fmt(booking.amount)}</div>
             </div>
-            <p style={{ color: SOFT, fontSize: 14 }}>A confirmation is on its way. See you at Strobriē!</p>
+            <p style={{ color: SOFT, fontSize: 14 }}>A confirmation is on its way. See you at Strobrie!</p>
             <Link to="/" style={{ color: ACCENT, fontWeight: 700 }}>Back to home</Link>
           </>
         )}

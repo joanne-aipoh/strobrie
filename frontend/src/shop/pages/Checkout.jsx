@@ -239,7 +239,7 @@ export default function Checkout() {
   // instead of going through Paystack. Nothing is submitted to the backend
   // here; staff take it from there in the chat.
   function buildWhatsAppOrderMessage() {
-    const lines = ["Hi Strobriē! I'd like to order:"];
+    const lines = ["Hi Strobrie! I'd like to order:"];
     for (const item of items) {
       let line = `- ${item.qty} × ${item.name} — ${fmt(item.price * item.qty)}`;
       if (item.inscription) line += ` (Inscription: "${item.inscription}")`;
@@ -426,7 +426,7 @@ export default function Checkout() {
                   Cakes, cheesecakes &amp; cupcakes need at least 48 hours' notice — pick a date two days from now
                   or later. Need it sooner?{" "}
                   <a
-                    href={whatsappLink("Hi Strobriē! I'd like to order a cake sooner than 48 hours — is that possible?")}
+                    href={whatsappLink("Hi Strobrie! I'd like to order a cake sooner than 48 hours — is that possible?")}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
