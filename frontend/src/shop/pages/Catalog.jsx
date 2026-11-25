@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { photoUrl, shopApi } from "../shopApi.js";
 import { useCart } from "../CartContext.jsx";
 import { shopPath } from "../shopBase.js";
-import { groupProducts, cardPhotos } from "../productGrouping.js";
+import { groupProducts, cardPhotos, productsInCard } from "../productGrouping.js";
 import { groupCoffeeSeparate } from "../coffeeGrouping.js";
 import { CAKE_CATEGORIES } from "../cakeCategories.js";
 import { inscriptionLimitForLabel } from "../inscriptionLimit.js";
@@ -68,6 +68,7 @@ function ProductCard({ card }) {
   const [ebSide, setEbSide] = useState("Pancakes");
   const [added, setAdded] = useState(false);
   const [isBoxItem, setIsBoxItem] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   let product, name;
   if (card.type === "grouped2d") {
@@ -91,6 +92,41 @@ function ProductCard({ card }) {
   const isEnglishBreakfast = product.name === "English Breakfast";
   const isNonCoffeeLatte = NON_COFFEE_NAMES.has(product.name);
   const isHotTea = product.category === "Tea" && HOT_TEA_NAMES.has(product.name);
+
+  // Whether a product needs choices before it can be added (a variant/flavour,
+  // a cake inscription, an eggs style, a box fill, …). Those get a "Choose"
+  // button that expands an options panel; everything else adds in one tap.
+  const needsChoices =
+    card.type === "grouped" ||
+    card.type === "grouped2d" ||
+    CAKE_CATEGORIES.includes(product.category) ||
+    isEggs ||
+    isEnglishBreakfast ||
+    isNonCoffeeLatte ||
+    isHotTea ||
+    /box of\s*\d+/i.test(product.name);
+  const choiceHint =
+    card.type === "grouped2d"
+      ? "Choose flavour & size"
+      : card.type === "grouped"
+      ? "Choose option"
+      : CAKE_CATEGORIES.includes(product.category)
+      ? "Customise"
+      : isNonCoffeeLatte
+      ? "Hot or iced"
+      : isEggs || isEnglishBreakfast
+      ? "Choose eggs"
+      : "Options";
+  // Collapsed rows show the cheapest price as "from ₦X" when a card spans
+  // several prices; the expanded panel still shows the exact selected price.
+  const cardPrices = productsInCard(card).map((p) => p.price);
+  const minPrice = Math.min(...cardPrices);
+  const priceText = cardPrices.some((p) => p !== minPrice) ? `from ${fmt(minPrice)}` : fmt(minPrice);
+  const thumbStyle = /cinnamon/i.test(product.name)
+    ? { objectPosition: "center 70%" }
+    : DRINK_CATEGORIES.has(product.category)
+    ? { objectPosition: /matcha/i.test(product.name) ? "center 85%" : "center 72%" }
+    : undefined;
   useEffect(() => {
     if (isEggs && addons === "") setAddons("Scrambled");
     if (isNonCoffeeLatte && addons === "") setAddons("Hot");
@@ -117,39 +153,60 @@ function ProductCard({ card }) {
   }
 
   return (
-    <div className="product-card">
-      <div className="product-card-image">
-        {photos[0] ? (
-          <img
-            src={photoUrl(photos[0].url)}
-            alt={name}
-            style={
-              /cinnamon/i.test(product.name)
-                ? // The cinnamon roll shot has text across the top — drop the
-                  // crop down so the roll shows and the text is cut off.
-                  { objectPosition: "center 70%" }
-                : DRINK_CATEGORIES.has(product.category)
-                ? { objectPosition: /matcha/i.test(product.name) ? "center 85%" : "center 72%" }
-                : undefined
-            }
-          />
-        ) : (
-          <div className="product-card-placeholder">No photo yet</div>
-        )}
-        {!isBoxItem && outOfStock && (
-          <span className="product-card-stock-badge sold-out">
-            {product.unavailable ? "Unavailable Today" : "Sold Out"}
-          </span>
-        )}
-        {!isBoxItem && !outOfStock && remainingStock !== null && remainingStock <= 10 && (
-          <span className="product-card-stock-badge low">Only {remainingStock} left</span>
-        )}
+    <div className="menu-row-wrap">
+      <div className="menu-row">
+        <div className={`menu-row-thumb${outOfStock ? " is-out" : ""}`}>
+          {photos[0] ? (
+            <img src={photoUrl(photos[0].url)} alt={name} style={thumbStyle} />
+          ) : (
+            <span className="menu-row-thumb-ph">No photo</span>
+          )}
+          {!isBoxItem && outOfStock && (
+            <span className="menu-row-soldout">{product.unavailable ? "N/A" : "Sold out"}</span>
+          )}
+        </div>
+        <div className="menu-row-info">
+          <Link to={shopPath(`/product/${product.id}`)} className="menu-row-name">
+            {name}
+          </Link>
+          {product.description && <p className="menu-row-desc">{product.description}</p>}
+          {needsChoices && !expanded && <span className="menu-row-hint">{choiceHint} ▾</span>}
+        </div>
+        <div className="menu-row-right">
+          <div className="menu-row-price">{priceText}</div>
+          {needsChoices ? (
+            <button
+              type="button"
+              className="menu-row-add"
+              aria-expanded={expanded}
+              onClick={() => setExpanded((v) => !v)}
+            >
+              {expanded ? "Close" : "Choose"}
+            </button>
+          ) : outOfStock ? (
+            <button type="button" className="menu-row-add is-disabled" disabled>
+              {product.unavailable ? "N/A" : "Sold out"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="menu-row-add"
+              onClick={() => {
+                addItem(product, 1, {});
+                setAdded(true);
+                setTimeout(() => setAdded(false), 1500);
+              }}
+            >
+              {added ? "Added ✓" : "Add"}
+            </button>
+          )}
+          {!needsChoices && !outOfStock && remainingStock !== null && remainingStock <= 10 && (
+            <span className="menu-row-low">Only {remainingStock} left</span>
+          )}
+        </div>
       </div>
-      <div className="product-card-body">
-        <Link to={shopPath(`/product/${product.id}`)} className="product-card-name">
-          {name}
-        </Link>
-        {product.description && <p className="product-card-desc">{product.description}</p>}
+      {needsChoices && expanded && (
+        <div className="menu-row-panel">
         {card.type === "grouped" && (
           <select
             className="product-card-variant"
@@ -350,7 +407,8 @@ function ProductCard({ card }) {
               </button>
             </>
           ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -543,7 +601,7 @@ export default function Catalog() {
                       {SECTION_NOTES[category]}
                     </p>
                   )}
-                  <div className="product-grid" style={{ marginTop: "1rem" }}>
+                  <div className="menu-list" style={{ marginTop: "0.75rem" }}>
                     {cards.map((card) => (
                       <ProductCard card={card} key={card.type === "single" ? card.product.id : card.name} />
                     ))}

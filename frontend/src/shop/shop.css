@@ -34,6 +34,154 @@
   }
 }
 
+/* ---- Menu-style product list (compact rows) ----
+   A lighter alternative to the photo-grid cards: each product is a slim row
+   with a small thumbnail, name/price, and a one-tap Add. Items that need a
+   choice (flavour, size, cake inscription, box fill) show "Choose", which
+   expands the full options panel below the row. */
+.menu-list {
+  display: flex;
+  flex-direction: column;
+}
+.menu-row-wrap {
+  border-bottom: 1px solid var(--color-border, #ece7df);
+}
+.menu-row-wrap:first-child {
+  border-top: 1px solid var(--color-border, #ece7df);
+}
+.menu-row {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.7rem 0;
+}
+.menu-row-thumb {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--color-bg-alt);
+  flex: none;
+}
+.menu-row-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.menu-row-thumb.is-out img {
+  opacity: 0.45;
+  filter: grayscale(0.4);
+}
+.menu-row-thumb-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 10px;
+  color: var(--color-mauve);
+  text-align: center;
+}
+.menu-row-soldout {
+  position: absolute;
+  inset: auto 0 0 0;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  text-align: center;
+  padding: 2px 0;
+}
+.menu-row-info {
+  min-width: 0;
+}
+.menu-row-name {
+  font-weight: 700;
+  color: var(--color-text);
+  text-decoration: none;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.menu-row-name:hover {
+  color: var(--color-hot-pink-dark);
+}
+.menu-row-desc {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-text-soft, #6b6b6b);
+  margin: 2px 0 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.menu-row-hint {
+  display: inline-block;
+  font-size: 11.5px;
+  color: var(--color-hot-pink-dark);
+  margin-top: 3px;
+  font-weight: 600;
+}
+.menu-row-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  white-space: nowrap;
+}
+.menu-row-price {
+  font-weight: 700;
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+.menu-row-add {
+  border: 1px solid var(--color-hot-pink-dark);
+  background: var(--color-hot-pink-dark);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 0.34rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+  line-height: 1.1;
+}
+.menu-row-add:hover {
+  filter: brightness(1.05);
+}
+.menu-row-add[aria-expanded="true"] {
+  background: transparent;
+  color: var(--color-hot-pink-dark);
+}
+.menu-row-add.is-disabled {
+  background: #e7e3dc;
+  border-color: #e7e3dc;
+  color: #8a8a8a;
+  cursor: default;
+}
+.menu-row-low {
+  font-size: 10.5px;
+  color: var(--color-hot-pink-dark);
+}
+.menu-row-panel {
+  padding: 0.25rem 0 1rem calc(56px + 0.9rem);
+}
+@media (max-width: 460px) {
+  .menu-row {
+    grid-template-columns: 48px 1fr auto;
+    gap: 0.7rem;
+  }
+  .menu-row-thumb {
+    width: 48px;
+    height: 48px;
+  }
+  .menu-row-panel {
+    padding-left: 0;
+  }
+}
+
 .product-card {
   background: var(--color-card);
   border-radius: 16px;
