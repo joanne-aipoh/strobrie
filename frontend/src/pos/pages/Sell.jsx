@@ -386,8 +386,9 @@ export default function Sell() {
   // Only dine-in picks a table from the dropdown; takeaway/delivery type a name.
   const orderName = (orderType === "dine_in" ? (tableChoice === CUSTOM ? customTable : tableChoice) : customTable).trim();
   // Tables with an open ticket are occupied — hide them from the dropdown so a
-  // new order can't be started on a table that's already in use.
-  const occupiedTables = new Set(openTabs.map((t) => t.label));
+  // new order can't be started on a table that's already in use. "Outside" is an
+  // area that can hold several orders at once, so it's never treated as occupied.
+  const occupiedTables = new Set(openTabs.map((t) => t.label).filter((l) => l !== "Outside"));
   // A new order is set up in three steps, each revealing the next: pick a type,
   // then a table/name, then handle loyalty (find a customer or skip). Only when
   // all three are answered does the rest of the panel (items, totals, charge)
