@@ -1013,6 +1013,11 @@ export default function Sell() {
             ))}
           </div>
         )}
+        {!setupDone && (
+          <div style={{ fontSize: 12.5, color: "var(--ink-soft)", background: "var(--cream-2)", borderRadius: 8, padding: "8px 10px", marginBottom: 10 }}>
+            Finish setting up the order (including loyalty) to start adding items.
+          </div>
+        )}
         <div className="item-grid">
           {showCustomForm ? (
             <div className="item-card" style={{ cursor: "default" }}>
@@ -1035,7 +1040,12 @@ export default function Sell() {
               </button>
             </div>
           ) : (
-            <button className="item-card" style={{ borderStyle: "dashed" }} onClick={() => setShowCustomForm(true)}>
+            <button
+              className="item-card"
+              style={{ borderStyle: "dashed", ...(setupDone ? {} : { opacity: 0.5, cursor: "not-allowed" }) }}
+              disabled={!setupDone}
+              onClick={() => setShowCustomForm(true)}
+            >
               <div className="name">+ Custom item</div>
               <div className="price">Any price, any name</div>
             </button>
@@ -1047,8 +1057,9 @@ export default function Sell() {
               <button
                 key={item.id}
                 className="item-card"
-                disabled={soldOut}
-                style={soldOut ? { opacity: 0.5, cursor: "not-allowed" } : undefined}
+                disabled={soldOut || !setupDone}
+                style={soldOut || !setupDone ? { opacity: 0.5, cursor: "not-allowed" } : undefined}
+                title={!setupDone && !soldOut ? "Finish order setup (including loyalty) first" : undefined}
                 onClick={() => (item.modifiers?.length ? setModifierProduct(item) : addToCart(item))}
               >
                 <div className="name">
