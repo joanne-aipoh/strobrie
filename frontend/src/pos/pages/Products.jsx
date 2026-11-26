@@ -323,37 +323,38 @@ function GroupRow({ name, products, categories, editingId, setEditingId, selecte
   }
 
   return (
-    <div className="panel" style={{ background: "var(--cream-2)" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+    <div style={{ borderBottom: "1px solid var(--line)", opacity: anyActive ? 1 : 0.55 }}>
+      <div
+        style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 4px", cursor: "pointer" }}
+        onClick={() => setOpen((v) => !v)}
+      >
         {SHOW_PRODUCT_PHOTOS &&
           (photo ? (
             <img
               src={photoUrl(photo.url)}
               alt=""
-              style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 8, border: "1px solid var(--line)", flexShrink: 0 }}
+              style={{ width: 40, height: 40, objectFit: "cover", borderRadius: 6, border: "1px solid var(--line)", flexShrink: 0 }}
             />
           ) : (
-            <div
-              style={{
-                width: 56, height: 56, borderRadius: 8, border: "1px dashed var(--line)", flexShrink: 0,
-                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "var(--ink-soft)", textAlign: "center",
-              }}
-            >
-              No photo
-            </div>
+            <div style={{ width: 40, height: 40, borderRadius: 6, border: "1px dashed var(--line)", flexShrink: 0 }} />
           ))}
-        <div style={{ flex: 1, cursor: "pointer" }} onClick={() => setOpen((v) => !v)}>
-          <strong>{name}</strong> <span style={{ color: "var(--ink-soft)", fontWeight: 400 }}>({products.length})</span>
-          <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-            {anyActive ? "On" : "Off"}
-          </div>
+        <span style={{ color: "var(--ink-soft)", flexShrink: 0, fontSize: 12 }}>{open ? "▾" : "▸"}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ fontWeight: 600 }}>{name}</span>
+          <span style={{ color: "var(--ink-soft)", marginLeft: 6, fontSize: 13 }}>
+            ({products.length} option{products.length === 1 ? "" : "s"})
+          </span>
+          {!anyActive && <span className="checkin-badge out" style={{ marginLeft: 8 }}>Off</span>}
         </div>
         {SHOW_PRODUCT_PHOTOS && (
           <>
             <button
               className="link-btn"
               style={{ fontSize: 12, whiteSpace: "nowrap" }}
-              onClick={() => fileRef.current?.click()}
+              onClick={(e) => {
+                e.stopPropagation();
+                fileRef.current?.click();
+              }}
               disabled={uploading}
             >
               {uploading ? "Uploading…" : photo ? "Change photo" : "Add photo"}
@@ -361,17 +362,9 @@ function GroupRow({ name, products, categories, editingId, setEditingId, selecte
             <input ref={fileRef} type="file" accept="image/*" onChange={uploadGroupPhoto} style={{ display: "none" }} />
           </>
         )}
-        <span style={{ color: "var(--ink-soft)", cursor: "pointer" }} onClick={() => setOpen((v) => !v)}>
-          {open ? "▲" : "▼"}
-        </span>
       </div>
-      {SHOW_PRODUCT_PHOTOS && (
-        <div style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 4 }}>
-          One photo for the whole group — applied to all {products.length} items. Expand to edit each item.
-        </div>
-      )}
       {open && (
-        <div style={{ marginTop: 8 }}>
+        <div style={{ marginLeft: 14, paddingLeft: 10, borderLeft: "2px solid var(--line)" }}>
           {products.map((p) => (
             <ProductRow
               key={p.id}
