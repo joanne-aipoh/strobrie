@@ -7,52 +7,7 @@ function fmt(n) {
   return `₦${n.toLocaleString("en-NG")}`;
 }
 
-const BLANK_FORM = { name: "", description: "", category: "", price: "", stock_qty: "" };
-
-// A tracked batch sitting this many days or more gets flagged for review —
-// not auto-discounted, just surfaced so a person decides (mark it down,
-// or pull it if it's gone off). Adjust to taste.
-const STALE_STOCK_DAYS = 3;
-
-function daysSinceRestock(product) {
-  if (product.stock_qty === null || !product.stock_updated_at) return null;
-  const ms = Date.now() - new Date(product.stock_updated_at).getTime();
-  return Math.floor(ms / (1000 * 60 * 60 * 24));
-}
-
-function RestockControl({ product, onChanged }) {
-  const [qty, setQty] = useState("");
-  const [error, setError] = useState("");
-
-  async function addBatch() {
-    const q = parseInt(qty, 10);
-    if (!q || q <= 0) {
-      setError("Enter a quantity greater than 0.");
-      return;
-    }
-    await shopApi.restockProduct(product.id, q);
-    setQty("");
-    setError("");
-    onChanged();
-  }
-
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
-      <input
-        type="number"
-        min="1"
-        placeholder="Qty made"
-        value={qty}
-        onChange={(e) => setQty(e.target.value)}
-        style={{ maxWidth: 100, fontSize: 12.5, padding: "4px 8px" }}
-      />
-      <button className="link-btn" onClick={addBatch}>
-        + Add to stock
-      </button>
-      {error && <span className="error-text">{error}</span>}
-    </div>
-  );
-}
+const BLANK_FORM = { name: "", description: "", category: "", price: "" };
 
 function ProductPhotos({ product, onChanged }) {
   const fileInputRef = useRef(null);
@@ -169,7 +124,7 @@ function ProductForm({ initial, onSubmit, onCancel, categories }) {
         description: form.description.trim() || null,
         category: form.category.trim(),
         price,
-        stock_qty: form.stock_qty === "" ? null : parseInt(form.stock_qty, 10),
+        stock_qty: null, // stock counting is off — everything is made to order
         modifiers: cleanModifiers,
         ...(initial ? { is_active: form.is_active, unavailable: form.unavailable } : {}),
       });
@@ -202,10 +157,6 @@ function ProductForm({ initial, onSubmit, onCancel, categories }) {
       <div className="form-field">
         <label>Price (₦)</label>
         <input type="number" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="e.g. 46400" />
-      </div>
-      <div className="form-field">
-        <label>Stock (blank = unlimited)</label>
-        <input type="number" min="0" value={form.stock_qty} onChange={(e) => setForm({ ...form, stock_qty: e.target.value })} placeholder="e.g. 5" />
       </div>
       <div className="form-field full">
         <label>Description</label>
@@ -255,19 +206,6 @@ function ProductRow({ product, categories, editingId, setEditingId, selected, on
     await onChanged();
   }
 
-  async function toggleUnavailable() {
-    await shopApi.updateProduct(product.id, {
-      name: product.name,
-      description: product.description,
-      category: product.category,
-      price: product.price,
-      stock_qty: product.stock_qty,
-      is_active: product.is_active,
-      unavailable: !product.unavailable,
-    });
-    await onChanged();
-  }
-
   if (editingId === product.id) {
     return (
       <div className="panel" style={{ background: "var(--cream-2)" }}>
@@ -277,7 +215,6 @@ function ProductRow({ product, categories, editingId, setEditingId, selected, on
             description: product.description || "",
             category: product.category,
             price: String(product.price),
-            stock_qty: product.stock_qty === null ? "" : String(product.stock_qty),
             is_active: product.is_active,
             unavailable: product.unavailable,
           }}
@@ -304,50 +241,18 @@ function ProductRow({ product, categories, editingId, setEditingId, selected, on
             <strong>{product.name}</strong>
             <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end", flexShrink: 0 }}>
               <span className={`checkin-badge ${product.is_active ? "in" : "out"}`}>
-                {product.is_active ? "Available online" : "Hidden"}
+                {product.is_active ? "On" : "Off"}
               </span>
-              {product.unavailable && <span className="checkin-badge out">Unavailable Today</span>}
             </div>
           </div>
-          <div style={{ fontSize: 13, marginTop: 2 }}>
-            {fmt(product.price)} &middot; {product.stock_qty === null ? "unlimited stock" : `${product.stock_qty} in stock`}
-          </div>
-          {(() => {
-            const days = daysSinceRestock(product);
-            if (days === null || days < STALE_STOCK_DAYS || product.stock_qty <= 0) return null;
-            return (
-              <div
-                style={{
-                  fontSize: 12.5,
-                  fontWeight: 600,
-                  color: "var(--rust-dark)",
-                  background: "var(--cream)",
-                  border: "1px solid var(--rust-dark)",
-                  borderRadius: 6,
-                  padding: "4px 8px",
-                  marginTop: 6,
-                  display: "inline-block",
-                }}
-              >
-                Restocked {days} day{days === 1 ? "" : "s"} ago &middot; {product.stock_qty} left — worth a discount or a freshness check?
-              </div>
-            );
-          })()}
+          <div style={{ fontSize: 13, marginTop: 2 }}>{fmt(product.price)}</div>
           {product.description && <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 4 }}>{product.description}</div>}
-          <label
-            title="Use this if you can't make it today (e.g. out of an ingredient it needs) — separate from stock count."
-            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, marginTop: 6, whiteSpace: "nowrap" }}
-          >
-            <input type="checkbox" checked={product.unavailable} onChange={toggleUnavailable} />
-            Not available today
-          </label>
-          <RestockControl product={product} onChanged={onChanged} />
           <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
             <button className="link-btn" onClick={() => setEditingId(product.id)}>
               Edit
             </button>
             <button className="link-btn" onClick={toggleActive}>
-              {product.is_active ? "Hide from shop" : "Show in shop"}
+              {product.is_active ? "Turn off" : "Turn on"}
             </button>
             <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={handleDelete}>
               Delete
@@ -369,7 +274,6 @@ function GroupRow({ name, products, categories, editingId, setEditingId, selecte
   const fileRef = useRef(null);
   const photo = products.map((p) => p.photos[0]).find(Boolean);
   const anyActive = products.some((p) => p.is_active);
-  const anyUnavail = products.some((p) => p.unavailable);
 
   // One photo for the whole group: upload the chosen file to every product in
   // the group (replacing each one's existing photo) so they all share it.
@@ -412,8 +316,7 @@ function GroupRow({ name, products, categories, editingId, setEditingId, selecte
         <div style={{ flex: 1, cursor: "pointer" }} onClick={() => setOpen((v) => !v)}>
           <strong>{name}</strong> <span style={{ color: "var(--ink-soft)", fontWeight: 400 }}>({products.length})</span>
           <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-            {anyActive ? "Available online" : "Hidden"}
-            {anyUnavail ? " · some unavailable today" : ""}
+            {anyActive ? "On" : "Off"}
           </div>
         </div>
         <button
@@ -652,7 +555,6 @@ export default function Products() {
   const [editingId, setEditingId] = useState(null);
   const [settings, setSettings] = useState(null);
   const [search, setSearch] = useState("");
-  const [trackedOnly, setTrackedOnly] = useState(false);
   const [openCategories, setOpenCategories] = useState(() => new Set());
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [priceMode, setPriceMode] = useState(false);
@@ -681,7 +583,6 @@ export default function Products() {
 
   const searchTerm = search.trim().toLowerCase();
   const filtered = products.filter((p) => {
-    if (trackedOnly && p.stock_qty === null) return false;
     if (searchTerm && !p.name.toLowerCase().includes(searchTerm)) return false;
     return true;
   });
@@ -696,7 +597,7 @@ export default function Products() {
 
   // While actively searching/filtering, every matching category auto-opens
   // so results aren't hidden behind a collapsed group.
-  const isFiltering = searchTerm !== "" || trackedOnly;
+  const isFiltering = searchTerm !== "";
 
   function toggleCategory(cat) {
     setOpenCategories((prev) => {
@@ -736,20 +637,6 @@ export default function Products() {
     <>
       <div className="panel">
         <h3>Products</h3>
-        <p style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: -8, marginBottom: 12 }}>
-          One list, used in two places: this is the till menu on the Sell screen <em>and</em> the catalogue on
-          shop.strobrie.com. A name, price or stock change here lands on both. "Available online" and
-          "Unavailable Today" only change what customers see on the shop — the till can still ring up anything
-          that's in stock.
-        </p>
-
-        {settings && (
-          <p style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: -4, marginBottom: 12 }}>
-            Each category below has a "Hide from shop"/"Show in shop" toggle — hides that whole
-            section from customers (e.g. Brunch on a weekday, Cocktails) while it stays fully
-            sellable here in Flow.
-          </p>
-        )}
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
           <input
@@ -759,17 +646,13 @@ export default function Products() {
             onChange={(e) => setSearch(e.target.value)}
             style={{ flex: 1, minWidth: 200 }}
           />
-          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, whiteSpace: "nowrap" }}>
-            <input type="checkbox" checked={trackedOnly} onChange={(e) => setTrackedOnly(e.target.checked)} />
-            Tracked stock only
-          </label>
           <button className="log-btn" style={{ whiteSpace: "nowrap" }} onClick={() => setPriceMode((v) => !v)}>
             {priceMode ? "Done editing prices" : "Edit prices"}
           </button>
         </div>
         <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: -6, marginBottom: 12 }}>
-          {products.length} products total. Anything with "unlimited stock" is made to order and never needs
-          counting — check "Tracked stock only" to hide those and see just what's actually being tracked.
+          {products.length} products. Use <strong>Turn off / Turn on</strong> to show or hide an item on the till
+          and shop; <strong>Edit</strong> to change its name, price, photo or options.
         </p>
 
         {priceMode ? (
