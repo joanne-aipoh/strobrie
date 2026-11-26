@@ -300,18 +300,6 @@ function printReceipt(receipt) {
   printHTML(receiptHTML(receipt));
 }
 
-function printKitchenTicket(ticket) {
-  if (directPrintOn()) {
-    try {
-      sendRaw(encodeKitchen(ticket));
-      return;
-    } catch {
-      /* fall back to the HTML print path below */
-    }
-  }
-  printHTML(kitchenHTML(ticket));
-}
-
 // The bar makes drinks and plates the bakery; the kitchen makes food — different
 // stations, so an order can print two tickets. (Coffee is one DB category.)
 const BAR_CATEGORIES = new Set([
@@ -341,13 +329,25 @@ function printKitchenTickets({ items, ...common }) {
   const printable = items.filter((i) => !NO_PRINT_CATEGORIES.has(i.category));
   const food = printable.filter((i) => !isBar(i));
   const bar = printable.filter((i) => isBar(i));
-  if (food.length) printKitchenTicket({ ...common, items: food, station: "FOOD" });
-  if (bar.length) {
-    const printBar = () => printKitchenTicket({ ...common, items: bar, station: "BAR" });
-    // Stagger the second ticket so the two print jobs queue in order.
-    if (food.length) setTimeout(printBar, 700);
-    else printBar();
+  const foodTicket = food.length ? { ...common, items: food, station: "FOOD" } : null;
+  const barTicket = bar.length ? { ...common, items: bar, station: "BAR" } : null;
+  if (!foodTicket && !barTicket) return;
+  // Send the FOOD and BAR tickets as ONE print job (one RawBT navigation) so the
+  // second slip can't be dropped — previously they were two staggered jobs and
+  // the bar ticket often went missing once RawBT took the foreground.
+  if (directPrintOn()) {
+    try {
+      let bytes = [];
+      if (foodTicket) bytes = bytes.concat(encodeKitchen(foodTicket));
+      if (barTicket) bytes = bytes.concat(encodeKitchen(barTicket));
+      sendRaw(bytes);
+      return;
+    } catch {
+      /* fall back to the HTML print path below */
+    }
   }
+  if (foodTicket) printHTML(kitchenHTML(foodTicket));
+  if (barTicket) printHTML(kitchenHTML(barTicket));
 }
 
 // A sample receipt to confirm the printer (e.g. RawBT → Bluetooth) is connected.
