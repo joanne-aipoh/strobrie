@@ -7,6 +7,7 @@ import { groupProducts, cardPhotos, productsInCard } from "../productGrouping.js
 import { CAKE_CATEGORIES } from "../cakeCategories.js";
 import { inscriptionLimitForLabel } from "../inscriptionLimit.js";
 import BoxBuilder from "../BoxBuilder.jsx";
+import { SHOW_PRODUCT_PHOTOS } from "../../photoVisibility.js";
 
 function fmt(n) {
   return `₦${n.toLocaleString("en-NG")}`;
@@ -170,17 +171,19 @@ function ProductCard({ card }) {
 
   return (
     <div className="menu-row-wrap">
-      <div className="menu-row">
-        <div className={`menu-row-thumb${outOfStock ? " is-out" : ""}`}>
-          {photos[0] ? (
-            <img src={photoUrl(photos[0].url)} alt={name} style={thumbStyle} />
-          ) : (
-            <span className="menu-row-thumb-ph">No photo</span>
-          )}
-          {!isBoxItem && outOfStock && (
-            <span className="menu-row-soldout">{product.unavailable ? "N/A" : "Sold out"}</span>
-          )}
-        </div>
+      <div className={`menu-row${SHOW_PRODUCT_PHOTOS ? "" : " nophoto"}`}>
+        {SHOW_PRODUCT_PHOTOS && (
+          <div className={`menu-row-thumb${outOfStock ? " is-out" : ""}`}>
+            {photos[0] ? (
+              <img src={photoUrl(photos[0].url)} alt={name} style={thumbStyle} />
+            ) : (
+              <span className="menu-row-thumb-ph">No photo</span>
+            )}
+            {!isBoxItem && outOfStock && (
+              <span className="menu-row-soldout">{product.unavailable ? "N/A" : "Sold out"}</span>
+            )}
+          </div>
+        )}
         <div className="menu-row-info">
           <Link to={shopPath(`/product/${product.id}`)} className="menu-row-name">
             {name}
@@ -222,7 +225,7 @@ function ProductCard({ card }) {
         </div>
       </div>
       {needsChoices && expanded && (
-        <div className="menu-row-panel">
+        <div className={`menu-row-panel${SHOW_PRODUCT_PHOTOS ? "" : " nophoto"}`}>
         {card.type === "grouped" && (
           <select
             className="product-card-variant"

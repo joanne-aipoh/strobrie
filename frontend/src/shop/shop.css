@@ -56,6 +56,13 @@
   gap: 0.9rem;
   padding: 0.7rem 0;
 }
+/* Photos hidden: drop the thumbnail column (and the panel indent below). */
+.menu-row.nophoto {
+  grid-template-columns: 1fr auto;
+}
+.menu-row-panel.nophoto {
+  padding-left: 0;
+}
 .menu-row-thumb {
   position: relative;
   width: 56px;

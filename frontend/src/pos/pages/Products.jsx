@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import ModifierEditor from "./ModifierEditor.jsx";
 import { photoUrl, shopApi } from "../../shop/shopApi.js";
 import { groupProducts, productsInCard } from "../../shop/productGrouping.js";
+import { SHOW_PRODUCT_PHOTOS } from "../../photoVisibility.js";
 
 function fmt(n) {
   return `₦${n.toLocaleString("en-NG")}`;
@@ -258,7 +259,7 @@ function ProductRow({ product, categories, editingId, setEditingId, selected, on
               Delete
             </button>
           </div>
-          <ProductPhotos product={product} onChanged={onChanged} />
+          {SHOW_PRODUCT_PHOTOS && <ProductPhotos product={product} onChanged={onChanged} />}
         </div>
       </div>
     </div>
@@ -297,44 +298,51 @@ function GroupRow({ name, products, categories, editingId, setEditingId, selecte
   return (
     <div className="panel" style={{ background: "var(--cream-2)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        {photo ? (
-          <img
-            src={photoUrl(photo.url)}
-            alt=""
-            style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 8, border: "1px solid var(--line)", flexShrink: 0 }}
-          />
-        ) : (
-          <div
-            style={{
-              width: 56, height: 56, borderRadius: 8, border: "1px dashed var(--line)", flexShrink: 0,
-              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "var(--ink-soft)", textAlign: "center",
-            }}
-          >
-            No photo
-          </div>
-        )}
+        {SHOW_PRODUCT_PHOTOS &&
+          (photo ? (
+            <img
+              src={photoUrl(photo.url)}
+              alt=""
+              style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 8, border: "1px solid var(--line)", flexShrink: 0 }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 56, height: 56, borderRadius: 8, border: "1px dashed var(--line)", flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "var(--ink-soft)", textAlign: "center",
+              }}
+            >
+              No photo
+            </div>
+          ))}
         <div style={{ flex: 1, cursor: "pointer" }} onClick={() => setOpen((v) => !v)}>
           <strong>{name}</strong> <span style={{ color: "var(--ink-soft)", fontWeight: 400 }}>({products.length})</span>
           <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
             {anyActive ? "On" : "Off"}
           </div>
         </div>
-        <button
-          className="link-btn"
-          style={{ fontSize: 12, whiteSpace: "nowrap" }}
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-        >
-          {uploading ? "Uploading…" : photo ? "Change photo" : "Add photo"}
-        </button>
-        <input ref={fileRef} type="file" accept="image/*" onChange={uploadGroupPhoto} style={{ display: "none" }} />
+        {SHOW_PRODUCT_PHOTOS && (
+          <>
+            <button
+              className="link-btn"
+              style={{ fontSize: 12, whiteSpace: "nowrap" }}
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? "Uploading…" : photo ? "Change photo" : "Add photo"}
+            </button>
+            <input ref={fileRef} type="file" accept="image/*" onChange={uploadGroupPhoto} style={{ display: "none" }} />
+          </>
+        )}
         <span style={{ color: "var(--ink-soft)", cursor: "pointer" }} onClick={() => setOpen((v) => !v)}>
           {open ? "▲" : "▼"}
         </span>
       </div>
-      <div style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 4 }}>
-        One photo for the whole group — applied to all {products.length} items. Expand to edit each item.
-      </div>
+      {SHOW_PRODUCT_PHOTOS && (
+        <div style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 4 }}>
+          One photo for the whole group — applied to all {products.length} items. Expand to edit each item.
+        </div>
+      )}
       {open && (
         <div style={{ marginTop: 8 }}>
           {products.map((p) => (
