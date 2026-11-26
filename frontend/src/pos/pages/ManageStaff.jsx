@@ -52,8 +52,13 @@ export default function ManageStaff() {
       setError("You can't remove the account you're logged in as.");
       return;
     }
-    await posApi.removeStaff(id);
-    await refreshStaffList();
+    try {
+      await posApi.removeStaff(id);
+      await refreshStaffList();
+      setError("");
+    } catch (err) {
+      setError(err.message || "Couldn't remove that account.");
+    }
   }
 
   async function changeRole(id, newRole) {

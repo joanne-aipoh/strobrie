@@ -2,6 +2,7 @@ import secrets
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .. import pos_models, pos_schemas
@@ -25,8 +26,9 @@ def _generate_temp_pin(db: Session) -> str:
 
 @router.get("", response_model=list[pos_schemas.StaffOut])
 def list_staff(db: Session = Depends(get_db)):
-    """Names, roles and whether a PIN reset is pending — never the PIN hash."""
-    return db.scalars(select(pos_models.Staff)).all()
+    """Active staff — names, roles and whether a PIN reset is pending (never the
+    PIN hash). Removed (deactivated) accounts are excluded."""
+    return db.scalars(select(pos_models.Staff).where(pos_models.Staff.active.is_(True))).all()
 
 
 @router.post("/setup", response_model=pos_schemas.StaffOut, status_code=201)
@@ -126,8 +128,16 @@ def remove_staff(staff_id: int, db: Session = Depends(get_db)):
     staff = db.get(pos_models.Staff, staff_id)
     if staff is None:
         raise HTTPException(status_code=404, detail="Staff member not found")
-    db.delete(staff)
-    db.commit()
+    # A staff member with recorded sales/tabs is referenced by foreign keys, so
+    # a hard delete fails. Try to delete; if they're referenced, deactivate them
+    # instead (soft delete) so their history and attribution stay intact.
+    try:
+        db.delete(staff)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        staff.active = False
+        db.commit()
 
 
 @router.post("/login", response_model=pos_schemas.StaffOut)
@@ -135,4 +145,6 @@ def login(payload: pos_schemas.LoginRequest, db: Session = Depends(get_db)):
     staff = db.get(pos_models.Staff, payload.staff_id)
     if staff is None or not verify_pin(payload.pin, staff.pin_hash):
         raise HTTPException(status_code=401, detail="Incorrect PIN")
+    if not staff.active:
+        raise HTTPException(status_code=403, detail="This account has been removed.")
     return staff

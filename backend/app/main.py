@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 
 from . import models, pos_models, pottery_models, shop_models
 from .database import Base, engine
@@ -27,6 +28,13 @@ from .routers import (
 load_dotenv()
 
 Base.metadata.create_all(bind=engine)
+
+# Lightweight additive migrations — create_all() adds missing tables but never
+# new columns to existing ones. These are idempotent (ADD COLUMN IF NOT EXISTS),
+# so they run harmlessly on every startup and keep the schema in step with the
+# models without a separate migration step.
+with engine.begin() as _conn:
+    _conn.execute(text("ALTER TABLE staff ADD COLUMN IF NOT EXISTS active boolean NOT NULL DEFAULT true"))
 
 app = FastAPI(title="Strobrie API")
 

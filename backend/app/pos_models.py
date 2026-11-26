@@ -17,6 +17,10 @@ class Staff(Base):
     # New hires get an auto-generated temporary PIN and must set their own on
     # first login. Defaults false so existing accounts aren't forced to change.
     must_change_pin: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # Soft-delete flag. A staff member with recorded sales/tabs can't be hard
+    # deleted (foreign keys), so "Remove" deactivates them instead — they drop
+    # out of the staff list and can't log in, but their history stays intact.
+    active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
