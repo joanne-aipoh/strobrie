@@ -250,6 +250,7 @@ function ProductRow({ product, categories, editingId, setEditingId, selected, on
             description: product.description || "",
             category: product.category,
             price: String(product.price),
+            modifiers: product.modifiers,
             is_active: product.is_active,
             unavailable: product.unavailable,
           }}
