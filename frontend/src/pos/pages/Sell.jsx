@@ -6,7 +6,7 @@ import { queueSale, cacheMenu, cachedMenu, isNetworkError } from "../offline.js"
 import ApprovalModal from "./ApprovalModal.jsx";
 import ModifierPicker from "./ModifierPicker.jsx";
 import { RECEIPT_LOGO } from "../receiptLogo.js";
-import { directPrintOn, setDirectPrint, sendRaw, encodeReceipt, encodeKitchen, prepareLogo } from "../escpos.js";
+import { directPrintOn, sendRaw, encodeReceipt, encodeKitchen, prepareLogo } from "../escpos.js";
 
 const CATEGORY_ORDER = ["Hot Coffee", "Iced Coffee", "Special Brews", "Tea", "Juices", "Smoothies", "Milkshakes", "Lemonades", "Breakfast", "Lunch", "Brunch", "Bakery", "Cakes", "Cheesecakes", "Mocktails", "Cocktails", "Schweppes", "Beer", "Extras"];
 
@@ -382,12 +382,6 @@ export default function Sell() {
   const [customPrice, setCustomPrice] = useState("");
   const [customError, setCustomError] = useState("");
   const [payMethod, setPayMethod] = useState(""); // "" (none yet) until staff pick one
-  const [directPrint, setDirectPrintState] = useState(directPrintOn); // RawBT ESC/POS auto-cut
-  function toggleDirectPrint() {
-    const next = !directPrint;
-    setDirectPrint(next);
-    setDirectPrintState(next);
-  }
 
   const [custSearchPhone, setCustSearchPhone] = useState("");
   const [custSearchResult, setCustSearchResult] = useState("idle");
@@ -1337,13 +1331,6 @@ export default function Sell() {
             Print Bill
           </button>
         </div>
-        <label
-          style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--ink-soft)", marginTop: 8, cursor: "pointer" }}
-          title="Send prints straight to RawBT as ESC/POS so the paper cuts automatically. Turn off to use the normal print dialog."
-        >
-          <input type="checkbox" checked={directPrint} onChange={toggleDirectPrint} />
-          Direct print (auto-cut)
-        </label>
         {activeTab &&
           (confirmingClose ? (
             <div style={{ marginTop: 10, background: "var(--cream-2)", borderRadius: 10, padding: 12 }}>

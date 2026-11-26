@@ -13,21 +13,10 @@
 // A per-device toggle (localStorage) lets staff turn this on to test and fall
 // straight back to the HTML print path if a printer doesn't like it.
 
-const DIRECT_KEY = "flow_direct_print_v1";
-
+// Auto-cut via RawBT ESC/POS is confirmed working on the till, so direct
+// printing is always on now (the per-device toggle was removed 26 Nov 2026).
 export function directPrintOn() {
-  try {
-    return localStorage.getItem(DIRECT_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-export function setDirectPrint(on) {
-  try {
-    localStorage.setItem(DIRECT_KEY, on ? "1" : "0");
-  } catch {
-    /* storage unavailable — just don't persist */
-  }
+  return true;
 }
 
 // ---- byte buffer + ESC/POS commands -------------------------------------
