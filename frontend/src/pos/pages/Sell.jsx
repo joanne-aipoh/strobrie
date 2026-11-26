@@ -724,12 +724,18 @@ export default function Sell() {
     detachCustomer();
   }
 
-  // "Change" the order type after picking the wrong one: clear the type and the
-  // table/name so both options show again. Cart and loyalty are left as-is.
+  // "Change" after picking the wrong order type — it's starting over, so wipe
+  // the whole order back to blank: items, loyalty, note and payment too.
   function resetOrderType() {
+    setCart([]);
     setOrderType("");
     setTableChoice("");
     setCustomTable("");
+    setLoyaltySkipped(false);
+    setPayMethod("");
+    setOrderNote("");
+    setSavedFlash("");
+    detachCustomer();
   }
 
   // Put a saved tab back on screen so it can be added to or paid off.
