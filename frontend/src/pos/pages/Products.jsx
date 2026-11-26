@@ -744,10 +744,11 @@ export default function Products() {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 6,
-                    padding: "8px 4px",
+                    gap: 8,
+                    padding: "10px 12px",
                     cursor: "pointer",
-                    borderBottom: "1px solid var(--line)",
+                    background: "var(--cream-2)",
+                    borderRadius: 10,
                   }}
                   onClick={() => toggleCategory(cat)}
                 >
@@ -765,8 +766,11 @@ export default function Products() {
                       })
                     }
                   />
-                  <strong style={{ flex: 1 }}>
-                    {cat} <span style={{ color: "var(--ink-soft)", fontWeight: 400 }}>({items.length})</span>
+                  <strong style={{ flex: 1, fontSize: 14.5, textTransform: "uppercase", letterSpacing: 0.5, color: "var(--ink)" }}>
+                    {cat}{" "}
+                    <span style={{ color: "var(--ink-soft)", fontWeight: 600, textTransform: "none", letterSpacing: 0, fontSize: 13 }}>
+                      ({items.length})
+                    </span>
                   </strong>
                   {catHidden && <span className="checkin-badge out">Hidden from shop</span>}
                   {settings && (
