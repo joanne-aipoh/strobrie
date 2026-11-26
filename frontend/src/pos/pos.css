@@ -62,7 +62,7 @@
 .pos-app nav.tabs a.active,
 .pos-app nav.tabs button.active{color:var(--rust-dark);border-bottom-color:var(--rust);font-weight:700;background:none;}
 
-.pos-app .layout{display:grid;grid-template-columns:11fr 9fr;gap:20px;align-items:start;}
+.pos-app .layout{display:grid;grid-template-columns:9fr 11fr;gap:20px;align-items:start;}
 
 .pos-app .categories{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
 .pos-app .cat-btn{
@@ -89,6 +89,7 @@
 .pos-app .item-card .price{font-size:14px;color:var(--sage);font-weight:700;letter-spacing:.2px;}
 
 .pos-app .cart{
+  order:-1; /* New Order sits in the left column; items/categories on the right */
   background:var(--white);border:1px solid var(--line);border-radius:16px;
   padding:18px;position:sticky;top:16px;
   box-shadow:0 2px 14px rgba(43,29,34,.07);
