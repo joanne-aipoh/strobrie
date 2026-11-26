@@ -502,7 +502,8 @@ export default function Sell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Live customer suggestions as the waitress types a name or part of a number.
+  // Live customer suggestions as the waitress types the phone number (loyalty
+  // is matched by phone only — names can collide and attach the wrong person).
   useEffect(() => {
     const q = custSearchPhone.trim();
     if (attachedCustomer || q.length < 2) {
@@ -1197,8 +1198,8 @@ export default function Sell() {
         ) : (
           <div style={{ background: "var(--cream-2)", borderRadius: 8, padding: 10, marginBottom: 12 }}>
             <div className="form-field" style={{ marginBottom: 6 }}>
-              <label>Customer name or phone (loyalty)</label>
-              <input type="text" value={custSearchPhone} onChange={(e) => setCustSearchPhone(e.target.value)} placeholder="Name or 0803…" />
+              <label>Phone number (loyalty)</label>
+              <input type="tel" inputMode="numeric" value={custSearchPhone} onChange={(e) => setCustSearchPhone(e.target.value)} placeholder="0803…" />
             </div>
             {custSuggestions.length > 0 && (
               <div style={{ background: "#fff", border: "1px solid var(--line)", borderRadius: 8, marginBottom: 6, overflow: "hidden" }}>

@@ -1,3 +1,5 @@
+import re
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -13,8 +15,12 @@ def list_customers(search: str | None = Query(default=None), db: Session = Depen
     stmt = select(pos_models.LoyaltyCustomer)
     customers = db.scalars(stmt).all()
     if search:
-        needle = search.strip().lower()
-        customers = [c for c in customers if needle in c.name.lower() or needle in c.phone]
+        # Loyalty is matched by PHONE ONLY — names can collide (two people with
+        # the same name), which risks attaching the wrong customer. Match on the
+        # digits so spaces/dashes don't matter; a search with no digits (a name)
+        # returns nothing.
+        digits = re.sub(r"\D", "", search)
+        customers = [c for c in customers if digits and digits in re.sub(r"\D", "", c.phone)]
     return sorted(customers, key=lambda c: c.points, reverse=True)
 
 
