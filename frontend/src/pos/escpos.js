@@ -132,17 +132,37 @@ export function prepareLogo(dataUrl) {
           ctx.drawImage(img, 0, 0, w, h);
           const px = ctx.getImageData(0, 0, w, h).data;
           const bytesPerRow = w / 8;
-          const out = [0x1d, 0x76, 0x30, 0x00, bytesPerRow & 0xff, (bytesPerRow >> 8) & 0xff, h & 0xff, (h >> 8) & 0xff];
+          // Build each row's bytes and note whether it has any dark pixel, so we
+          // can trim the logo's own blank top/bottom padding — that padding was
+          // printing as empty space above the logo on the receipt.
+          const rows = [];
+          const rowHasDark = [];
           for (let y = 0; y < h; y++) {
+            const row = new Array(bytesPerRow).fill(0);
+            let hasDark = false;
             for (let xb = 0; xb < bytesPerRow; xb++) {
               let byte = 0;
               for (let bit = 0; bit < 8; bit++) {
                 const i = (y * w + (xb * 8 + bit)) * 4;
                 const dark = px[i + 3] > 128 && (px[i] + px[i + 1] + px[i + 2]) / 3 < 128;
-                if (dark) byte |= 0x80 >> bit;
+                if (dark) {
+                  byte |= 0x80 >> bit;
+                  hasDark = true;
+                }
               }
-              out.push(byte);
+              row[xb] = byte;
             }
+            rows.push(row);
+            rowHasDark.push(hasDark);
+          }
+          let top = 0;
+          while (top < h && !rowHasDark[top]) top++;
+          let bottom = h - 1;
+          while (bottom > top && !rowHasDark[bottom]) bottom--;
+          const trimmedH = Math.max(1, bottom - top + 1);
+          const out = [0x1d, 0x76, 0x30, 0x00, bytesPerRow & 0xff, (bytesPerRow >> 8) & 0xff, trimmedH & 0xff, (trimmedH >> 8) & 0xff];
+          for (let y = top; y <= bottom; y++) {
+            for (let xb = 0; xb < bytesPerRow; xb++) out.push(rows[y][xb]);
           }
           logoBytes = out;
         } catch {
@@ -193,7 +213,9 @@ export function encodeReceipt(r, cafe, vatRate) {
   b.line(RULE);
   if (r.orderName) b.line("Order: " + r.orderName);
   b.line("Employee: " + r.staffName);
+  b.bold(true);
   b.line(ORDER_TYPE_LABEL[r.orderType] || "Dine in");
+  b.bold(false);
   b.line(new Date(r.timestamp).toLocaleString());
   b.line(RULE);
 
@@ -249,7 +271,9 @@ export function encodeKitchen(k) {
 
   b.align(0);
   b.line(RULE);
+  b.bold(true);
   b.line(ORDER_TYPE_LABEL[k.orderType] || "Dine in");
+  b.bold(false);
   b.line(new Date(k.timestamp).toLocaleString());
   b.line(RULE);
 
