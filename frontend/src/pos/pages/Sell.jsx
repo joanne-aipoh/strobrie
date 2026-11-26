@@ -974,7 +974,7 @@ export default function Sell() {
                   className={`cat-btn ${activeTab?.id === t.id ? "active" : ""}`}
                   onClick={() => openTab(t)}
                 >
-                  <strong>{t.label}</strong> &middot; {fmt(tabTotal(t))} &middot; {since(t.opened_at)}
+                  <strong>{t.label}</strong> &middot; {fmt(tabTotal(t))} &middot; {since(t.updated_at || t.opened_at)}
                 </button>
               ))}
             </div>
@@ -1099,7 +1099,7 @@ export default function Sell() {
               <div style={{ marginTop: 5 }}>
                 <span className="tab-status">
                   <span className="dot" />
-                  Open · {since(activeTab.opened_at)}
+                  Open · {since(activeTab.updated_at || activeTab.opened_at)}
                 </span>
               </div>
             )}
