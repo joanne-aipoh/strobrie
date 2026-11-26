@@ -1019,11 +1019,6 @@ export default function Sell() {
             ))}
           </div>
         )}
-        {!setupDone && (
-          <div style={{ fontSize: 12.5, color: "var(--ink-soft)", background: "var(--cream-2)", borderRadius: 8, padding: "8px 10px", marginBottom: 10 }}>
-            Finish setting up the order (including loyalty) to start adding items.
-          </div>
-        )}
         <div className="item-grid">
           {showCustomForm ? (
             <div className="item-card" style={{ cursor: "default" }}>
