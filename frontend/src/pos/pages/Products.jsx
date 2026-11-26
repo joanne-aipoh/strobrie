@@ -157,7 +157,7 @@ function ProductForm({ initial, onSubmit, onCancel, categories }) {
             />
             <button
               type="button"
-              className="link-btn"
+              className="mini-btn"
               style={{ whiteSpace: "nowrap" }}
               onClick={() => {
                 setNewCategory(false);
@@ -206,7 +206,7 @@ function ProductForm({ initial, onSubmit, onCancel, categories }) {
           {initial ? "Save changes" : "Add product"}
         </button>
         {onCancel && (
-          <button className="link-btn" onClick={onCancel}>
+          <button className="mini-btn" onClick={onCancel}>
             Cancel
           </button>
         )}

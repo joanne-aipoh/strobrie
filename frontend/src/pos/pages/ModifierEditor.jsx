@@ -34,7 +34,7 @@ export default function ModifierEditor({ value, onChange }) {
             <span style={{ fontSize: 13 }}>
               <strong>{g.name}</strong> — priced by grid ({g.options.map((o) => o.label).join(", ")})
             </span>
-            <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={() => removeGroup(gi)}>
+            <button className="mini-btn danger" onClick={() => removeGroup(gi)}>
               Remove
             </button>
           </div>
@@ -61,7 +61,7 @@ export default function ModifierEditor({ value, onChange }) {
               <option value="variant">Pick one (sets price)</option>
               <option value="addon">Add any (adds to price)</option>
             </select>
-            <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={() => removeGroup(gi)}>
+            <button className="mini-btn danger" onClick={() => removeGroup(gi)}>
               Remove group
             </button>
           </div>
@@ -94,18 +94,18 @@ export default function ModifierEditor({ value, onChange }) {
                   title="Percent of the chosen price (overrides ₦)"
                 />
               )}
-              <button className="link-btn" onClick={() => removeOption(gi, oi)} title="Remove option">
+              <button className="mini-btn danger" onClick={() => removeOption(gi, oi)} title="Remove option">
                 ✕
               </button>
             </div>
           ))}
-          <button className="link-btn" onClick={() => addOption(gi)}>
+          <button className="mini-btn" onClick={() => addOption(gi)}>
             + Add option
           </button>
         </div>
       ))}
 
-      <button className="link-btn" onClick={addGroup}>
+      <button className="mini-btn" onClick={addGroup}>
         + Add option group
       </button>
     </div>
