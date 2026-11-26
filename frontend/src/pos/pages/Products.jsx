@@ -86,6 +86,9 @@ function ProductForm({ initial, onSubmit, onCancel, categories }) {
   const [form, setForm] = useState(initial || BLANK_FORM);
   const [modifiers, setModifiers] = useState(initial?.modifiers || []);
   const [error, setError] = useState("");
+  // "Create new category" mode: a new product whose category isn't one of the
+  // existing ones. Editing always starts on an existing category.
+  const [newCategory, setNewCategory] = useState(false);
 
   async function handleSubmit() {
     if (!form.name.trim()) {
@@ -142,18 +145,49 @@ function ProductForm({ initial, onSubmit, onCancel, categories }) {
       </div>
       <div className="form-field">
         <label>Category</label>
-        <input
-          type="text"
-          list="product-categories"
-          value={form.category}
-          onChange={(e) => setForm({ ...form, category: e.target.value })}
-          placeholder="e.g. Cakes"
-        />
-        <datalist id="product-categories">
-          {categories.map((c) => (
-            <option value={c} key={c} />
-          ))}
-        </datalist>
+        {newCategory ? (
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input
+              type="text"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+              placeholder="New category name"
+              autoFocus
+              style={{ flex: 1 }}
+            />
+            <button
+              type="button"
+              className="link-btn"
+              style={{ whiteSpace: "nowrap" }}
+              onClick={() => {
+                setNewCategory(false);
+                setForm({ ...form, category: "" });
+              }}
+            >
+              Use existing
+            </button>
+          </div>
+        ) : (
+          <select
+            value={form.category}
+            onChange={(e) => {
+              if (e.target.value === "__new__") {
+                setNewCategory(true);
+                setForm({ ...form, category: "" });
+              } else {
+                setForm({ ...form, category: e.target.value });
+              }
+            }}
+          >
+            <option value="">Choose a category…</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+            <option value="__new__">+ Create new category…</option>
+          </select>
+        )}
       </div>
       <div className="form-field">
         <label>Price (₦)</label>
@@ -228,40 +262,33 @@ function ProductRow({ product, categories, editingId, setEditingId, selected, on
   }
 
   return (
-    <div className="panel" style={{ background: "var(--cream-2)" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+    <div style={{ borderBottom: "1px solid var(--line)", opacity: product.is_active ? 1 : 0.55 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 4px" }}>
         <input
           type="checkbox"
           checked={selected}
           onChange={onToggleSelect}
-          style={{ marginTop: 4, flexShrink: 0 }}
+          style={{ flexShrink: 0 }}
           aria-label={`Select ${product.name}`}
         />
-        <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-            <strong>{product.name}</strong>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end", flexShrink: 0 }}>
-              <span className={`checkin-badge ${product.is_active ? "in" : "out"}`}>
-                {product.is_active ? "On" : "Off"}
-              </span>
-            </div>
-          </div>
-          <div style={{ fontSize: 13, marginTop: 2 }}>{fmt(product.price)}</div>
-          {product.description && <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 4 }}>{product.description}</div>}
-          <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
-            <button className="link-btn" onClick={() => setEditingId(product.id)}>
-              Edit
-            </button>
-            <button className="link-btn" onClick={toggleActive}>
-              {product.is_active ? "Turn off" : "Turn on"}
-            </button>
-            <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={handleDelete}>
-              Delete
-            </button>
-          </div>
-          {SHOW_PRODUCT_PHOTOS && <ProductPhotos product={product} onChanged={onChanged} />}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ fontWeight: 600 }}>{product.name}</span>
+          <span style={{ color: "var(--ink-soft)", marginLeft: 8, fontSize: 13 }}>{fmt(product.price)}</span>
+          {!product.is_active && <span className="checkin-badge out" style={{ marginLeft: 8 }}>Off</span>}
+        </div>
+        <div style={{ display: "flex", gap: 10, flexShrink: 0, alignItems: "center" }}>
+          <button className="link-btn" onClick={() => setEditingId(product.id)}>Edit</button>
+          <button className="link-btn" onClick={toggleActive}>{product.is_active ? "Turn off" : "Turn on"}</button>
+          <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={handleDelete} aria-label={`Delete ${product.name}`}>
+            Delete
+          </button>
         </div>
       </div>
+      {SHOW_PRODUCT_PHOTOS && (
+        <div style={{ padding: "0 4px 8px 30px" }}>
+          <ProductPhotos product={product} onChanged={onChanged} />
+        </div>
+      )}
     </div>
   );
 }
@@ -654,6 +681,11 @@ export default function Products() {
             onChange={(e) => setSearch(e.target.value)}
             style={{ flex: 1, minWidth: 200 }}
           />
+          {!priceMode && (
+            <button className="log-btn" style={{ whiteSpace: "nowrap" }} onClick={() => setShowAdd((v) => !v)}>
+              {showAdd ? "Cancel" : "+ Add product"}
+            </button>
+          )}
           <button className="log-btn" style={{ whiteSpace: "nowrap" }} onClick={() => setPriceMode((v) => !v)}>
             {priceMode ? "Done editing prices" : "Edit prices"}
           </button>
@@ -662,6 +694,13 @@ export default function Products() {
           {products.length} products. Use <strong>Turn off / Turn on</strong> to show or hide an item on the till
           and shop; <strong>Edit</strong> to change its name, price, photo or options.
         </p>
+
+        {showAdd && !priceMode && (
+          <div className="panel" style={{ background: "var(--cream-2)", marginBottom: 14 }}>
+            <strong style={{ display: "block", marginBottom: 10 }}>New product</strong>
+            <ProductForm categories={categories} onSubmit={handleCreate} onCancel={() => setShowAdd(false)} />
+          </div>
+        )}
 
         {priceMode ? (
           <PriceSheet byCategory={byCategory} onSaved={load} />
@@ -781,15 +820,6 @@ export default function Products() {
               </div>
             );
           })}
-
-          <button className="link-btn" style={{ marginTop: 6 }} onClick={() => setShowAdd((v) => !v)}>
-            {showAdd ? "Cancel" : "+ Add product"}
-          </button>
-          {showAdd && (
-            <div style={{ marginTop: 14 }}>
-              <ProductForm categories={categories} onSubmit={handleCreate} onCancel={() => setShowAdd(false)} />
-            </div>
-          )}
           </>
         )}
       </div>
