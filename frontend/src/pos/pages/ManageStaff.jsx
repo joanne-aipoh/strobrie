@@ -3,7 +3,9 @@ import { usePosAuth } from "../PosAuthContext.jsx";
 import { posApi } from "../posApi.js";
 
 function roleLabel(role) {
-  return role === "front_desk" ? "front desk" : role;
+  if (role === "front_desk") return "front desk";
+  if (role === "staff") return "waitress";
+  return role;
 }
 
 export default function ManageStaff() {
@@ -141,7 +143,7 @@ export default function ManageStaff() {
                 style={{ marginLeft: 8, fontSize: 12, padding: "2px 6px" }}
                 title="Change role"
               >
-                <option value="staff">Staff</option>
+                <option value="staff">Waitress</option>
                 <option value="front_desk">Front desk</option>
                 <option value="manager">Manager</option>
               </select>
@@ -173,7 +175,7 @@ export default function ManageStaff() {
         <div className="form-field">
           <label>Role</label>
           <select value={role} onChange={(e) => setRole(e.target.value)}>
-            <option value="staff">Staff</option>
+            <option value="staff">Waitress</option>
             <option value="front_desk">Front desk</option>
             <option value="manager">Manager</option>
           </select>
@@ -184,8 +186,8 @@ export default function ManageStaff() {
         <br />
         New staff get an auto-generated temporary PIN (shown once here) and set their own on first login.
         <br />
-        <strong>Staff</strong>: till, tabs, loyalty, waste, event tickets. <strong>Front desk</strong>: + orders,
-        products, events &amp; reports. <strong>Manager</strong>: everything, incl. staff admin &amp; voids.
+        <strong>Waitress</strong>: till, tabs, loyalty, waste, event tickets. <strong>Front desk</strong>: + orders,
+        products, events &amp; reports, and can authorise voids. <strong>Manager</strong>: everything, incl. team admin.
       </p>
       {error && <div className="error-text">{error}</div>}
       <button className="log-btn" onClick={addStaff}>

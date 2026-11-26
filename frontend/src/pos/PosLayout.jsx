@@ -14,7 +14,9 @@ import OfflineBar from "./OfflineBar.jsx";
 const MAIN_SITE_URL = "https://strobrie.com";
 
 function roleLabel(role) {
-  return role === "front_desk" ? "front desk" : role;
+  if (role === "front_desk") return "front desk";
+  if (role === "staff") return "waitress";
+  return role;
 }
 
 function PosShell() {
