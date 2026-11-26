@@ -43,9 +43,9 @@ function Builder() {
     },
     feed: (n) => bytes.push(0x1b, 0x64, n), // feed n lines
     // Feed past the blade, then cut. GS V 0 = full cut; change to 0x01 for a
-    // partial cut if a printer leaves the receipt attached. The 6-line feed
-    // leaves a bottom margin so the last line isn't right at the torn edge.
-    cut: () => bytes.push(0x1b, 0x64, 0x06, 0x1d, 0x56, 0x00),
+    // partial cut if a printer leaves the receipt attached. A small 4-line feed
+    // keeps the last line off the torn edge without wasting paper.
+    cut: () => bytes.push(0x1b, 0x64, 0x04, 0x1d, 0x56, 0x00),
     bytes: () => bytes,
   };
 }
