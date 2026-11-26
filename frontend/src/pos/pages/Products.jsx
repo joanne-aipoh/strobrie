@@ -277,10 +277,10 @@ function ProductRow({ product, categories, editingId, setEditingId, selected, on
           <span style={{ color: "var(--ink-soft)", marginLeft: 8, fontSize: 13 }}>{fmt(product.price)}</span>
           {!product.is_active && <span className="checkin-badge out" style={{ marginLeft: 8 }}>Off</span>}
         </div>
-        <div style={{ display: "flex", gap: 10, flexShrink: 0, alignItems: "center" }}>
-          <button className="link-btn" onClick={() => setEditingId(product.id)}>Edit</button>
-          <button className="link-btn" onClick={toggleActive}>{product.is_active ? "Turn off" : "Turn on"}</button>
-          <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={handleDelete} aria-label={`Delete ${product.name}`}>
+        <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
+          <button className="mini-btn" onClick={() => setEditingId(product.id)}>Edit</button>
+          <button className="mini-btn" onClick={toggleActive}>{product.is_active ? "Turn off" : "Turn on"}</button>
+          <button className="mini-btn danger" onClick={handleDelete} aria-label={`Delete ${product.name}`}>
             Delete
           </button>
         </div>
@@ -716,10 +716,10 @@ export default function Products() {
             >
               <span style={{ fontSize: 13 }}>{selectedIds.size} selected</span>
               <div style={{ display: "flex", gap: 10 }}>
-                <button className="link-btn" onClick={() => setSelectedIds(new Set())}>
+                <button className="mini-btn" onClick={() => setSelectedIds(new Set())}>
                   Clear
                 </button>
-                <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={deleteSelected}>
+                <button className="mini-btn danger" onClick={deleteSelected}>
                   Delete selected
                 </button>
               </div>
@@ -769,8 +769,7 @@ export default function Products() {
                   {catHidden && <span className="checkin-badge out">Hidden from shop</span>}
                   {settings && (
                     <button
-                      className="link-btn"
-                      style={{ fontSize: 12 }}
+                      className="mini-btn"
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleCategoryVisible(cat);
