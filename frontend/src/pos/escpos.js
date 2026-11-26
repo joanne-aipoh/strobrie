@@ -165,6 +165,8 @@ export function encodeReceipt(r, cafe, vatRate) {
 
   b.align(1);
   if (logoBytes) {
+    // The logo graphic already says "Strobrie By Joanne", so skip the name
+    // and tagline text when it's present.
     b.rawArr(logoBytes);
     b.line();
   } else {
@@ -173,8 +175,8 @@ export function encodeReceipt(r, cafe, vatRate) {
     b.line(cafe.name.toUpperCase());
     b.bold(false);
     b.size(SIZE_NORMAL);
+    b.line(cafe.tagline);
   }
-  b.line(cafe.tagline);
   b.line(cafe.address);
   b.line(cafe.website);
   b.line(cafe.phones);
@@ -223,7 +225,7 @@ export function encodeReceipt(r, cafe, vatRate) {
   b.line(RULE);
 
   b.align(1);
-  b.line(r.bill ? "Not paid yet - please pay at the counter." : "Thank you!");
+  if (!r.bill) b.line("Thank you!");
   b.cut();
   return b.bytes();
 }
@@ -232,7 +234,7 @@ export function encodeReceipt(r, cafe, vatRate) {
 export function encodeKitchen(k) {
   const b = Builder();
   b.init();
-  b.feed(8); // top gap so the header clears a receipt-holder clip/spike
+  b.feed(5); // top gap so the header clears a receipt-holder clip/spike
 
   b.align(1);
   b.size(SIZE_2X);
