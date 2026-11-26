@@ -968,6 +968,9 @@ export default function Sell() {
       <div>
         {openTabs.length > 0 && (
           <div className="panel" style={{ padding: 12, marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>
+              Open tickets ({openTabs.length})
+            </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {openTabs.map((t) => (
                 <button
