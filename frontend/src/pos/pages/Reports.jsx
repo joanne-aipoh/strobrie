@@ -30,6 +30,7 @@ function downloadCSV(filename, rows) {
 
 const PERIODS = [
   { key: "today", label: "Today" },
+  { key: "yesterday", label: "Yesterday" },
   { key: "week", label: "This week" },
   { key: "month", label: "This month" },
   { key: "all", label: "All time" },
@@ -44,6 +45,12 @@ function periodStart(key) {
     d.setHours(0, 0, 0, 0);
     return d;
   }
+  if (key === "yesterday") {
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - 1);
+    return d;
+  }
   if (key === "week") {
     const d = new Date(now);
     d.setHours(0, 0, 0, 0);
@@ -55,6 +62,17 @@ function periodStart(key) {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   }
   return new Date(0);
+}
+
+// Exclusive upper bound for a period; null means "up to now". Only "yesterday"
+// is a closed window — it ends at the start of today.
+function periodEnd(key) {
+  if (key === "yesterday") {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  return null;
 }
 
 export default function Reports() {
@@ -91,8 +109,12 @@ export default function Reports() {
   const customerName = (id) => (id ? customers.find((c) => c.id === id)?.name || "—" : "—");
 
   const startDate = periodStart(period);
+  const endDate = periodEnd(period);
   const periodLabel = PERIODS.find((p) => p.key === period)?.label || "";
-  const inPeriod = (ts) => new Date(ts) >= startDate;
+  const inPeriod = (ts) => {
+    const t = new Date(ts);
+    return t >= startDate && (endDate === null || t < endDate);
+  };
 
   const validSales = sales.filter((s) => !s.voided);
   const periodSales = validSales.filter((s) => inPeriod(s.timestamp));
