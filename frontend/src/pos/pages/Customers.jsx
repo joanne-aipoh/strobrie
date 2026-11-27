@@ -16,6 +16,8 @@ export default function Customers() {
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editError, setEditError] = useState("");
+  const [deletingId, setDeletingId] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     posApi.listCustomers().then(setCustomers);
@@ -73,6 +75,17 @@ export default function Customers() {
       setEditError("");
     } catch (err) {
       setEditError(err.message);
+    }
+  }
+
+  async function deleteCustomer(id) {
+    try {
+      await posApi.deleteCustomer(id);
+      setCustomers((prev) => prev.filter((c) => c.id !== id));
+      setDeletingId(null);
+      setDeleteError("");
+    } catch (err) {
+      setDeleteError(err.message);
     }
   }
 
@@ -141,10 +154,28 @@ export default function Customers() {
                   <td>{c.visits}</td>
                   <td>{fmt(c.total_spent)}</td>
                   <td>{new Date(c.joined_at).toLocaleDateString()}</td>
-                  <td>
-                    <button className="link-btn" onClick={() => startEdit(c)}>
-                      Edit
-                    </button>
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    {deletingId === c.id ? (
+                      <>
+                        <span style={{ fontSize: 12, color: "var(--rust-dark)" }}>Delete? </span>
+                        <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={() => deleteCustomer(c.id)}>
+                          Yes
+                        </button>{" "}
+                        <button className="link-btn" onClick={() => { setDeletingId(null); setDeleteError(""); }}>
+                          No
+                        </button>
+                        {deleteError && <div className="error-text">{deleteError}</div>}
+                      </>
+                    ) : (
+                      <>
+                        <button className="link-btn" onClick={() => startEdit(c)}>
+                          Edit
+                        </button>{" "}
+                        <button className="link-btn" style={{ color: "var(--rust-dark)" }} onClick={() => { setDeletingId(c.id); setDeleteError(""); }}>
+                          Delete
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               )

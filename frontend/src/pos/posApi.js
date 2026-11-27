@@ -58,6 +58,7 @@ export const posApi = {
   lookupCustomer: (phone) => request(`/api/pos/customers/lookup?phone=${encodeURIComponent(phone)}`),
   createCustomer: (data) => request("/api/pos/customers", { method: "POST", body: JSON.stringify(data) }),
   updateCustomer: (id, data) => request(`/api/pos/customers/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteCustomer: (id) => request(`/api/pos/customers/${id}`, { method: "DELETE" }),
 
   // waste
   listWaste: () => request("/api/pos/waste"),

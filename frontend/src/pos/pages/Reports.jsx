@@ -261,7 +261,7 @@ export default function Reports() {
           <div className="value">{fmt(periodWaste)}</div>
         </div>
         <div className="metric-card">
-          <div className="label">Loyalty customers</div>
+          <div className="label">Loyalty customers (total)</div>
           <div className="value">{customers.length}</div>
         </div>
       </div>

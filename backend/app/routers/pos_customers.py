@@ -1,7 +1,7 @@
 import re
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from .. import pos_models, pos_schemas
@@ -46,6 +46,21 @@ def create_customer(payload: pos_schemas.CustomerCreate, db: Session = Depends(g
     db.commit()
     db.refresh(customer)
     return customer
+
+
+@router.delete("/{customer_id}", status_code=204)
+def delete_customer(customer_id: int, db: Session = Depends(get_db)):
+    customer = db.get(pos_models.LoyaltyCustomer, customer_id)
+    if customer is None:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    # Detach the customer from any sales/tabs/orders first so the foreign keys
+    # don't block the delete — those records stay on the books, just without the
+    # loyalty link.
+    db.execute(text("UPDATE sales SET customer_id = NULL WHERE customer_id = :id"), {"id": customer_id})
+    db.execute(text("UPDATE tabs SET customer_id = NULL WHERE customer_id = :id"), {"id": customer_id})
+    db.execute(text("UPDATE orders SET loyalty_customer_id = NULL WHERE loyalty_customer_id = :id"), {"id": customer_id})
+    db.delete(customer)
+    db.commit()
 
 
 @router.patch("/{customer_id}", response_model=pos_schemas.CustomerOut)
